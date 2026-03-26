@@ -1,45 +1,6 @@
 import { useState, useEffect } from 'react';
-import {
-	BookOpen,
-	User,
-	Menu,
-	X,
-	LogOut,
-	Megaphone,
-	DoorOpen,
-	PanelLeftClose,
-} from 'lucide-react';
-import '../../css/Sidebar.css';
-import { logout } from '../../utils/auth';
-
-const ROLE_META = {
-	student: {
-		label: 'Student',
-		color: '#0ea5e9',
-		bg: 'rgba(14,165,233,0.1)',
-		border: 'rgba(14,165,233,0.25)',
-	},
-	teacher: {
-		label: 'Teacher',
-		color: '#8b5cf6',
-		bg: 'rgba(139,92,246,0.1)',
-		border: 'rgba(139,92,246,0.25)',
-	},
-	admin: {
-		label: 'Admin',
-		color: '#f59e0b',
-		bg: 'rgba(245,158,11,0.1)',
-		border: 'rgba(245,158,11,0.25)',
-	},
-};
-
-const getRoleMeta = (role) =>
-	ROLE_META[role?.toLowerCase()] ?? {
-		label: role ?? 'User',
-		color: '#64748b',
-		bg: 'rgba(100,116,139,0.1)',
-		border: 'rgba(100,116,139,0.2)',
-	};
+import { Menu, X } from 'lucide-react';
+import SidebarContent from './SidebarContent';
 
 const Sidebar = ({
 	activePage,
@@ -51,9 +12,6 @@ const Sidebar = ({
 	const [isOpen, setIsOpen] = useState(false);
 	const [isMobile, setIsMobile] = useState(false);
 	const [collapsed, setCollapsed] = useState(false);
-
-	const isTeacher = userRole === 'teacher';
-	const roleMeta = getRoleMeta(userRole);
 
 	useEffect(() => {
 		const checkMobile = () => {
@@ -77,18 +35,7 @@ const Sidebar = ({
 		);
 	}, [collapsed, isMobile]);
 
-	const menuItems = [
-		...(isTeacher
-			? [{ id: 'teacher-classes', label: 'Your Classes', icon: BookOpen }]
-			: [
-					{ id: 'enrolled-classes', label: 'Enrolled Classes', icon: DoorOpen },
-				]),
-		{ id: 'classes', label: 'Class Directory', icon: BookOpen },
-		{ id: 'announcements', label: 'Announcements', icon: Megaphone },
-		{ id: 'profile', label: 'Profile', icon: User },
-	];
-
-	const handleMenuClick = (id) => {
+	const handlePageChange = (id) => {
 		onPageChange(id);
 		if (isMobile) setIsOpen(false);
 	};
@@ -97,167 +44,44 @@ const Sidebar = ({
 		<>
 			{isMobile && (
 				<button
-					className='mobile-toggle'
+					className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-slate-950 text-slate-200 border border-slate-800"
 					onClick={() => setIsOpen((v) => !v)}
 					aria-label={isOpen ? 'Close menu' : 'Open menu'}
 					aria-expanded={isOpen}
 				>
-					{isOpen ? <X size={24} /> : <Menu size={24} />}
+					{isOpen ? <X size={20} /> : <Menu size={20} />}
 				</button>
 			)}
 
 			{isMobile && isOpen && (
 				<div
-					className='sidebar-overlay'
+					className="fixed inset-0 bg-black/60 z-30 backdrop-blur-sm"
 					onClick={() => setIsOpen(false)}
-					aria-hidden='true'
+					aria-hidden="true"
 				/>
 			)}
 
 			<aside
 				className={[
-					'sidebar',
-					isOpen ? 'sidebar-open' : '',
-					collapsed ? 'sidebar-collapsed' : '',
-				]
-					.join(' ')
-					.trim()}
-				aria-label='Main navigation'
+					'fixed top-0 left-0 h-full bg-slate-950 border-r border-slate-800/60 flex flex-col z-40 transition-all duration-300 ease-in-out',
+					isMobile
+						? `w-[280px] ${isOpen ? 'translate-x-0' : '-translate-x-full'}`
+						: collapsed
+							? 'w-[72px]'
+							: 'w-[280px]',
+				].join(' ')}
+				aria-label="Main navigation"
 			>
-				<div className='sidebar-header'>
-					<div className='logo-container'>
-						{collapsed && !isMobile ? (
-							<button
-								className='logo-icon logo-icon-btn'
-								onClick={() => setCollapsed(false)}
-								aria-label='Expand sidebar'
-								title='Expand sidebar'
-							>
-								<BookOpen size={28} />
-							</button>
-						) : (
-							<div className='logo-icon'>
-								<BookOpen size={28} />
-							</div>
-						)}
-						<h1 className='logo-text'>EduPortal</h1>
-					</div>
-
-					{!isMobile && !collapsed && (
-						<button
-							className='collapse-btn'
-							onClick={() => setCollapsed(true)}
-							aria-label='Collapse sidebar'
-							title='Collapse sidebar'
-						>
-							<PanelLeftClose size={16} />
-							<span className='collapse-btn-label'>Collapse</span>
-						</button>
-					)}
-				</div>
-
-				<nav className='sidebar-nav' role='navigation'>
-					<ul className='nav-list'>
-						{menuItems.map((item) => {
-							const Icon = item.icon;
-							const isActive = activePage === item.id;
-							return (
-								<li key={item.id} className='nav-item'>
-									<button
-										className={`nav-link ${isActive ? 'nav-link-active' : ''}`}
-										onClick={() => handleMenuClick(item.id)}
-										aria-label={item.label}
-										aria-current={isActive ? 'page' : undefined}
-										title={collapsed ? item.label : undefined}
-									>
-										<Icon className='nav-icon' size={20} />
-										{!collapsed && (
-											<span className='nav-label'>{item.label}</span>
-										)}
-										{isActive && !collapsed && (
-											<span className='active-indicator' aria-hidden='true' />
-										)}
-									</button>
-								</li>
-							);
-						})}
-					</ul>
-				</nav>
-
-				<div className='sidebar-footer'>
-					{!collapsed && (
-						<button
-							className='user-info'
-							onClick={() => handleMenuClick('profile')}
-							aria-label='Go to profile'
-						>
-							<div className='user-avatar' aria-hidden='true'>
-								{userProfile ? (
-									<img
-										src={userProfile}
-										alt={`${userName}'s avatar`}
-										className='sidebar-avatar-img'
-										onError={(e) => {
-											e.target.style.display = 'none';
-											const fb = document.createElement('span');
-											fb.className = 'avatar-fallback';
-											fb.textContent = userName.charAt(0).toUpperCase();
-											e.target.parentElement.appendChild(fb);
-										}}
-									/>
-								) : (
-									<span className='avatar-fallback'>
-										{userName.charAt(0).toUpperCase()}
-									</span>
-								)}
-							</div>
-							<div className='user-details'>
-								<p className='user-name'>{userName || 'Guest'}</p>
-								<span
-									className='role-badge'
-									style={{
-										color: roleMeta.color,
-										background: roleMeta.bg,
-										borderColor: roleMeta.border,
-									}}
-								>
-									{roleMeta.label}
-								</span>
-							</div>
-						</button>
-					)}
-
-					{collapsed && (
-						<button
-							className='user-avatar-mini'
-							onClick={() => handleMenuClick('profile')}
-							title={`${userName} — view profile`}
-							aria-label='Go to profile'
-						>
-							{userProfile ? (
-								<img
-									src={userProfile}
-									alt={`${userName}'s avatar`}
-									className='sidebar-avatar-img'
-								/>
-							) : (
-								<span className='avatar-fallback'>
-									{userName.charAt(0).toUpperCase()}
-								</span>
-							)}
-						</button>
-					)}
-
-					<button
-						className='logout-btn'
-						onClick={logout}
-						title={collapsed ? 'Logout' : undefined}
-						aria-label='Logout'
-					>
-						<LogOut size={18} />
-						{!collapsed && <span>Logout</span>}
-					</button>
-				</div>
+				<SidebarContent
+					activePage={activePage}
+					onPageChange={handlePageChange}
+					userName={userName}
+					userRole={userRole}
+					userProfile={userProfile}
+					collapsed={collapsed && !isMobile}
+					onCollapse={() => setCollapsed((v) => !v)}
+					isMobile={isMobile}
+				/>
 			</aside>
 		</>
 	);
