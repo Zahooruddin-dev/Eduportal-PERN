@@ -7,8 +7,8 @@ import {
 	postEnrollement,
 	unenrollStudent,
 	getClassAnnouncements,
-} from '../../../../../api/api';
-import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
+} from '../../../../api/api';
+import { SpinnerIcon, AlertBox } from '../../../Icons/Icon';
 
 export default function EnrolledClasses() {
 	const { user } = useAuth();
@@ -147,11 +147,12 @@ export default function EnrolledClasses() {
 								<h3 className='text-lg font-semibold text-[var(--color-text-primary)] mb-1'>
 									{cls.class_name}
 								</h3>
-								{cls.time_in_pakistan && (
-									<p className='text-sm text-[var(--color-text-secondary)] mb-2'>
-										🕒 {cls.time_in_pakistan}
+								<div className='space-y-1 text-sm text-[var(--color-text-secondary)]'>
+									<p>📅 {cls.schedule_days}</p>
+									<p>
+										⏰ {cls.start_time} – {cls.end_time}
 									</p>
-								)}
+								</div>
 								<p className='text-xs text-[var(--color-text-muted)] mb-3'>
 									Enrolled on{' '}
 									{new Date(cls.enrollment_date).toLocaleDateString()}

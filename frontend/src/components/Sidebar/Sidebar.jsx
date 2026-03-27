@@ -14,12 +14,12 @@ import {
 } from 'lucide-react';
 
 const studentNavItems = [
+	{ id: 'enrolled-classes', label: 'Enrolled Classes', icon: GraduationCap },
 	{ id: 'live-sessions', label: 'Live Sessions', icon: Clock },
 	{ id: 'academic-calendar', label: 'Academic Calendar', icon: Calendar },
 	{ id: 'course-material', label: 'Course Material', icon: BookOpen },
 	{ id: 'gradebook', label: 'Gradebook', icon: BarChart },
 	{ id: 'report', label: 'Report', icon: FileText },
-	{ id: 'enrolled-classes', label: 'Enrolled Classes', icon: GraduationCap }, // new
 ];
 const teacherNavItems = [
 	{ id: 'live-sessions', label: 'Live Sessions', icon: Clock },

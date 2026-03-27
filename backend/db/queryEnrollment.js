@@ -24,10 +24,16 @@ async function enrollStudentQuery(studentId, classId) {
   );
   return rows[0];
 }
-
 async function getStudentScheduleQuery(studentId) {
   const { rows } = await pool.query(
-    `SELECT users.username as student_name, classes.id as class_id, classes.class_name, classes.time_in_pakistan, enrollments.enrollment_date
+    `SELECT 
+        users.username as student_name,
+        classes.id as class_id,
+        classes.class_name,
+        classes.schedule_days,
+        classes.start_time,
+        classes.end_time,
+        enrollments.enrollment_date
      FROM users
      JOIN enrollments ON users.id = enrollments.student_id
      JOIN classes ON enrollments.class_id = classes.id
