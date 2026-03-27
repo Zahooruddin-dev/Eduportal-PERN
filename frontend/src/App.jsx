@@ -7,7 +7,7 @@ import {
 import Login from './Auth/Login';
 import Register from './Auth/Register';
 import ProtectedRoute from './utils/ProtectedRoute';
-import { AuthProvider, useAuth } from './hooks/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import ForgotPassword from './Auth/ForgotPassword';
 
 const AuthRedirect = ({ children }) => {
