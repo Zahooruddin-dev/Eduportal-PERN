@@ -11,6 +11,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
 
   const renderContent = () => {
+    // Admin and Parent roles – not fully supported
     if (user?.role === 'admin' || user?.role === 'parent') {
       return (
         <div className="flex items-center justify-center h-full">
@@ -26,21 +27,48 @@ export default function Dashboard() {
       );
     }
 
-    switch (activeTab) {
-      case 'profile':
-        return <Profile />;
-      default:
-        return (
-          <div className="p-6">
-            <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">
-              Welcome, {user?.username}!
-            </h1>
-            <p className="mt-2 text-[var(--color-text-muted)]">
-              This is your dashboard. Select an option from the sidebar.
-            </p>
-          </div>
-        );
+    // Student role
+    if (user?.role === 'student') {
+      switch (activeTab) {
+        // we will add student‑specific tabs here, when we are ready
+        case 'profile':
+          return <Profile />;
+        default:
+          return (
+            <div className="p-6">
+              <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">
+                Welcome, {user?.username}!
+              </h1>
+              <p className="mt-2 text-[var(--color-text-muted)]">
+                This is your student dashboard. Select an option from the sidebar.
+              </p>
+            </div>
+          );
+      }
     }
+
+    // Teacher role
+    if (user?.role === 'teacher') {
+      switch (activeTab) {
+        case 'schedule-management':
+          return <ScheduleManagement />;
+        case 'profile':
+          return <Profile />;
+        default:
+          return (
+            <div className="p-6">
+              <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">
+                Welcome, {user?.username}!
+              </h1>
+              <p className="mt-2 text-[var(--color-text-muted)]">
+                This is your teacher dashboard. Select an option from the sidebar.
+              </p>
+            </div>
+          );
+      }
+    }
+
+    return null;
   };
 
   return (

@@ -12,6 +12,9 @@ export const getClassById = (id) => {
 export const getMyClasses = () => {
 	return api.get('/api/class/mine');
 };
+export const updateClass = (id, data) => {
+  return api.put(`/api/class/${id}`, data);
+};
 export const deleteMyClass = (id) => {
 	return api.delete(`/api/class/${id}`);
 };
