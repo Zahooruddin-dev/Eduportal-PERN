@@ -9,13 +9,17 @@ async function getClasses(req, res) {
 	}
 }
 async function createClasses(req, res) {
-	const { class_name, time_in_pakistan } = req.body;
+	const { class_name, schedule_days, start_time, end_time, room_number } =
+		req.body;
 	const teacher_id = req.user.id;
 
 	try {
 		const newClass = await db.CreateNewClassQuery(
 			class_name,
-			time_in_pakistan,
+			schedule_days,
+			start_time,
+			end_time,
+			room_number,
 			teacher_id,
 		);
 		res.status(201).json(newClass);
