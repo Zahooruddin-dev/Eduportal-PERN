@@ -114,13 +114,13 @@ export default function ForgotPassword() {
   });
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--app-bg)' }}>
+    <div className="fixed inset-0 flex items-center justify-center px-4 overflow-y-auto" style={{ background: 'var(--app-bg)', zIndex: 9999 }}>
       <SkeletonLoader step={step} />
     </div>
   );
 
   if (success) return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--app-bg)' }}>
+    <div className="fixed inset-0 flex items-center justify-center px-4 overflow-y-auto" style={{ background: 'var(--app-bg)', zIndex: 9999 }}>
       <div className="w-full max-w-md">
         <div
           className="rounded-2xl overflow-hidden"
@@ -131,7 +131,7 @@ export default function ForgotPassword() {
           <div className="px-8 py-14 flex flex-col items-center gap-4 text-center">
             <div
               className="w-16 h-16 rounded-2xl flex items-center justify-center"
-              style={{ background: 'rgba(87,214,209,0.12)', color: 'var(--sb-accent)' }}
+              style={{ background: 'var(--sb-accent-bg)', color: 'var(--sb-accent)' }}
               aria-hidden="true"
             >
               <CheckCircle size={32} />
@@ -153,7 +153,7 @@ export default function ForgotPassword() {
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12" style={{ background: 'var(--app-bg)' }}>
+    <div className="fixed inset-0 flex items-center justify-center px-4 py-12 overflow-y-auto" style={{ background: 'var(--app-bg)', zIndex: 9999 }}>
       <a
         href="#fp-form"
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm font-medium"
