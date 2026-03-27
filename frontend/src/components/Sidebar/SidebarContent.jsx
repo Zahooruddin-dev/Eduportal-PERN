@@ -223,65 +223,67 @@ const SidebarContent = ({
         </div>
       </nav>
 
-      <footer className='shrink-0 border-t border-[var(--sb-border)] px-6 pb-6 pt-5'>
-        <button
-          onClick={() => onPageChange('profile')}
-          aria-label='Go to profile'
-          title={collapsed ? 'Profile' : undefined}
-          className={`mb-3 flex w-full items-center gap-3 rounded-lg px-3.5 py-3 transition-colors hover:bg-[var(--sb-hover)] ${
-            collapsed ? 'justify-center' : 'justify-start'
-          }`}
-        >
-          <div className='mr-3 flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--sb-border)] bg-[var(--sb-avatar-bg)] text-base font-semibold text-[var(--sb-avatar-text)]'>
-            {userProfile ? (
-              <img
-                src={userProfile}
-                alt={`${userName}'s avatar`}
-                className='h-full w-full object-cover'
-                onError={(e) => (e.currentTarget.style.display = 'none')}
-              />
-            ) : (
-              <span>{userName?.charAt(0).toUpperCase()}</span>
-            )}
-          </div>
-
-          {!collapsed && (
-            <div className='flex min-w-0 flex-1 flex-col text-left'>
-              <span className='truncate text-[15px] font-semibold text-[var(--sb-text)]'>{userName || 'Guest'}</span>
-              <span
-                className='mt-1 inline-block w-max rounded-md border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]'
-                style={{
-                  color: roleMeta.color,
-                  backgroundColor: roleMeta.bg,
-                  borderColor: roleMeta.border,
-                }}
-              >
-                {roleMeta.label}
-              </span>
+      <footer className='shrink-0 border-t border-[var(--sb-border)] px-6 py-6'>
+        <div className='flex flex-col'>
+          <button
+            onClick={() => onPageChange('profile')}
+            aria-label='Go to profile'
+            title={collapsed ? 'Profile' : undefined}
+            className={`mb-4 flex w-full items-center gap-3 rounded-lg px-3.5 py-3 transition-all duration-150 hover:bg-[var(--sb-hover)] ${
+              collapsed ? 'justify-center' : 'justify-start'
+            }`}
+          >
+            <div className='mr-4 flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--sb-border)] bg-[var(--sb-avatar-bg)] text-base font-semibold text-[var(--sb-avatar-text)]'>
+              {userProfile ? (
+                <img
+                  src={userProfile}
+                  alt={`${userName}'s avatar`}
+                  className='h-full w-full object-cover'
+                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                />
+              ) : (
+                <span>{userName?.charAt(0).toUpperCase()}</span>
+              )}
             </div>
-          )}
-        </button>
 
-        <div className={`flex ${collapsed ? 'flex-col gap-2.5' : 'gap-2.5'}`}>
-          <button
-            onClick={onToggleTheme}
-            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
-            className='flex flex-1 items-center justify-center gap-2.5 rounded-lg border border-[var(--sb-border)] bg-[var(--sb-bg-elevated)] p-3 text-sm text-[var(--sb-text-secondary)] transition-colors hover:bg-[var(--sb-hover)] hover:text-[var(--sb-text)]'
-          >
-            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
-            {!collapsed && <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>}
+            {!collapsed && (
+              <div className='flex min-w-0 flex-1 flex-col text-left'>
+                <span className='truncate text-[15px] font-semibold text-[var(--sb-text)]'>{userName || 'Guest'}</span>
+                <span
+                  className='mt-1 inline-flex items-center w-max rounded-md border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] shadow-sm'
+                  style={{
+                    color: roleMeta.color,
+                    backgroundColor: roleMeta.bg,
+                    borderColor: roleMeta.border,
+                  }}
+                >
+                  {roleMeta.label}
+                </span>
+              </div>
+            )}
           </button>
 
-          <button
-            onClick={logout}
-            aria-label='Logout'
-            title='Logout'
-            className='flex flex-1 items-center justify-center gap-2.5 rounded-lg border border-transparent p-3 text-sm text-[var(--sb-text-secondary)] transition-colors hover:border-[var(--sb-danger-border)] hover:bg-[var(--sb-danger-hover-bg)] hover:text-[var(--sb-danger)]'
-          >
-            <LogOut size={17} />
-            {!collapsed && <span>Logout</span>}
-          </button>
+          <div className={`flex ${collapsed ? 'flex-col gap-2.5' : 'gap-2.5 items-center'}`}>
+            <button
+              onClick={onToggleTheme}
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+              title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+              className='flex flex-1 items-center justify-center gap-2.5 rounded-lg border border-[var(--sb-border)] bg-[var(--sb-bg-elevated)] p-3 text-sm text-[var(--sb-text-secondary)] transition-colors hover:bg-[var(--sb-hover)] hover:text-[var(--sb-text)] shadow-sm'
+            >
+              {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+              {!collapsed && <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>}
+            </button>
+
+            <button
+              onClick={logout}
+              aria-label='Logout'
+              title='Logout'
+              className='flex flex-1 items-center justify-center gap-2.5 rounded-lg border border-transparent p-3 text-sm text-[var(--sb-text-secondary)] transition-colors hover:border-[var(--sb-danger-border)] hover:bg-[var(--sb-danger-hover-bg)] hover:text-[var(--sb-danger)] shadow-sm'
+            >
+              <LogOut size={17} />
+              {!collapsed && <span>Logout</span>}
+            </button>
+          </div>
         </div>
       </footer>
     </div>
