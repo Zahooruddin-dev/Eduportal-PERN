@@ -391,6 +391,7 @@ export default function ResourceManager({ classId, className, onBack }) {
 											))}
 										</div>
 									)}
+                  
 									<div className='mt-2'>
 										{res.type === 'file' ? (
 											<a
