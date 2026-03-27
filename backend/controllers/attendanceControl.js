@@ -1,6 +1,5 @@
-import db from '../db/queryAttendence';
-
-export const markBulkAttendance = async (req, res) => {
+const db = require('../db/queryAttendence');
+async function markBulkAttendance(req, res) {
 	const { classId, attendanceData } = req.body;
 	// attendanceData format: [{ studentId: 1, status: 'present' }, ...]
 	// Get YYYY-MM-DD format for Postgres DATE type
@@ -24,9 +23,9 @@ export const markBulkAttendance = async (req, res) => {
 		console.error('Attendance Error:', error);
 		res.status(500).json({ success: false, error: 'Database update failed.' });
 	}
-};
+}
 
-export const getClassAttendance = async (req, res) => {
+async function getClassAttendance(req, res) {
 	const { classId } = req.params;
 	const today = new Date().toISOString().split('T')[0];
 
@@ -36,4 +35,9 @@ export const getClassAttendance = async (req, res) => {
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
+}
+
+module.exports = {
+	markBulkAttendance,
+	getClassAttendance,
 };
