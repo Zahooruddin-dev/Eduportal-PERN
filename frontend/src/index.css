@@ -10,6 +10,18 @@
 }
 
 :root {
+  --sb-bg: #ffffff;
+  --sb-text: #1c1917;
+  --sb-text-secondary: #78716c;
+  --sb-text-dim: #a8a29e;
+  --sb-border: #e7e5e4;
+  --sb-border-strong: #d6d3d1;
+  --sb-hover: #f5f5f4;
+  --sb-accent: #0ea5e9;
+  --sb-accent-bg: #e0f2fe;
+  --sb-active-bg: #0ea5e9;
+  --sb-danger: #ef4444;
+  --sb-danger-hover-bg: #fef2f2;
 	--font-display: 'DM Serif Display', Georgia, serif;
 	--font-body: 'DM Sans', system-ui, sans-serif;
 
