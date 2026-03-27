@@ -6,7 +6,7 @@ CREATE TABLE enrollments (
     UNIQUE(student_id, class_id) 
 );
 CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- Built-in Postgres 13+ function
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(50) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
@@ -92,3 +92,16 @@ SELECT
 FROM pg_constraint c
 JOIN pg_class t ON c.conrelid = t.oid
 WHERE confrelid = 'students'::regclass;
+
+
+CREATE TABLE attendance (
+    id BIGSERIAL PRIMARY KEY,
+    class_id BIGINT NOT NULL,
+    student_id BIGINT NOT NULL,
+    status VARCHAR(10) CHECK (status IN ('present', 'absent', 'late')),
+    date DATE DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_attendance_class FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+    CONSTRAINT fk_attendance_student FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE(student_id, class_id, date)
+);
