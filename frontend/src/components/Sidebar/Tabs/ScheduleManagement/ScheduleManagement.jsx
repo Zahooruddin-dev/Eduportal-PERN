@@ -1,7 +1,7 @@
 // src/Dashboard/Sidebar/Tabs/ScheduleManagement.jsx
 import { useState, useEffect } from 'react';
-import { getMyClasses, createClass, deleteMyClass, updateClass } from '../../../api/api'; // adjust path
-import { SpinnerIcon, AlertBox } from '../../../components/Icons/Icon';
+import { getMyClasses, createClass, deleteMyClass, updateClass } from '../../../../api/api'; // adjust path
+import { SpinnerIcon, AlertBox } from '../../../Icons/Icon';
 
 export default function ScheduleManagement() {
   const [classes, setClasses] = useState([]);

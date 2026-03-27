@@ -28,18 +28,16 @@ export const getClassEnrolledRooster = (id) => {
 export const getStudentEnrolledShedule = (id) => {
 	return api.get(`/api/enroll/student/${id}`);
 };
+export const getClassAnnouncements = (classId) => {
+  return api.get(`/api/class/${classId}/announcements`);
+};
 
 export const postAnnouncement = (classId, data) => {
-	return api.post(`/api/class/${classId}/announcements`, data);
+  return api.post(`/api/class/${classId}/announcements`, data);
 };
-export const getClassAnnouncements = (classId) => {
-	return api.get(`/api/class/${classId}/announcements`);
-};
-export const getAnnouncementById = (classId, announcementId) => {
-	return api.get(`/api/class/${classId}/announcements/${announcementId}`);
-};
+
 export const deleteAnnouncement = (classId, announcementId) => {
-	return api.delete(`/api/class/${classId}/announcements/${announcementId}`);
+  return api.delete(`/api/class/${classId}/announcements/${announcementId}`);
 };
 export const getMyAnnouncements = () => api.get('/api/announcements/my');
 

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import Sidebar from '../Sidebar/Sidebar';
 import Profile from '../Profile/Profile';
-import ScheduleManagement from '../Sidebar/Tabs/ScheduleManagement';
+import ScheduleManagement from '../Sidebar/Tabs/ScheduleManagement/ScheduleManagement';
 
 export default function Dashboard() {
   const { user } = useAuth();
