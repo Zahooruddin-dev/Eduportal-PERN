@@ -2,7 +2,11 @@ const pool = require('./Pool');
 
 async function getClassRosterQuery(classId) {
   const { rows } = await pool.query(
-    `SELECT classes.class_name, users.username as student_name, users.email
+    `SELECT 
+        users.id AS student_id, 
+        users.username, 
+        users.profile_pic,
+        classes.class_name
      FROM classes
      JOIN enrollments ON classes.id = enrollments.class_id
      JOIN users ON enrollments.student_id = users.id
@@ -11,7 +15,6 @@ async function getClassRosterQuery(classId) {
   );
   return rows;
 }
-
 async function enrollStudentQuery(studentId, classId) {
   const { rows } = await pool.query(
     `INSERT INTO enrollments (student_id, class_id)
