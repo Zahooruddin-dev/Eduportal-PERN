@@ -17,6 +17,7 @@ import {
 	deleteResource,
 } from '../../../../../api/api';
 import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
+import FileViewerModal from '../../../../FileViewerModal/FileViewerModal';
 
 export default function ResourceManager({ classId, className, onBack }) {
 	const [resources, setResources] = useState([]);
@@ -35,6 +36,7 @@ export default function ResourceManager({ classId, className, onBack }) {
 	});
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [uploading, setUploading] = useState(false);
+	const [viewingFile, setViewingFile] = useState(null);
 
 	const fetchResources = async () => {
 		setLoading(true);
@@ -391,19 +393,16 @@ export default function ResourceManager({ classId, className, onBack }) {
 											))}
 										</div>
 									)}
-                  
+
 									<div className='mt-2'>
 										{res.type === 'file' ? (
-											<a
-												href={res.content}
-												target='_blank'
-												rel='noopener noreferrer'
-												className='inline-flex items-center gap-1 text-sm text-[var(--color-primary)] hover:underline'
-											>
-												<FileText size={14} />
-												View File
-												<ExternalLink size={12} />
-											</a>
+											 <button
+    onClick={() => setViewingFile({ url: res.content, title: res.title })}
+    className="inline-flex items-center gap-1 text-sm text-[var(--color-primary)] hover:underline"
+  >
+    <FileText size={14} />
+    View File
+  </button>
 										) : (
 											<a
 												href={res.content}
@@ -448,6 +447,14 @@ export default function ResourceManager({ classId, className, onBack }) {
 					))}
 				</div>
 			)}
+      {viewingFile && (
+  <FileViewerModal
+    fileUrl={viewingFile.url}
+    title={viewingFile.title}
+    isOpen={!!viewingFile}
+    onClose={() => setViewingFile(null)}
+  />
+)}
 		</div>
 	);
 }
