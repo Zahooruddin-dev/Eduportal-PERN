@@ -4,7 +4,7 @@ import useTheme from '../../hooks/useTheme';
 import SidebarContent from './SidebarContent';
 
 const MOBILE_BREAKPOINT = 767;
-const EXPANDED_WIDTH = '304px';
+const EXPANDED_WIDTH = '288px';
 const COLLAPSED_WIDTH = '84px';
 
 const Sidebar = ({
@@ -65,7 +65,7 @@ const Sidebar = ({
 				<button
 					onClick={() => setIsOpen((prev) => !prev)}
 					aria-label={isOpen ? 'Close menu' : 'Open menu'}
-					className='fixed left-4 top-4 z-[70] flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--sb-border)] bg-[var(--sb-bg-elevated)] text-[var(--sb-text)] shadow-[0_8px_20px_rgba(0,0,0,0.22)]'
+					className='fixed left-4 top-4 z-[70] flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--sb-border)] bg-[var(--sb-bg-elevated)] text-[var(--sb-text)] shadow-[0_8px_20px_rgba(15,23,42,0.14)]'
 				>
 					{isOpen ? <X size={19} /> : <Menu size={19} />}
 				</button>
@@ -75,7 +75,7 @@ const Sidebar = ({
 				<button
 					aria-label='Close sidebar overlay'
 					onClick={() => setIsOpen(false)}
-					className='fixed inset-0 z-40 bg-black/35'
+					className='fixed inset-0 z-40 bg-black/20'
 				/>
 			)}
 
@@ -84,7 +84,7 @@ const Sidebar = ({
 				style={{
 					width: sidebarWidth,
 					transform: isMobile && !isOpen ? 'translateX(-100%)' : 'translateX(0)',
-					boxShadow: isMobile ? '0 12px 34px rgba(0,0,0,0.22)' : 'none',
+					boxShadow: isMobile ? '0 12px 34px rgba(15, 23, 42, 0.2)' : 'none',
 				}}
 			>
 				<SidebarContent

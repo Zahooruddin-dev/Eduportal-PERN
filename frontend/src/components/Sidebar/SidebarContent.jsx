@@ -46,24 +46,45 @@ const getRoleMeta = (role) =>
     border: 'rgba(120,113,108,0.18)',
   };
 
-const STUDENT_NAV = [
-  { id: 'live-sessions', label: 'Live Sessions', hint: 'Join ongoing classes', icon: Video },
-  { id: 'academic-calender', label: 'Academic Calender', hint: 'Important dates', icon: CalendarDays },
-  { id: 'course-material', label: 'Course Material', hint: 'Notes and resources', icon: FolderOpen },
-  { id: 'gradebook', label: 'Gradebook', hint: 'Marks and progress', icon: ClipboardList },
-  { id: 'report', label: 'Report', hint: 'Performance summary', icon: FileText },
-  { id: 'profile', label: 'Profile', hint: 'Account and settings', icon: User },
+const STUDENT_SECTIONS = [
+  {
+    title: 'Main Menu',
+    items: [
+      { id: 'live-sessions', label: 'Live Sessions', hint: 'Join ongoing classes', icon: Video },
+      { id: 'academic-calender', label: 'Academic Calender', hint: 'Important dates', icon: CalendarDays },
+      { id: 'report', label: 'Report', hint: 'Performance summary', icon: FileText },
+    ],
+  },
+  {
+    title: 'My Courses',
+    items: [
+      { id: 'course-material', label: 'Course Material', hint: 'Notes and resources', icon: FolderOpen },
+      { id: 'gradebook', label: 'Gradebook', hint: 'Marks and progress', icon: ClipboardList },
+    ],
+  },
+  {
+    title: 'Settings',
+    items: [{ id: 'profile', label: 'Profile', hint: 'Account and settings', icon: User }],
+  },
 ];
 
-const TEACHER_NAV = [
+const TEACHER_SECTIONS = [
   {
-    id: 'teacher-classes',
-    label: 'Teaching Hub',
-    hint: 'Classes and posts',
-    icon: GraduationCap,
+    title: 'Main Menu',
+    items: [
+      {
+        id: 'teacher-classes',
+        label: 'Teaching Hub',
+        hint: 'Classes and posts',
+        icon: GraduationCap,
+      },
+      { id: 'announcements', label: 'Announcements', hint: 'School-wide notes', icon: Megaphone },
+    ],
   },
-  { id: 'announcements', label: 'Announcements', hint: 'School-wide notes', icon: Megaphone },
-  { id: 'profile', label: 'Profile', hint: 'Account and settings', icon: User },
+  {
+    title: 'Settings',
+    items: [{ id: 'profile', label: 'Profile', hint: 'Account and settings', icon: User }],
+  },
 ];
 
 const NavItem = ({ item, isActive, collapsed, onClick }) => {
@@ -76,8 +97,8 @@ const NavItem = ({ item, isActive, collapsed, onClick }) => {
         aria-label={item.label}
         aria-current={isActive ? 'page' : undefined}
         title={collapsed ? item.label : undefined}
-        className={`group flex w-full items-center gap-3 rounded-xl border text-sm transition-all duration-200 ${
-          collapsed ? 'justify-center px-3 py-3' : 'justify-start px-3.5 py-3'
+        className={`group flex w-full items-center rounded-lg border text-sm font-medium transition-all duration-200 ${
+          collapsed ? 'justify-center p-3.5' : 'justify-start px-3.5 py-3.5'
         } ${
           isActive
             ? 'border-[var(--sb-accent-border)] bg-[var(--sb-accent-bg)] text-[var(--sb-accent-light)]'
@@ -85,18 +106,18 @@ const NavItem = ({ item, isActive, collapsed, onClick }) => {
         }`}
       >
         <span
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-colors ${
+          className={`mr-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-colors ${
             isActive
               ? 'border-[var(--sb-accent-border)] bg-[var(--sb-bg)] text-[var(--sb-accent)]'
-              : 'border-[var(--sb-border)] bg-[var(--sb-bg-elevated)] text-[var(--sb-text-dim)] group-hover:text-[var(--sb-text)]'
+              : 'border-[var(--sb-border)] bg-[var(--sb-bg-elevated)] text-[var(--sb-text-dim)] group-hover:text-[var(--sb-text-secondary)]'
           }`}
         >
-          <Icon size={18} />
+          <Icon size={17} />
         </span>
 
         {!collapsed && (
           <span className='flex min-w-0 flex-1 flex-col items-start'>
-            <span className='truncate text-[15px] font-semibold leading-tight'>{item.label}</span>
+            <span className='truncate text-base leading-tight text-inherit'>{item.label}</span>
             {item.hint ? <span className='truncate pt-0.5 text-xs text-[var(--sb-text-dim)]'>{item.hint}</span> : null}
           </span>
         )}
@@ -127,12 +148,12 @@ const SidebarContent = ({
 }) => {
   const isTeacher = userRole === 'teacher';
   const roleMeta = getRoleMeta(userRole);
-  const menuItems = isTeacher ? TEACHER_NAV : STUDENT_NAV;
+  const sections = isTeacher ? TEACHER_SECTIONS : STUDENT_SECTIONS;
   const toggleLabel = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
 
   return (
-    <div className='flex h-full flex-col bg-[var(--sb-bg)]'>
-      <header className='shrink-0 border-b border-[var(--sb-border)] px-5 pb-5 pt-6'>
+    <div className='flex h-full flex-col bg-[var(--sb-bg)] font-sans text-[var(--sb-text)]'>
+      <header className='shrink-0 border-b border-[var(--sb-border)] px-6 pb-6 pt-8'>
         <div className='flex items-center justify-between gap-3'>
           <button
             onClick={() => onPageChange(isTeacher ? 'teacher-classes' : 'live-sessions')}
@@ -146,8 +167,8 @@ const SidebarContent = ({
 
             {!collapsed && (
               <span className='flex min-w-0 flex-col text-left'>
-                <span className='truncate font-body text-base font-semibold text-[var(--sb-text)]'>Mizuka Portal</span>
-                <span className='truncate text-xs font-medium text-[var(--sb-text-dim)]'>Enterprise Learning</span>
+                <span className='truncate text-base font-semibold text-[var(--sb-text)]'>Mizuka Portal</span>
+                <span className='truncate text-xs font-medium text-[var(--sb-text-dim)]'>Edu Portal</span>
               </span>
             )}
           </button>
@@ -163,30 +184,42 @@ const SidebarContent = ({
         </div>
       </header>
 
-      <nav className='flex-1 overflow-y-auto overflow-x-hidden px-4 py-5' role='navigation' aria-label='Main'>
-        <ul className='m-0 flex list-none flex-col gap-2 p-0'>
-          {menuItems.map((item) => (
-            <NavItem
-              key={item.id}
-              item={item}
-              isActive={activePage === item.id}
-              collapsed={collapsed}
-              onClick={onPageChange}
-            />
+      <nav className='flex-1 overflow-y-auto overflow-x-hidden px-6 py-8' role='navigation' aria-label='Main'>
+        <div className='flex flex-col gap-7'>
+          {sections.map((section) => (
+            <div key={section.title}>
+              {!collapsed && (
+                <h3 className='mb-3 px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--sb-text-dim)]'>
+                  {section.title}
+                </h3>
+              )}
+
+              <ul className='m-0 flex list-none flex-col gap-2 p-0'>
+                {section.items.map((item) => (
+                  <NavItem
+                    key={item.id}
+                    item={item}
+                    isActive={activePage === item.id}
+                    collapsed={collapsed}
+                    onClick={onPageChange}
+                  />
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       </nav>
 
-      <footer className='shrink-0 border-t border-[var(--sb-border)] px-4 pb-5 pt-4'>
+      <footer className='shrink-0 border-t border-[var(--sb-border)] px-6 pb-6 pt-5'>
         <button
           onClick={() => onPageChange('profile')}
           aria-label='Go to profile'
           title={collapsed ? 'Profile' : undefined}
-          className={`mb-3 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-[var(--sb-hover)] ${
+          className={`mb-3 flex w-full items-center gap-3 rounded-lg px-3.5 py-3 transition-colors hover:bg-[var(--sb-hover)] ${
             collapsed ? 'justify-center' : 'justify-start'
           }`}
         >
-          <div className='flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--sb-border)] bg-[var(--sb-avatar-bg)] text-base font-semibold text-[var(--sb-avatar-text)]'>
+          <div className='mr-3 flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--sb-border)] bg-[var(--sb-avatar-bg)] text-base font-semibold text-[var(--sb-avatar-text)]'>
             {userProfile ? (
               <img
                 src={userProfile}
