@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { loginUser } from '../api/authApi';
 
 const EyeIcon = ({ open }) =>
   open ? (
@@ -43,17 +44,12 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:3000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Login failed');
-      login(data.token);
+      const res = await loginUser(form);
+      login(res.data.token);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message);
+      const message = err.response?.data?.message || err.message || 'Login failed';
+      setError(message);
     } finally {
       setLoading(false);
     }
