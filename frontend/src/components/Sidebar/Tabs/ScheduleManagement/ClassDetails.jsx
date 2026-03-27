@@ -1,7 +1,7 @@
 // src/Dashboard/Sidebar/Tabs/ClassDetails.jsx
 import { useState, useEffect } from 'react';
-import { getClassById, getClassAnnouncements, postAnnouncement, deleteAnnouncement } from '../../../api/api';
-import { SpinnerIcon, AlertBox } from '../../../components/Icons/Icon';
+import { getClassById, getClassAnnouncements, postAnnouncement, deleteAnnouncement } from '../../../../api/api';
+import { SpinnerIcon, AlertBox } from '../../../Icons/Icon';
 
 export default function ClassDetails({ classId, onBack }) {
   const [classInfo, setClassInfo] = useState(null);
