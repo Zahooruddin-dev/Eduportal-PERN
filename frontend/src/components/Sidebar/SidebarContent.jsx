@@ -8,6 +8,8 @@ import {
   ClipboardList,
   FileText,
   GraduationCap,
+  BookMarked,
+  MessageCircle,
   ChevronRight,
   LogOut,
   PanelLeft,
@@ -79,6 +81,17 @@ const TEACHER_SECTIONS = [
         icon: GraduationCap,
       },
       { id: 'announcements', label: 'Announcements', hint: 'School-wide notes', icon: Megaphone },
+    ],
+  },
+  {
+    title: 'Instructor Tools',
+    items: [
+      { id: 'teacher-live-sessions', label: 'Live Sessions', hint: 'Start or join live classes', icon: Video },
+      { id: 'class-schedule-management', label: 'Schedule', hint: 'Manage class timings', icon: CalendarDays },
+      { id: 'teacher-course-material', label: 'Course Material', hint: 'Upload and share resources', icon: FolderOpen },
+      { id: 'teacher-gradebook', label: 'Gradebook', hint: 'Manage grades and reports', icon: BookMarked },
+      { id: 'parent-communication', label: 'Parent Communication', hint: 'Message parents', icon: MessageCircle },
+      { id: 'student-attendance-tracking', label: 'Attendance', hint: 'Track attendance', icon: ClipboardList },
     ],
   },
   {

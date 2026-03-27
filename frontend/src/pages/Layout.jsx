@@ -9,6 +9,12 @@ import AcademicCalender from '../components/Sidebar/Students-Sidebar/AcademicCal
 import CourseMaterial from '../components/Sidebar/Students-Sidebar/CourseMaterial';
 import GradeBook from '../components/Sidebar/Students-Sidebar/GradeBook';
 import Report from '../components/Sidebar/Students-Sidebar/Report';
+import TeacherLiveSessions from '../components/Sidebar/Teachers-Sidebar/LiveSessions';
+import ClassScheduleManagement from '../components/Sidebar/Teachers-Sidebar/ClassScheduleManagement';
+import TeacherCourseMaterial from '../components/Sidebar/Teachers-Sidebar/CourseMaterialRepo';
+import TeacherGradeBook from '../components/Sidebar/Teachers-Sidebar/GradeBook';
+import ParentCommunication from '../components/Sidebar/Teachers-Sidebar/ParentCommunication';
+import StudentAttendanceTracking from '../components/Sidebar/Teachers-Sidebar/StudentAttendanceTracking';
 import { useAuth } from '../utils/AuthContext';
 import Enrolled from '../components/Sidebar/Enrolled/Enrolled';
 
@@ -62,6 +68,12 @@ const Layout = () => {
 		{ id: 'course-material', component: <CourseMaterial /> },
 		{ id: 'gradebook', component: <GradeBook /> },
 		{ id: 'report', component: <Report /> },
+		{ id: 'teacher-live-sessions', component: <TeacherLiveSessions /> },
+		{ id: 'class-schedule-management', component: <ClassScheduleManagement /> },
+		{ id: 'teacher-course-material', component: <TeacherCourseMaterial /> },
+		{ id: 'teacher-gradebook', component: <TeacherGradeBook /> },
+		{ id: 'parent-communication', component: <ParentCommunication /> },
+		{ id: 'student-attendance-tracking', component: <StudentAttendanceTracking /> },
 		{ id: 'enrolled-classes', component: <Enrolled userId={user?.id} /> },
 		{
 			id: 'classes',

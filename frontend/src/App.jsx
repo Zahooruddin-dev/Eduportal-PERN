@@ -10,7 +10,6 @@ import Layout from './pages/Layout';
 import ProtectedRoute from './utils/ProtectedRoute';
 import { AuthProvider, useAuth } from './utils/AuthContext';
 import ForgotPassword from './pages/Auth/Forgotpassword';
-import './App.css';
 
 const AuthRedirect = ({ children }) => {
 	const { user } = useAuth();
