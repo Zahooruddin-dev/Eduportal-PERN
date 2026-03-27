@@ -111,3 +111,33 @@ ADD COLUMN subject VARCHAR(100),
 ADD COLUMN description TEXT,
 ADD COLUMN max_students INTEGER DEFAULT 30,
 ALTER COLUMN room_number DROP NOT NULL; -- make room optional
+
+BEGIN;
+
+-- Remove old column
+ALTER TABLE classes DROP COLUMN IF EXISTS time_in_pakistan;
+
+-- Convert schedule_days to plain text
+ALTER TABLE classes ALTER COLUMN schedule_days TYPE TEXT;
+
+-- Add new columns if they don't exist
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='classes' AND column_name='grade_level') THEN
+        ALTER TABLE classes ADD COLUMN grade_level VARCHAR(50);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='classes' AND column_name='subject') THEN
+        ALTER TABLE classes ADD COLUMN subject VARCHAR(100);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='classes' AND column_name='description') THEN
+        ALTER TABLE classes ADD COLUMN description TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='classes' AND column_name='max_students') THEN
+        ALTER TABLE classes ADD COLUMN max_students INTEGER DEFAULT 30;
+    END IF;
+END $$;
+
+-- Ensure room_number is nullable
+ALTER TABLE classes ALTER COLUMN room_number DROP NOT NULL;
+
+COMMIT;
