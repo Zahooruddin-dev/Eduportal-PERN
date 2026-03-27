@@ -51,22 +51,7 @@ const Sidebar = ({
           onClick={() => setIsOpen((v) => !v)}
           aria-label={isOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={isOpen}
-          style={{
-            position: 'fixed',
-            top: '1rem',
-            left: '1rem',
-            zIndex: 60,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '2.25rem',
-            height: '2.25rem',
-            borderRadius: '0.5rem',
-            background: 'var(--sb-bg-elevated)',
-            border: '1px solid var(--sb-border-strong)',
-            color: 'var(--sb-text)',
-            cursor: 'pointer',
-          }}
+          className={"fixed top-4 left-4 z-[60] flex items-center justify-center w-9 h-9 rounded-md bg-[var(--sb-bg-elevated)] border border-[var(--sb-border-strong)] text-[var(--sb-text)] cursor-pointer"}
         >
           {isOpen ? <X size={18} /> : <Menu size={18} />}
         </button>
@@ -76,34 +61,18 @@ const Sidebar = ({
         <div
           aria-hidden="true"
           onClick={() => setIsOpen(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 40,
-            background: 'rgba(0,0,0,0.55)',
-            backdropFilter: 'blur(4px)',
-          }}
+          className="fixed inset-0 z-40 bg-[rgba(0,0,0,0.55)] backdrop-blur-sm"
         />
       )}
 
       <aside
         aria-label="Main navigation"
+        className={"fixed top-0 left-0 h-[100dvh] z-50 flex flex-col overflow-hidden bg-[var(--sb-bg)] border-r"}
         style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          height: '100dvh',
-          zIndex: 50,
           width: isMobile ? '272px' : effectiveCollapsed ? '68px' : '272px',
-          background: 'var(--sb-bg)',
-          borderRight: '1px solid var(--sb-border)',
-          display: 'flex',
-          flexDirection: 'column',
-          transition:
-            'transform 0.3s cubic-bezier(0.4,0,0.2,1), width 0.3s cubic-bezier(0.4,0,0.2,1)',
+          borderRightColor: 'var(--sb-border)',
           transform: isMobile && !isOpen ? 'translateX(-100%)' : 'translateX(0)',
-          willChange: 'transform, width',
-          overflow: 'hidden',
+          transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1), width 0.3s cubic-bezier(0.4,0,0.2,1)'
         }}
       >
         <SidebarContent
