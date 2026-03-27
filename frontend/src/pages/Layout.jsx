@@ -10,7 +10,6 @@ import CourseMaterial from '../components/Sidebar/Students-Sidebar/CourseMateria
 import GradeBook from '../components/Sidebar/Students-Sidebar/GradeBook';
 import Report from '../components/Sidebar/Students-Sidebar/Report';
 import { useAuth } from '../utils/AuthContext';
-import '../css/Layout.css';
 import Enrolled from '../components/Sidebar/Enrolled/Enrolled';
 
 const Layout = () => {
@@ -86,7 +85,7 @@ const Layout = () => {
 	];
 
 	return (
-		<div className='layout'>
+		<div className='flex min-h-screen w-full bg-[var(--app-bg)] text-[var(--app-text)]'>
 			<Sidebar
 				activePage={activePage}
 				userName={user?.username}
@@ -94,8 +93,8 @@ const Layout = () => {
 				userProfile={getProfileImageUrl()}
 				onPageChange={handlePageChange}
 			/>
-			<main className='layout-main'>
-				<div className='layout-content'>
+			<main className='app-content min-h-screen'>
+				<div className='w-full px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8 2xl:mx-auto 2xl:max-w-[1600px]'>
 					{pages.map(({ id, component }) => {
 						if (!visitedPages.has(id)) return null;
 						return (
