@@ -372,7 +372,7 @@ const SidebarContent = ({
 							<div style={s.logoMark}>
 								<BookOpen size={15} />
 							</div>
-							<span style={s.logoText}>EduPortal</span>
+							<span style={s.logoText}>Mizuka Portal</span>
 						</>
 					)}
 				</div>
