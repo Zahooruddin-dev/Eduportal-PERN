@@ -2,34 +2,39 @@ const dbAnnounce = require('../db/queryAnnouncements');
 const dbClass = require('../db/queryClasses');
 
 async function postAnnouncement(req, res) {
-	const { classId } = req.params;
-	const { title, content, expires_at } = req.body;
-	const teacherId = req.user.id;
+  const { classId } = req.params;
+  const { title, content, expires_at } = req.body;
+  const teacherId = req.user.id;
 
-	try {
-		const targetClass = await dbClass.getClassByIdQuery(classId);
+  // Ensure teacherId exists (token must contain id)
+  if (!teacherId) {
+    return res.status(401).json({ error: 'User not authenticated' });
+  }
 
-		if (!targetClass) {
-			return res.status(404).json({ error: 'Class not found' });
-		}
+  // Convert empty string to null for expires_at as it's optional in the frontend
+  const expiresAt = expires_at && expires_at !== '' ? expires_at : null;
 
-		if (targetClass.teacher_id !== teacherId) {
-			return res
-				.status(403)
-				.json({ error: "Unauthorized: You don't teach this class" });
-		}
+  try {
+    const targetClass = await dbClass.getClassByIdQuery(classId);
+    if (!targetClass) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+    if (targetClass.teacher_id !== teacherId) {
+      return res.status(403).json({ error: "Unauthorized: You don't teach this class" });
+    }
 
-		const announcement = await dbAnnounce.createAnnouncementQuery(
-			classId,
-			teacherId,
-			title,
-			content,
-			expires_at ?? null,
-		);
-		res.status(201).json(announcement);
-	} catch (err) {
-		res.status(500).json({ error: err.message });
-	}
+    const announcement = await dbAnnounce.createAnnouncementQuery(
+      classId,
+      teacherId,
+      title,
+      content,
+      expiresAt
+    );
+    res.status(201).json(announcement);
+  } catch (err) {
+    console.error(err); // Log the full error for debugging
+    res.status(500).json({ error: err.message });
+  }
 }
 
 async function getClassAnnouncements(req, res) {
