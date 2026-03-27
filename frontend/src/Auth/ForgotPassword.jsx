@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { resetPassword,requestReset } from '../api/authApi';
 
 const SpinnerIcon = () => (
   <svg className="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -43,16 +44,12 @@ function RequestStep({ onSuccess }) {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:3000/api/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Something went wrong');
+      const res = await requestReset({ email });
+      
       onSuccess(email);
     } catch (err) {
-      setError(err.message);
+      const message = err.response?.data?.message || err.message || 'Something went wrong';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -130,7 +127,7 @@ function SentStep({ email, onReset }) {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/auth/reset-password', {
+      const res = await fetch('http://localhost:3000/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code: form.code, password: form.password }),

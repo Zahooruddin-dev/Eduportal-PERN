@@ -17,20 +17,20 @@ const sendResetEmail = async (toEmail, resetCode) => {
   const resetUrl = resetUrlBase ? `${resetUrlBase}?code=${encodeURIComponent(resetCode)}` : null;
 
   const mailOptions = {
-    from: `"Mizuka Connect" <${process.env.EMAIL_USER}>`,
+    from: `"Mizuka Portal" <${process.env.EMAIL_USER}>`,
     to: toEmail,
-    subject: 'Mizuka Connect — Password Reset Instructions',
-    text: `You requested a password reset for your Mizuka Connect account.\n\nUse this code to reset your password: ${resetCode}\nThis code will expire in ${expiry} minutes.\n\nDo NOT share this code with anyone. If you did not request a password reset, please ignore this email or contact support: ${supportEmail}`,
+    subject: 'Mizuka Portal — Password Reset Instructions',
+    text: `You requested a password reset for your Mizuka Portal account.\n\nUse this code to reset your password: ${resetCode}\nThis code will expire in ${expiry} minutes.\n\nDo NOT share this code with anyone. If you did not request a password reset, please ignore this email or contact support: ${supportEmail}`,
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; color:#333;">
         <div style="max-width:600px;margin:24px auto;padding:24px;border:1px solid #e6e9ee;border-radius:8px;background:#ffffff;">
           <div style="text-align:center;margin-bottom:12px;">
-            <h2 style="margin:0;color:#0b5cff">Mizuka Connect</h2>
+            <h2 style="margin:0;color:#0b5cff">Mizuka Portal</h2>
             <p style="margin:6px 0 0;color:#6b7280">Password reset request</p>
           </div>
 
           <p>Hello,</p>
-          <p style="color:#374151">We received a request to reset the password for your Mizuka Connect account associated with this email address.</p>
+          <p style="color:#374151">We received a request to reset the password for your Mizuka Portal account associated with this email address.</p>
 
           <div style="margin:18px 0;text-align:center;">
             <div style="display:inline-block;padding:14px 20px;border-radius:8px;background:#f3f6ff;border:1px solid #e0e7ff;">
@@ -45,7 +45,7 @@ const sendResetEmail = async (toEmail, resetCode) => {
           <hr style="border:none;border-top:1px solid #eef2f7;margin:18px 0" />
           <p style="font-size:13px;color:#6b7280;margin:0">If you did not request a password reset, you can safely ignore this email. If you believe an unauthorized person attempted to access your account, contact us at <a href="mailto:${supportEmail}">${supportEmail}</a>.</p>
 
-          <p style="font-size:12px;color:#9ca3af;margin-top:16px">Thanks — The Mizuka Connect team</p>
+          <p style="font-size:12px;color:#9ca3af;margin-top:16px">Thanks — The Mizuka Portal team</p>
         </div>
         <p style="font-size:11px;color:#9ca3af;text-align:center;margin-top:8px">This message was sent to ${toEmail}. If you no longer wish to receive these emails, update your preferences in your account settings.</p>
       </div>
