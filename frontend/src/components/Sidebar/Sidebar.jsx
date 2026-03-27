@@ -1,4 +1,5 @@
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../hooks/useTheme';
 import {
 	Menu,
 	X,
@@ -11,6 +12,8 @@ import {
 	UserCheck,
 	LogOut,
 	GraduationCap,
+	Sun,
+	Moon,
 } from 'lucide-react';
 
 const studentNavItems = [
@@ -45,6 +48,7 @@ export default function Sidebar({
 	setActiveTab,
 }) {
 	const { user, logout } = useAuth();
+	const { theme, toggle } = useTheme();
 	const isStudent = user?.role === 'student';
 	const navItems = isStudent ? studentNavItems : teacherNavItems;
 
@@ -90,7 +94,7 @@ export default function Sidebar({
 				})}
 			</nav>
 
-			{/* Footer: profile + logout */}
+			{/* Footer: profile + theme toggle + logout */}
 			<div className='border-t border-[var(--color-border)] p-4'>
 				<div className='flex items-center justify-between'>
 					{/* Profile info – clickable to open profile tab */}
@@ -123,14 +127,26 @@ export default function Sidebar({
 						)}
 					</button>
 
-					<button
-						onClick={logout}
-						className='flex items-center gap-2 px-2 py-1 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/50 transition-colors'
-						aria-label='Logout'
-					>
-						<LogOut size={18} />
-						{!collapsed && <span className='text-sm font-medium'>Logout</span>}
-					</button>
+					<div className='flex gap-1'>
+						{/* Theme toggle button */}
+						<button
+							onClick={toggle}
+							className='p-1 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/50 transition-colors'
+							aria-label='Toggle theme'
+						>
+							{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+						</button>
+
+						{/* Logout button */}
+						<button
+							onClick={logout}
+							className='flex items-center gap-2 px-2 py-1 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/50 transition-colors'
+							aria-label='Logout'
+						>
+							<LogOut size={18} />
+							{!collapsed && <span className='text-sm font-medium'>Logout</span>}
+						</button>
+					</div>
 				</div>
 			</div>
 		</aside>

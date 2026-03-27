@@ -5,9 +5,10 @@ import {
 	createClass,
 	deleteMyClass,
 	updateClass,
-} from '../../../../api/api'; 
+} from '../../../../api/api';
 import { SpinnerIcon, AlertBox } from '../../../Icons/Icon';
 import ClassDetails from './ClassDetails';
+import { useTheme } from '../../../../hooks/useTheme';
 
 export default function ScheduleManagement() {
 	const [classes, setClasses] = useState([]);
@@ -148,11 +149,11 @@ export default function ScheduleManagement() {
 			</div>
 
 			{error && <AlertBox message={error} />}
-{success && (
-  <div className="mb-4 p-3 rounded-lg bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 text-sm">
-    {success}
-  </div>
-)}
+			{success && (
+				<div className='mb-4 p-3 rounded-lg bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 text-sm'>
+					{success}
+				</div>
+			)}
 
 			{classes.length === 0 ? (
 				<p className='text-[var(--color-text-muted)]'>
@@ -160,52 +161,57 @@ export default function ScheduleManagement() {
 				</p>
 			) : (
 				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-		{classes.map((cls) => (
-  <div
-    key={cls.id}
-    onClick={() => setSelectedClass(cls)}
-    className="cursor-pointer bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
-  >
-    <div className="flex justify-between items-start">
-      <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
-        {cls.class_name}
-      </h3>
-      <span className="text-xs bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-2 py-1 rounded-full">
-        {cls.grade_level || 'N/A'}
-      </span>
-    </div>
-    {cls.subject && (
-      <p className="text-sm text-[var(--color-text-secondary)] mb-2">
-        📚 {cls.subject}
-      </p>
-    )}
-    <div className="space-y-1 text-sm text-[var(--color-text-secondary)]">
-      <p>📅 {cls.schedule_days}</p>
-      <p>⏰ {cls.start_time} – {cls.end_time}</p>
-      {cls.room_number && <p>🚪 Room {cls.room_number}</p>}
-      {cls.max_students && <p>👥 Max {cls.max_students} students</p>}
-    </div>
-    {cls.description && (
-      <p className="mt-2 text-sm text-[var(--color-text-muted)] line-clamp-2">
-        {cls.description}
-      </p>
-    )}
-    <div className="flex gap-2 mt-4" onClick={(e) => e.stopPropagation()}>
-      <button
-        onClick={() => handleEdit(cls)}
-        className="px-3 py-1 text-sm text-[var(--color-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border)]/50 transition-colors"
-      >
-        Edit
-      </button>
-      <button
-        onClick={() => handleDelete(cls.id)}
-        className="px-3 py-1 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-      >
-        Delete
-      </button>
-    </div>
-  </div>
-))}
+					{classes.map((cls) => (
+						<div
+							key={cls.id}
+							onClick={() => setSelectedClass(cls)}
+							className='cursor-pointer bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow'
+						>
+							<div className='flex justify-between items-start'>
+								<h3 className='text-lg font-semibold text-[var(--color-text-primary)] mb-2'>
+									{cls.class_name}
+								</h3>
+								<span className='text-xs bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-2 py-1 rounded-full'>
+									{cls.grade_level || 'N/A'}
+								</span>
+							</div>
+							{cls.subject && (
+								<p className='text-sm text-[var(--color-text-secondary)] mb-2'>
+									📚 {cls.subject}
+								</p>
+							)}
+							<div className='space-y-1 text-sm text-[var(--color-text-secondary)]'>
+								<p>📅 {cls.schedule_days}</p>
+								<p>
+									⏰ {cls.start_time} – {cls.end_time}
+								</p>
+								{cls.room_number && <p>🚪 Room {cls.room_number}</p>}
+								{cls.max_students && <p>👥 Max {cls.max_students} students</p>}
+							</div>
+							{cls.description && (
+								<p className='mt-2 text-sm text-[var(--color-text-muted)] line-clamp-2'>
+									{cls.description}
+								</p>
+							)}
+							<div
+								className='flex gap-2 mt-4'
+								onClick={(e) => e.stopPropagation()}
+							>
+								<button
+									onClick={() => handleEdit(cls)}
+									className='px-3 py-1 text-sm text-[var(--color-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border)]/50 transition-colors'
+								>
+									Edit
+								</button>
+								<button
+									onClick={() => handleDelete(cls.id)}
+									className='px-3 py-1 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors'
+								>
+									Delete
+								</button>
+							</div>
+						</div>
+					))}
 				</div>
 			)}
 

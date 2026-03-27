@@ -5,6 +5,7 @@ import Sidebar from '../Sidebar/Sidebar';
 import Profile from '../Profile/Profile';
 import EnrolledClasses from '../Sidebar/Tabs/EnrolledClasses/EnrolledClasses';
 import ScheduleManagement from '../Sidebar/Tabs/ScheduleManagement/ScheduleManagement';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function Dashboard() {
 	const { user } = useAuth();

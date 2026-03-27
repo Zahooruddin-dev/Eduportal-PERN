@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { getClassById, getClassAnnouncements, postAnnouncement, deleteAnnouncement } from '../../../../api/api';
 import { SpinnerIcon, AlertBox } from '../../../Icons/Icon';
+import { useTheme } from '../../../../hooks/useTheme';
 
 export default function ClassDetails({ classId, onBack }) {
   const [classInfo, setClassInfo] = useState(null);
