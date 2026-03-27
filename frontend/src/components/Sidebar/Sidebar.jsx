@@ -4,8 +4,8 @@ import useTheme from '../../hooks/useTheme';
 import SidebarContent from './SidebarContent';
 
 const MOBILE_BREAKPOINT = 767;
-const EXPANDED_WIDTH = '286px';
-const COLLAPSED_WIDTH = '76px';
+const EXPANDED_WIDTH = '304px';
+const COLLAPSED_WIDTH = '84px';
 
 const Sidebar = ({
 	activePage,
