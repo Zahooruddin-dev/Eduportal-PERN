@@ -4,54 +4,56 @@ import {
 	Megaphone,
 	DoorOpen,
 	LogOut,
-	PanelLeftClose,
-	PanelLeftOpen,
 	CalendarDays,
 	Video,
 	ClipboardList,
 	FolderOpen,
 	BookMarked,
 	MessageCircle,
+	PanelLeftClose,
+	PanelLeftOpen,
+	Sun,
+	Moon,
 } from 'lucide-react';
 import { logout } from '../../utils/auth';
 
 const ROLE_META = {
 	student: {
 		label: 'Student',
-		color: '#38bdf8',
-		bg: 'rgba(56,189,248,0.1)',
-		border: 'rgba(56,189,248,0.2)',
+		color: 'var(--sb-badge-student-color)',
+		bg: 'var(--sb-badge-student-bg)',
+		border: 'var(--sb-badge-student-border)',
 	},
 	teacher: {
 		label: 'Teacher',
-		color: '#a78bfa',
-		bg: 'rgba(167,139,250,0.1)',
-		border: 'rgba(167,139,250,0.2)',
+		color: 'var(--sb-badge-teacher-color)',
+		bg: 'var(--sb-badge-teacher-bg)',
+		border: 'var(--sb-badge-teacher-border)',
 	},
 	admin: {
 		label: 'Admin',
-		color: '#fbbf24',
-		bg: 'rgba(251,191,36,0.1)',
-		border: 'rgba(251,191,36,0.2)',
+		color: 'var(--sb-badge-admin-color)',
+		bg: 'var(--sb-badge-admin-bg)',
+		border: 'var(--sb-badge-admin-border)',
 	},
 };
 
 const getRoleMeta = (role) =>
 	ROLE_META[role?.toLowerCase()] ?? {
 		label: role ?? 'User',
-		color: '#94a3b8',
-		bg: 'rgba(148,163,184,0.1)',
-		border: 'rgba(148,163,184,0.2)',
+		color: 'var(--sb-text-secondary)',
+		bg: 'rgba(120,113,108,0.08)',
+		border: 'rgba(120,113,108,0.18)',
 	};
 
-const STUDENT_MENU = [
+const STUDENT_NAV = [
 	{ id: 'enrolled-classes', label: 'Enrolled Classes', icon: DoorOpen },
 	{ id: 'classes', label: 'Class Directory', icon: BookOpen },
 	{ id: 'announcements', label: 'Announcements', icon: Megaphone },
 	{ id: 'profile', label: 'Profile', icon: User },
 ];
 
-const TEACHER_MENU = [
+const TEACHER_NAV = [
 	{ id: 'class-schedule', label: 'Class & Schedule', icon: CalendarDays },
 	{ id: 'live-sessions', label: 'Live Sessions', icon: Video },
 	{ id: 'attendance', label: 'Attendance', icon: ClipboardList },
@@ -59,6 +61,282 @@ const TEACHER_MENU = [
 	{ id: 'gradebook', label: 'Grade Book', icon: BookMarked },
 	{ id: 'parent-comms', label: 'Parent Communication', icon: MessageCircle },
 ];
+
+const s = {
+	root: {
+		display: 'flex',
+		flexDirection: 'column',
+		height: '100%',
+		overflow: 'hidden',
+	},
+
+	header: {
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		padding: '0 1rem',
+		height: '64px',
+		borderBottom: '1px solid var(--sb-border)',
+		flexShrink: 0,
+	},
+
+	logoWrap: {
+		display: 'flex',
+		alignItems: 'center',
+		gap: '0.625rem',
+		minWidth: 0,
+		overflow: 'hidden',
+	},
+
+	logoMark: {
+		width: '30px',
+		height: '30px',
+		borderRadius: '8px',
+		background: 'var(--sb-accent-bg)',
+		border: '1px solid var(--sb-accent-border)',
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'center',
+		flexShrink: 0,
+		color: 'var(--sb-accent)',
+	},
+
+	logoText: {
+		fontFamily: 'var(--font-display)',
+		fontSize: '1.1rem',
+		color: 'var(--sb-text)',
+		letterSpacing: '-0.01em',
+		whiteSpace: 'nowrap',
+		overflow: 'hidden',
+		textOverflow: 'ellipsis',
+	},
+
+	collapseBtn: {
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'center',
+		width: '28px',
+		height: '28px',
+		borderRadius: '6px',
+		border: '1px solid var(--sb-border)',
+		background: 'transparent',
+		color: 'var(--sb-text-secondary)',
+		cursor: 'pointer',
+		flexShrink: 0,
+		transition: 'color 0.15s, border-color 0.15s, background 0.15s',
+	},
+
+	nav: {
+		flex: 1,
+		overflowY: 'auto',
+		overflowX: 'hidden',
+		padding: '1rem 0.625rem',
+	},
+
+	sectionLabel: {
+		fontFamily: 'var(--font-body)',
+		fontSize: '0.625rem',
+		fontWeight: 600,
+		letterSpacing: '0.1em',
+		textTransform: 'uppercase',
+		color: 'var(--sb-text-dim)',
+		padding: '0 0.625rem',
+		marginBottom: '0.375rem',
+		whiteSpace: 'nowrap',
+		overflow: 'hidden',
+	},
+
+	navList: {
+		listStyle: 'none',
+		display: 'flex',
+		flexDirection: 'column',
+		gap: '1px',
+	},
+
+	navBtn: (isActive, collapsed) => ({
+		width: '100%',
+		display: 'flex',
+		alignItems: 'center',
+		gap: '0.75rem',
+		padding: collapsed ? '0.625rem 0' : '0.5625rem 0.75rem',
+		borderRadius: '8px',
+		border: 'none',
+		background: isActive ? 'var(--sb-active-bg)' : 'transparent',
+		color: isActive ? 'var(--sb-accent-light)' : 'var(--sb-text-secondary)',
+		cursor: 'pointer',
+		fontSize: '0.8125rem',
+		fontFamily: 'var(--font-body)',
+		fontWeight: isActive ? 500 : 400,
+		letterSpacing: '-0.01em',
+		textAlign: 'left',
+		whiteSpace: 'nowrap',
+		overflow: 'hidden',
+		position: 'relative',
+		transition: 'background 0.15s, color 0.15s',
+		justifyContent: collapsed ? 'center' : 'flex-start',
+		boxSizing: 'border-box',
+	}),
+
+	activeBar: {
+		position: 'absolute',
+		left: 0,
+		top: '20%',
+		bottom: '20%',
+		width: '2px',
+		borderRadius: '0 2px 2px 0',
+		background: 'var(--sb-accent)',
+	},
+
+	navIcon: (isActive) => ({
+		flexShrink: 0,
+		color: isActive ? 'var(--sb-accent)' : 'var(--sb-text-dim)',
+		transition: 'color 0.15s',
+	}),
+
+	navLabel: {
+		flex: 1,
+		overflow: 'hidden',
+		textOverflow: 'ellipsis',
+	},
+
+	divider: {
+		height: '1px',
+		background: 'var(--sb-border)',
+		margin: '0.625rem 0.625rem',
+	},
+
+	footer: {
+		padding: '0.625rem',
+		borderTop: '1px solid var(--sb-border)',
+		flexShrink: 0,
+		display: 'flex',
+		flexDirection: 'column',
+		gap: '2px',
+	},
+
+	userBtn: (collapsed) => ({
+		width: '100%',
+		display: 'flex',
+		alignItems: 'center',
+		gap: '0.75rem',
+		padding: '0.5rem 0.625rem',
+		borderRadius: '8px',
+		border: 'none',
+		background: 'transparent',
+		cursor: 'pointer',
+		textAlign: 'left',
+		transition: 'background 0.15s',
+		justifyContent: collapsed ? 'center' : 'flex-start',
+		minWidth: 0,
+		overflow: 'hidden',
+	}),
+
+	avatar: {
+		width: '32px',
+		height: '32px',
+		borderRadius: '8px',
+		background: 'var(--sb-avatar-bg)',
+		border: '1px solid var(--sb-border-strong)',
+		overflow: 'hidden',
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'center',
+		flexShrink: 0,
+		fontSize: '0.75rem',
+		fontWeight: 600,
+		color: 'var(--sb-avatar-text)',
+		fontFamily: 'var(--font-body)',
+	},
+
+	userDetails: {
+		display: 'flex',
+		flexDirection: 'column',
+		gap: '0.1875rem',
+		minWidth: 0,
+		overflow: 'hidden',
+		flex: 1,
+	},
+
+	userName: {
+		fontSize: '0.8125rem',
+		fontWeight: 500,
+		color: 'var(--sb-text)',
+		fontFamily: 'var(--font-body)',
+		whiteSpace: 'nowrap',
+		overflow: 'hidden',
+		textOverflow: 'ellipsis',
+		letterSpacing: '-0.01em',
+	},
+
+	roleBadge: (meta) => ({
+		display: 'inline-block',
+		fontSize: '0.625rem',
+		fontWeight: 600,
+		letterSpacing: '0.06em',
+		textTransform: 'uppercase',
+		padding: '0.125rem 0.375rem',
+		borderRadius: '4px',
+		color: meta.color,
+		background: meta.bg,
+		border: `1px solid ${meta.border}`,
+		fontFamily: 'var(--font-body)',
+		width: 'fit-content',
+	}),
+
+	footerRow: {
+		display: 'flex',
+		gap: '2px',
+	},
+
+	iconBtn: (danger) => ({
+		flex: 1,
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'center',
+		gap: '0.5rem',
+		padding: '0.5rem 0.625rem',
+		borderRadius: '8px',
+		border: 'none',
+		background: 'transparent',
+		color: danger ? 'var(--sb-text-secondary)' : 'var(--sb-text-secondary)',
+		cursor: 'pointer',
+		fontSize: '0.75rem',
+		fontFamily: 'var(--font-body)',
+		transition: 'background 0.15s, color 0.15s',
+		whiteSpace: 'nowrap',
+	}),
+};
+
+const NavItem = ({ item, isActive, collapsed, onClick }) => {
+	const Icon = item.icon;
+	return (
+		<li>
+			<button
+				onClick={() => onClick(item.id)}
+				aria-label={item.label}
+				aria-current={isActive ? 'page' : undefined}
+				title={collapsed ? item.label : undefined}
+				style={s.navBtn(isActive, collapsed)}
+				onMouseEnter={(e) => {
+					if (!isActive) {
+						e.currentTarget.style.background = 'var(--sb-hover)';
+						e.currentTarget.style.color = 'var(--sb-text)';
+					}
+				}}
+				onMouseLeave={(e) => {
+					if (!isActive) {
+						e.currentTarget.style.background = 'transparent';
+						e.currentTarget.style.color = 'var(--sb-text-secondary)';
+					}
+				}}
+			>
+				{isActive && <span style={s.activeBar} aria-hidden='true' />}
+				<Icon size={16} style={s.navIcon(isActive)} />
+				{!collapsed && <span style={s.navLabel}>{item.label}</span>}
+			</button>
+		</li>
+	);
+};
 
 const SidebarContent = ({
 	activePage,
@@ -68,153 +346,145 @@ const SidebarContent = ({
 	userProfile,
 	collapsed,
 	onCollapse,
-	isMobile,
+	theme,
+	onToggleTheme,
 }) => {
 	const isTeacher = userRole === 'teacher';
 	const roleMeta = getRoleMeta(userRole);
-	const menuItems = isTeacher ? TEACHER_MENU : STUDENT_MENU;
+	const menuItems = isTeacher ? TEACHER_NAV : STUDENT_NAV;
+	const sectionLabel = isTeacher ? 'Workspace' : 'Navigation';
 
 	return (
-		<div className="flex flex-col h-full">
-			<div className="flex items-center justify-between px-4 h-16 shrink-0 border-b border-slate-800/60">
-				<div className="flex items-center gap-3 min-w-0">
+		<div style={s.root}>
+			<div style={s.header}>
+				<div style={s.logoWrap}>
 					{collapsed ? (
 						<button
 							onClick={onCollapse}
-							aria-label="Expand sidebar"
-							title="Expand sidebar"
-							className="text-indigo-400 hover:text-indigo-300 transition-colors"
+							aria-label='Expand sidebar'
+							title='Expand sidebar'
+							style={{ ...s.logoMark, cursor: 'pointer', border: 'none' }}
 						>
-							<BookOpen size={24} />
+							<BookOpen size={15} />
 						</button>
 					) : (
 						<>
-							<BookOpen size={24} className="text-indigo-400 shrink-0" />
-							<span className="text-slate-100 font-semibold text-sm tracking-wide truncate">
-								EduPortal
-							</span>
+							<div style={s.logoMark}>
+								<BookOpen size={15} />
+							</div>
+							<span style={s.logoText}>EduPortal</span>
 						</>
 					)}
 				</div>
 
-				{!isMobile && !collapsed && (
+				{!collapsed && (
 					<button
 						onClick={onCollapse}
-						aria-label="Collapse sidebar"
-						title="Collapse sidebar"
-						className="text-slate-500 hover:text-slate-300 transition-colors p-1 rounded"
+						aria-label='Collapse sidebar'
+						title='Collapse sidebar'
+						style={s.collapseBtn}
+						onMouseEnter={(e) => {
+							e.currentTarget.style.color = 'var(--sb-text)';
+							e.currentTarget.style.borderColor = 'var(--sb-border-strong)';
+							e.currentTarget.style.background = 'var(--sb-hover)';
+						}}
+						onMouseLeave={(e) => {
+							e.currentTarget.style.color = 'var(--sb-text-secondary)';
+							e.currentTarget.style.borderColor = 'var(--sb-border)';
+							e.currentTarget.style.background = 'transparent';
+						}}
 					>
-						<PanelLeftClose size={16} />
+						<PanelLeftClose size={13} />
 					</button>
 				)}
 			</div>
 
-			<nav className="flex-1 overflow-y-auto py-3 px-2" role="navigation">
-				<ul className="space-y-0.5">
-					{menuItems.map(({ id, label, icon: Icon }) => {
-						const isActive = activePage === id;
-						return (
-							<li key={id}>
-								<button
-									onClick={() => onPageChange(id)}
-									aria-label={label}
-									aria-current={isActive ? 'page' : undefined}
-									title={collapsed ? label : undefined}
-									className={[
-										'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150',
-										collapsed ? 'justify-center' : '',
-										isActive
-											? 'bg-indigo-500/15 text-indigo-300 font-medium'
-											: 'text-slate-400 hover:text-slate-200 hover:bg-white/5',
-									].join(' ')}
-								>
-									<Icon
-										size={18}
-										className={isActive ? 'text-indigo-400' : 'text-slate-500'}
-									/>
-									{!collapsed && <span>{label}</span>}
-									{isActive && !collapsed && (
-										<span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400" aria-hidden="true" />
-									)}
-								</button>
-							</li>
-						);
-					})}
+			<nav style={s.nav} role='navigation' aria-label='Main'>
+				{!collapsed && <p style={s.sectionLabel}>{sectionLabel}</p>}
+				<ul style={s.navList}>
+					{menuItems.map((item) => (
+						<NavItem
+							key={item.id}
+							item={item}
+							isActive={activePage === item.id}
+							collapsed={collapsed}
+							onClick={onPageChange}
+						/>
+					))}
 				</ul>
 			</nav>
 
-			<div className="shrink-0 border-t border-slate-800/60 p-2 space-y-1">
-				{!collapsed ? (
-					<button
-						onClick={() => onPageChange('profile')}
-						aria-label="Go to profile"
-						className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors text-left"
-					>
-						<div className="w-8 h-8 rounded-full bg-slate-700 shrink-0 overflow-hidden flex items-center justify-center">
-							{userProfile ? (
-								<img
-									src={userProfile}
-									alt={`${userName}'s avatar`}
-									className="w-full h-full object-cover"
-									onError={(e) => {
-										e.target.style.display = 'none';
-									}}
-								/>
-							) : (
-								<span className="text-slate-300 text-xs font-semibold">
-									{userName?.charAt(0).toUpperCase()}
-								</span>
-							)}
-						</div>
-						<div className="min-w-0 flex-1">
-							<p className="text-slate-200 text-sm font-medium truncate">{userName || 'Guest'}</p>
-							<span
-								className="text-xs px-1.5 py-0.5 rounded border font-medium"
-								style={{
-									color: roleMeta.color,
-									background: roleMeta.bg,
-									borderColor: roleMeta.border,
-								}}
-							>
-								{roleMeta.label}
-							</span>
-						</div>
-					</button>
-				) : (
-					<button
-						onClick={() => onPageChange('profile')}
-						title={`${userName} — view profile`}
-						aria-label="Go to profile"
-						className="w-full flex justify-center py-2"
-					>
-						<div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden flex items-center justify-center">
-							{userProfile ? (
-								<img
-									src={userProfile}
-									alt={`${userName}'s avatar`}
-									className="w-full h-full object-cover"
-								/>
-							) : (
-								<span className="text-slate-300 text-xs font-semibold">
-									{userName?.charAt(0).toUpperCase()}
-								</span>
-							)}
-						</div>
-					</button>
-				)}
-
+			<div style={s.footer}>
 				<button
-					onClick={logout}
-					title={collapsed ? 'Logout' : undefined}
-					aria-label="Logout"
-					className={[
-						'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 hover:text-red-400 hover:bg-red-500/8 transition-colors',
-						collapsed ? 'justify-center' : '',
-					].join(' ')}
+					onClick={() => onPageChange('profile')}
+					aria-label='Go to profile'
+					style={s.userBtn(collapsed)}
+					onMouseEnter={(e) => {
+						e.currentTarget.style.background = 'var(--sb-hover)';
+					}}
+					onMouseLeave={(e) => {
+						e.currentTarget.style.background = 'transparent';
+					}}
 				>
-					<LogOut size={16} />
-					{!collapsed && <span>Logout</span>}
+					<div style={s.avatar}>
+						{userProfile ? (
+							<img
+								src={userProfile}
+								alt={`${userName}'s avatar`}
+								style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+								onError={(e) => {
+									e.target.style.display = 'none';
+								}}
+							/>
+						) : (
+							<span>{userName?.charAt(0).toUpperCase()}</span>
+						)}
+					</div>
+					{!collapsed && (
+						<div style={s.userDetails}>
+							<span style={s.userName}>{userName || 'Guest'}</span>
+							<span style={s.roleBadge(roleMeta)}>{roleMeta.label}</span>
+						</div>
+					)}
 				</button>
+
+				<div style={s.footerRow}>
+					<button
+						onClick={onToggleTheme}
+						aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+						title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+						style={s.iconBtn(false)}
+						onMouseEnter={(e) => {
+							e.currentTarget.style.background = 'var(--sb-hover)';
+							e.currentTarget.style.color = 'var(--sb-accent)';
+						}}
+						onMouseLeave={(e) => {
+							e.currentTarget.style.background = 'transparent';
+							e.currentTarget.style.color = 'var(--sb-text-secondary)';
+						}}
+					>
+						{theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+						{!collapsed && <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>}
+					</button>
+
+					<button
+						onClick={logout}
+						aria-label='Logout'
+						title={collapsed ? 'Logout' : undefined}
+						style={s.iconBtn(true)}
+						onMouseEnter={(e) => {
+							e.currentTarget.style.background = 'var(--sb-danger-hover-bg)';
+							e.currentTarget.style.color = 'var(--sb-danger)';
+						}}
+						onMouseLeave={(e) => {
+							e.currentTarget.style.background = 'transparent';
+							e.currentTarget.style.color = 'var(--sb-text-secondary)';
+						}}
+					>
+						<LogOut size={14} />
+						{!collapsed && <span>Logout</span>}
+					</button>
+				</div>
 			</div>
 		</div>
 	);
