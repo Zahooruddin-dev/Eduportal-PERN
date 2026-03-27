@@ -7,8 +7,8 @@ import {
 import Login from './Auth/Login';
 import Register from './Auth/Register';
 import ProtectedRoute from './utils/ProtectedRoute';
-import { AuthProvider, useAuth } from './utils/AuthContext';
-import ForgotPassword from './Auth/Forgotpassword';
+import { AuthProvider, useAuth } from './hooks/AuthContext';
+import ForgotPassword from './Auth/ForgotPassword';
 
 const AuthRedirect = ({ children }) => {
 	const { user } = useAuth();
@@ -25,6 +25,10 @@ function App() {
 						path='/'
 						element={
 							<ProtectedRoute>
+								<div style={{padding:20}}>
+									<h1>Dashboard</h1>
+									<p>Welcome to the app — you are logged in.</p>
+								</div>
 							</ProtectedRoute>
 						}
 					/>

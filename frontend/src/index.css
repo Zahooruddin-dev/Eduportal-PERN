@@ -1,124 +1,51 @@
-@import 'tailwindcss';
-
-*,
-*::before,
-*::after {
-	box-sizing: border-box;
-	margin: 0;
-	padding: 0;
-}
+@import "tailwindcss";
 
 :root {
-  --sb-bg: #ffffff;
-  --sb-text: #1c1917;
-  --sb-text-secondary: #78716c;
-  --sb-text-dim: #a8a29e;
-  --sb-border: #e7e5e4;
-  --sb-border-strong: #d6d3d1;
-  --sb-hover: #f5f5f4;
-  --sb-accent: #0ea5e9;
-  --sb-accent-bg: #e0f2fe;
-  --sb-active-bg: #0ea5e9;
-  --sb-danger: #ef4444;
-  --sb-danger-hover-bg: #fef2f2;
-	--font-display: 'DM Serif Display', Georgia, serif;
-	--font-body: 'DM Sans', system-ui, sans-serif;
+  /* Backgrounds */
+  --color-bg: #f7f7f8;
+  --color-surface: #ffffff;
+  --color-input-bg: #fafafa;
 
-	--sidebar-width: 272px;
-	--sidebar-collapsed-width: 68px;
+  /* Borders */
+  --color-border: #e4e4e7;
 
-	/* ── Dark theme (default) ── */
-	--sb-bg: #0d0c0b;
-	--sb-bg-elevated: #131210;
-	--sb-border: rgba(255, 255, 255, 0.055);
-	--sb-border-strong: rgba(255, 255, 255, 0.1);
+  /* Brand */
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
 
-	--sb-text: #f1f6f6;
-	--sb-text-secondary: #b8c8c8;
-	--sb-text-dim: #6d7f80;
-
-	--sb-accent: #57d6d1;
-	--sb-accent-light: #9ef2ed;
-	--sb-accent-bg: rgba(87, 214, 209, 0.16);
-	--sb-accent-border: rgba(87, 214, 209, 0.34);
-
-	--sb-hover: rgba(255, 255, 255, 0.038);
-	--sb-active-bg: rgba(87, 214, 209, 0.13);
-
-	--sb-badge-student-color: #60b8e8;
-	--sb-badge-student-bg: rgba(96, 184, 232, 0.09);
-	--sb-badge-student-border: rgba(96, 184, 232, 0.2);
-
-	--sb-badge-teacher-color: #a78df5;
-	--sb-badge-teacher-bg: rgba(167, 141, 245, 0.09);
-	--sb-badge-teacher-border: rgba(167, 141, 245, 0.2);
-
-	--sb-badge-admin-color: #57d6d1;
-	--sb-badge-admin-bg: rgba(87, 214, 209, 0.14);
-	--sb-badge-admin-border: rgba(87, 214, 209, 0.32);
-
-	--sb-avatar-bg: #1f2b2c;
-	--sb-avatar-text: #f1f6f6;
-
-	--sb-danger: rgba(239, 68, 68, 0.85);
-	--sb-danger-bg: rgba(239, 68, 68, 0.08);
-	--sb-danger-border: rgba(239, 68, 68, 0.25);
-	--sb-danger-focus: rgba(239, 68, 68, 0.15);
-	--sb-danger-hover-bg: rgba(239, 68, 68, 0.07);
-
-	--sb-scrollbar-thumb: rgba(176, 241, 238, 0.24);
-	--sb-scrollbar-track: transparent;
-
-	/* ── App-level ── */
-	--app-bg: #070c0d;
-	--app-text: #eef6f6;
-	--app-surface: #0f1617;
+  /* Text */
+  --color-text-primary: #09090b;
+  --color-text-secondary: #3f3f46;
+  --color-text-muted: #71717a;
 }
 
-[data-theme='light'] {
-	--sb-bg: #f4fbfb;
-	--sb-bg-elevated: #ebf6f6;
-	--sb-border: rgba(0, 0, 0, 0.07);
-	--sb-border-strong: rgba(0, 0, 0, 0.12);
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #09090b;
+    --color-surface: #111113;
+    --color-input-bg: #18181b;
 
-	--sb-text: #0f2e31;
-	--sb-text-secondary: #325f63;
-	--sb-text-dim: #7ea3a7;
+    --color-border: #27272a;
 
-	--sb-accent: #13a7a2;
-	--sb-accent-light: #0c7f7b;
-	--sb-accent-bg: rgba(19, 167, 162, 0.13);
-	--sb-accent-border: rgba(19, 167, 162, 0.28);
+    --color-primary: #6366f1;
+    --color-primary-hover: #818cf8;
 
-	--sb-hover: rgba(0, 0, 0, 0.04);
-	--sb-active-bg: rgba(19, 167, 162, 0.1);
-
-	--sb-badge-student-color: #1a7db5;
-	--sb-badge-student-bg: rgba(26, 125, 181, 0.07);
-	--sb-badge-student-border: rgba(26, 125, 181, 0.2);
-
-	--sb-badge-teacher-color: #7c56d4;
-	--sb-badge-teacher-bg: rgba(124, 86, 212, 0.07);
-	--sb-badge-teacher-border: rgba(124, 86, 212, 0.2);
-
-	--sb-badge-admin-color: #0f8e89;
-	--sb-badge-admin-bg: rgba(19, 167, 162, 0.11);
-	--sb-badge-admin-border: rgba(19, 167, 162, 0.26);
-
-	--sb-avatar-bg: #d4ebeb;
-	--sb-avatar-text: #123739;
-
-	--sb-danger: #c0392b;
-	--sb-danger-bg: rgba(192, 57, 43, 0.07);
-	--sb-danger-border: rgba(192, 57, 43, 0.22);
-	--sb-danger-focus: rgba(192, 57, 43, 0.12);
-	--sb-danger-hover-bg: rgba(192, 57, 43, 0.06);
-
-	--sb-scrollbar-thumb: rgba(15, 104, 108, 0.28);
-	--sb-scrollbar-track: transparent;
-
-	--app-bg: #eff8f8;
-	--app-text: #14383b;
-	--app-surface: #f7fcfc;
+    --color-text-primary: #fafafa;
+    --color-text-secondary: #d4d4d8;
+    --color-text-muted: #71717a;
+  }
 }
 
+/* If you use a .dark class instead of prefers-color-scheme */
+.dark {
+  --color-bg: #09090b;
+  --color-surface: #111113;
+  --color-input-bg: #18181b;
+  --color-border: #27272a;
+  --color-primary: #6366f1;
+  --color-primary-hover: #818cf8;
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #d4d4d8;
+  --color-text-muted: #71717a;
+}
