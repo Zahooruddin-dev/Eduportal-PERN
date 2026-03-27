@@ -1,11 +1,9 @@
 // src/Dashboard/Sidebar/Tabs/StudentAnnouncements.jsx
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../../../context/AuthContext';
 import { getMyAnnouncements } from '../../../../api/api';
 import { SpinnerIcon } from '../../../Icons/Icon';
 
 export default function StudentAnnouncements() {
-	const { user } = useAuth();
 	const [announcements, setAnnouncements] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');

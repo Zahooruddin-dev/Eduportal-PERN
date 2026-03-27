@@ -1,13 +1,15 @@
 // src/Dashboard/Sidebar/Tabs/ClassDetails.jsx
 import { useState, useEffect } from 'react';
-import { getClassById, getClassAnnouncements, postAnnouncement, deleteAnnouncement } from '../../../../api/api';
+import { getClassById, getClassAnnouncements, postAnnouncement, deleteAnnouncement, getClassEnrolledRooster } from '../../../../api/api';
 import { SpinnerIcon, AlertBox } from '../../../Icons/Icon';
 import { useTheme } from '../../../../hooks/useTheme';
 
 export default function ClassDetails({ classId, onBack }) {
   const [classInfo, setClassInfo] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
+  const [roster, setRoster] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingRoster, setLoadingRoster] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [newAnnouncement, setNewAnnouncement] = useState({ title: '', content: '', expires_at: '' });
@@ -24,14 +26,27 @@ export default function ClassDetails({ classId, onBack }) {
       setClassInfo(classRes.data);
       setAnnouncements(announcementsRes.data);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load data');
+      setError(err.response?.data?.error || 'Failed to load class data');
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchRoster = async () => {
+    setLoadingRoster(true);
+    try {
+      const res = await getClassEnrolledRooster(classId);
+      setRoster(res.data);
+    } catch (err) {
+      console.error('Failed to load roster:', err);
+    } finally {
+      setLoadingRoster(false);
+    }
+  };
+
   useEffect(() => {
     fetchData();
+    fetchRoster();
   }, [classId]);
 
   const handleAnnouncementChange = (e) => {
@@ -134,6 +149,33 @@ export default function ClassDetails({ classId, onBack }) {
           <div className="mt-4">
             <p className="text-[var(--color-text-secondary)]">Description</p>
             <p className="text-[var(--color-text-primary)] mt-1 whitespace-pre-wrap">{classInfo.description}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Roster Section */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-4">
+          Enrolled Students ({roster.length})
+        </h2>
+        {loadingRoster ? (
+          <div className="flex justify-center py-4"><SpinnerIcon /></div>
+        ) : roster.length === 0 ? (
+          <p className="text-[var(--color-text-muted)]">No students enrolled yet.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {roster.map((student) => (
+              <div key={student.student_id} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3 flex items-center gap-3">
+                {student.profile_pic ? (
+                  <img src={student.profile_pic} alt={student.username} className="w-8 h-8 rounded-full object-cover" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)] text-sm font-medium">
+                    {student.username?.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="text-sm text-[var(--color-text-primary)]">{student.username}</span>
+              </div>
+            ))}
           </div>
         )}
       </div>

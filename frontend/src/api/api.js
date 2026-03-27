@@ -23,7 +23,7 @@ export const postEnrollement = (data) => {
 	return api.post(`/api/enroll/`, data);
 };
 export const getClassEnrolledRooster = (id) => {
-	return api.get(`/api/enroll/class/${id}`);
+  return api.get(`/api/enroll/class/${id}`);
 };
 export const getStudentEnrolledShedule = (id) => {
 	return api.get(`/api/enroll/student/${id}`);

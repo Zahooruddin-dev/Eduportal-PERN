@@ -141,3 +141,20 @@ END $$;
 ALTER TABLE classes ALTER COLUMN room_number DROP NOT NULL;
 
 COMMIT;
+-- enrollments: queries for a student's enrolled classes
+CREATE INDEX IF NOT EXISTS idx_enrollments_student_id ON enrollments(student_id);
+
+-- enrollments: queries for class roster (students in a class)
+CREATE INDEX IF NOT EXISTS idx_enrollments_class_id ON enrollments(class_id);
+
+-- announcements: filter by class and show only non-expired, newest first
+CREATE INDEX IF NOT EXISTS idx_announcements_class_id_expires ON announcements(class_id, expires_at, created_at DESC);
+
+-- announcements: filter by teacher (for deletion)
+CREATE INDEX IF NOT EXISTS idx_announcements_teacher_id ON announcements(teacher_id);
+
+-- classes: filter by teacher (teacher's classes)
+CREATE INDEX IF NOT EXISTS idx_classes_teacher_id ON classes(teacher_id);
+
+-- (Optional) If you often join users by role, consider:
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
