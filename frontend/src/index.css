@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Epilogue:wght@300;400;500;600&display=swap');
 
 *,
 *::before,
@@ -8,164 +8,201 @@
   padding: 0;
 }
 
+/* ─────────────────────────────────────────
+   DARK THEME  (default)
+───────────────────────────────────────── */
 :root {
-  --font-display: 'DM Serif Display', Georgia, serif;
-  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-display : 'DM Serif Display', Georgia, serif;
+  --font-body    : 'Epilogue', system-ui, sans-serif;
 
-  --sidebar-width: 272px;
-  --sidebar-collapsed-width: 68px;
+  --sidebar-w        : 258px;
+  --sidebar-rail-w   : 60px;
+  --sidebar-mobile-w : 264px;
+  --sidebar-width    : var(--sidebar-w);     
 
-  /* ── Dark theme (default) ── */
-  --sb-bg:              #0d0c0b;
-  --sb-bg-elevated:     #131210;
-  --sb-border:          rgba(255, 255, 255, 0.055);
-  --sb-border-strong:   rgba(255, 255, 255, 0.10);
+  /* surfaces */
+  --sb-bg          : #0b1014;
+  --sb-bg-elevated : #111820;
+  --sb-bg-hover    : rgba(255,255,255,0.035);
+  --sb-bg-active   : rgba(45,212,191,0.07);
 
-  --sb-text:            #ede8df;
-  --sb-text-secondary:  #7a7168;
-  --sb-text-dim:        #3a3630;
+  /* borders */
+  --sb-border        : rgba(255,255,255,0.06);
+  --sb-border-strong : rgba(255,255,255,0.11);
 
-  --sb-accent:          #c9923a;
-  --sb-accent-light:    #e0a84e;
-  --sb-accent-bg:       rgba(201, 146, 58, 0.09);
-  --sb-accent-border:   rgba(201, 146, 58, 0.22);
+  /* text */
+  --sb-text          : #e2ede9;
+  --sb-text-secondary: #6b8880;
+  --sb-text-dim      : #2d4440;
+  --sb-text-muted    : #8faaa4;
 
-  --sb-hover:           rgba(255, 255, 255, 0.038);
-  --sb-active-bg:       rgba(201, 146, 58, 0.08);
+  /* teal accent */
+  --accent        : #2dd4bf;
+  --accent-bright : #5eead4;
+  --accent-dim    : rgba(45,212,191,0.08);
+  --accent-border : rgba(45,212,191,0.18);
+  --accent-glow   : rgba(45,212,191,0.12);
 
-  --sb-badge-student-color:  #60b8e8;
-  --sb-badge-student-bg:     rgba(96, 184, 232, 0.09);
-  --sb-badge-student-border: rgba(96, 184, 232, 0.2);
+  /* badges */
+  --badge-student-c : #60b8e8;
+  --badge-student-bg: rgba(96,184,232,0.08);
+  --badge-student-b : rgba(96,184,232,0.18);
 
-  --sb-badge-teacher-color:  #a78df5;
-  --sb-badge-teacher-bg:     rgba(167, 141, 245, 0.09);
-  --sb-badge-teacher-border: rgba(167, 141, 245, 0.2);
+  --badge-teacher-c : var(--accent);
+  --badge-teacher-bg: var(--accent-dim);
+  --badge-teacher-b : var(--accent-border);
 
-  --sb-badge-admin-color:    #c9923a;
-  --sb-badge-admin-bg:       rgba(201, 146, 58, 0.09);
-  --sb-badge-admin-border:   rgba(201, 146, 58, 0.22);
+  --badge-admin-c   : #f0b86e;
+  --badge-admin-bg  : rgba(240,184,110,0.08);
+  --badge-admin-b   : rgba(240,184,110,0.18);
 
-  --sb-avatar-bg:       #2a2722;
-  --sb-avatar-text:     #ede8df;
+  /* avatar */
+  --avatar-bg   : #142020;
+  --avatar-text : #5eead4;
 
-  --sb-danger:          rgba(239, 68, 68, 0.85);
-  --sb-danger-hover-bg: rgba(239, 68, 68, 0.07);
+  /* utility */
+  --danger      : rgba(251,113,133,0.9);
+  --danger-bg   : rgba(251,113,133,0.07);
 
-  --sb-scrollbar-thumb: rgba(255, 255, 255, 0.07);
-  --sb-scrollbar-track: transparent;
+  /* scrollbar */
+  --scrollbar   : rgba(45,212,191,0.12);
 
-  /* ── App-level ── */
-  --app-bg:    #0a0908;
-  --app-text:  #ede8df;
-  --app-surface: #111009;
+  /* app */
+  --app-bg      : #080d10;
+  --app-text    : #e2ede9;
+  --app-surface : #0b1014;
+  --app-border  : rgba(255,255,255,0.05);
 }
 
+/* ─────────────────────────────────────────
+   LIGHT THEME
+───────────────────────────────────────── */
 [data-theme='light'] {
-  --sb-bg:              #f7f4ef;
-  --sb-bg-elevated:     #f0ece5;
-  --sb-border:          rgba(0, 0, 0, 0.07);
-  --sb-border-strong:   rgba(0, 0, 0, 0.12);
+  /* surfaces */
+  --sb-bg          : #f0f7f6;
+  --sb-bg-elevated : #e6f0ef;
+  --sb-bg-hover    : rgba(0,0,0,0.04);
+  --sb-bg-active   : rgba(15,118,110,0.06);
 
-  --sb-text:            #1c1a17;
-  --sb-text-secondary:  #9c9081;
-  --sb-text-dim:        #cdc5b8;
+  /* borders */
+  --sb-border        : rgba(0,0,0,0.07);
+  --sb-border-strong : rgba(0,0,0,0.12);
 
-  --sb-accent:          #a8731f;
-  --sb-accent-light:    #c48a28;
-  --sb-accent-bg:       rgba(168, 115, 31, 0.07);
-  --sb-accent-border:   rgba(168, 115, 31, 0.2);
+  /* text */
+  --sb-text          : #0d2926;
+  --sb-text-secondary: #4d7a74;
+  --sb-text-dim      : #b0ccc9;
+  --sb-text-muted    : #7ba8a3;
 
-  --sb-hover:           rgba(0, 0, 0, 0.04);
-  --sb-active-bg:       rgba(168, 115, 31, 0.07);
+  /* teal accent */
+  --accent        : #0f766e;
+  --accent-bright : #0e9488;
+  --accent-dim    : rgba(15,118,110,0.07);
+  --accent-border : rgba(15,118,110,0.2);
+  --accent-glow   : rgba(15,118,110,0.10);
 
-  --sb-badge-student-color:  #1a7db5;
-  --sb-badge-student-bg:     rgba(26, 125, 181, 0.07);
-  --sb-badge-student-border: rgba(26, 125, 181, 0.2);
+  /* badges */
+  --badge-student-c : #1a6fa3;
+  --badge-student-bg: rgba(26,111,163,0.07);
+  --badge-student-b : rgba(26,111,163,0.18);
 
-  --sb-badge-teacher-color:  #7c56d4;
-  --sb-badge-teacher-bg:     rgba(124, 86, 212, 0.07);
-  --sb-badge-teacher-border: rgba(124, 86, 212, 0.2);
+  --badge-teacher-c : var(--accent);
+  --badge-teacher-bg: var(--accent-dim);
+  --badge-teacher-b : var(--accent-border);
 
-  --sb-badge-admin-color:    #a8731f;
-  --sb-badge-admin-bg:       rgba(168, 115, 31, 0.07);
-  --sb-badge-admin-border:   rgba(168, 115, 31, 0.2);
+  --badge-admin-c   : #b45309;
+  --badge-admin-bg  : rgba(180,83,9,0.07);
+  --badge-admin-b   : rgba(180,83,9,0.18);
 
-  --sb-avatar-bg:       #e4ddd3;
-  --sb-avatar-text:     #1c1a17;
+  /* avatar */
+  --avatar-bg   : #cce8e5;
+  --avatar-text : #0f6b63;
 
-  --sb-danger:          #c0392b;
-  --sb-danger-hover-bg: rgba(192, 57, 43, 0.06);
+  /* utility */
+  --danger      : #dc2626;
+  --danger-bg   : rgba(220,38,38,0.06);
 
-  --sb-scrollbar-thumb: rgba(0, 0, 0, 0.1);
-  --sb-scrollbar-track: transparent;
+  /* scrollbar */
+  --scrollbar   : rgba(15,118,110,0.15);
 
-  --app-bg:    #edeae4;
-  --app-text:  #1c1a17;
-  --app-surface: #f2efe9;
+  /* app */
+  --app-bg      : #e8f2f1;
+  --app-text    : #0d2926;
+  --app-surface : #f0f7f6;
+  --app-border  : rgba(0,0,0,0.06);
 }
 
+/* ─────────────────────────────────────────
+   BASE
+───────────────────────────────────────── */
 html {
   font-size: 16px;
-  -webkit-font-smoothing: antialiased;
+  -webkit-font-smoothing : antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+  text-rendering         : optimizeLegibility;
 }
 
 body {
-  font-family: var(--font-body);
+  font-family     : var(--font-body);
   background-color: var(--app-bg);
-  color: var(--app-text);
-  transition:
-    background-color 0.25s ease,
-    color 0.25s ease;
-  min-height: 100vh;
-  line-height: 1.5;
+  color           : var(--app-text);
+  min-height      : 100vh;
+  line-height     : 1.55;
+  transition      : background-color 0.3s ease, color 0.3s ease;
 }
 
 #root {
-  display: flex;
+  display   : flex;
   min-height: 100vh;
 }
 
-/* ── Scrollbar ── */
-::-webkit-scrollbar {
-  width: 4px;
-}
-::-webkit-scrollbar-track {
-  background: var(--sb-scrollbar-track);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--sb-scrollbar-thumb);
-  border-radius: 99px;
-}
+/* ─────────────────────────────────────────
+   SCROLLBAR
+───────────────────────────────────────── */
+::-webkit-scrollbar       { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 99px; }
 
-/* ── Focus ring ── */
+/* ─────────────────────────────────────────
+   FOCUS
+───────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid var(--sb-accent);
+  outline       : 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius : 6px;
 }
 
-/* ── Selection ── */
+/* ─────────────────────────────────────────
+   SELECTION
+───────────────────────────────────────── */
 ::selection {
-  background: var(--sb-accent-bg);
-  color: var(--sb-accent-light);
+  background: var(--accent-dim);
+  color      : var(--accent-bright);
 }
 
-/* ── Layout helper — main content shifts with sidebar ── */
+/* ─────────────────────────────────────────
+   SIDEBAR HOVER-EXPAND  (desktop only)
+   The <aside> gets class="sidebar-rail" and
+   expands via :hover. No JS toggle needed.
+───────────────────────────────────────── */
+.sidebar-rail {
+  width     : var(--sidebar-rail-w);
+  transition: width 0.28s cubic-bezier(0.4,0,0.2,1);
+  overflow  : hidden;
+}
+
+.sidebar-rail:hover,
+.sidebar-rail:focus-within {
+  width: var(--sidebar-w);
+}
+
 .app-content {
-  margin-left: var(--sidebar-width);
-  flex: 1;
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 2rem;
-}
-
-.app-content.sidebar-collapsed {
-  margin-left: var(--sidebar-collapsed-width);
+  margin-left: var(--sidebar-rail-w);
+  flex       : 1;
+  padding    : 2rem;
+  transition : margin-left 0.28s cubic-bezier(0.4,0,0.2,1);
 }
 
 @media (max-width: 767px) {
-  .app-content {
-    margin-left: 0;
-  }
+  .app-content { margin-left: 0; }
 }
