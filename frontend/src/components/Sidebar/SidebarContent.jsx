@@ -2,7 +2,11 @@ import {
   BookOpen,
   User,
   Megaphone,
-  DoorOpen,
+  Video,
+  CalendarDays,
+  FolderOpen,
+  ClipboardList,
+  FileText,
   Sparkles,
   GraduationCap,
   ChevronRight,
@@ -45,9 +49,11 @@ const getRoleMeta = (role) =>
   };
 
 const STUDENT_NAV = [
-  { id: 'enrolled-classes', label: 'My Learning', hint: 'Your active classes', icon: DoorOpen },
-  { id: 'classes', label: 'Discover Classes', hint: 'Browse catalog', icon: BookOpen },
-  { id: 'announcements', label: 'Announcements', hint: 'Latest updates', icon: Megaphone },
+  { id: 'live-sessions', label: 'Live Sessions', hint: 'Join ongoing classes', icon: Video },
+  { id: 'academic-calender', label: 'Academic Calender', hint: 'Important dates', icon: CalendarDays },
+  { id: 'course-material', label: 'Course Material', hint: 'Notes and resources', icon: FolderOpen },
+  { id: 'gradebook', label: 'Gradebook', hint: 'Marks and progress', icon: ClipboardList },
+  { id: 'report', label: 'Report', hint: 'Performance summary', icon: FileText },
   { id: 'profile', label: 'Profile', hint: 'Account and settings', icon: User },
 ];
 
@@ -142,7 +148,7 @@ const STUDENT_NAV = [
 
           <div className={`relative flex items-center ${collapsed ? 'justify-center' : 'justify-between'} gap-3`}>
             <button
-              onClick={() => onPageChange(isTeacher ? 'teacher-classes' : 'enrolled-classes')}
+              onClick={() => onPageChange(isTeacher ? 'teacher-classes' : 'live-sessions')}
               aria-label='Open dashboard home'
               title='Dashboard home'
               className='group flex min-w-0 items-center gap-3 rounded-xl px-2 py-1.5 transition-colors hover:bg-[var(--sb-hover)]'
