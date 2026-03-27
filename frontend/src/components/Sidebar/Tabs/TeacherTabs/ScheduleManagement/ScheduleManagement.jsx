@@ -5,10 +5,10 @@ import {
 	createClass,
 	deleteMyClass,
 	updateClass,
-} from '../../../../api/api';
-import { SpinnerIcon, AlertBox } from '../../../Icons/Icon';
+} from '../../../../../api/api';
+import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
 import ClassDetails from './ClassDetails';
-import { useTheme } from '../../../../hooks/useTheme';
+import { useTheme } from '../../../../../hooks/useTheme';
 
 export default function ScheduleManagement() {
 	const [classes, setClasses] = useState([]);

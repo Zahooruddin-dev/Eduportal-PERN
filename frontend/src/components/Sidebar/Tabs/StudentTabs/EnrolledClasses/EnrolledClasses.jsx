@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../../../context/AuthContext';
+import { useAuth } from '../../../../../context/AuthContext';
 import {
 	getStudentEnrolledShedule,
 	getClasses,
 	postEnrollement,
 	unenrollStudent,
 	getClassAnnouncements,
-} from '../../../../api/api';
-import { SpinnerIcon } from '../../../Icons/Icon';
+} from '../../../../../api/api';
+import { SpinnerIcon } from '../../../../Icons/Icon';
 
 export default function EnrolledClasses() {
 	const { user } = useAuth();

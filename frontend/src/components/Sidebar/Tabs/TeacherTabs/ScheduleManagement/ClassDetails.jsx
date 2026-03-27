@@ -1,8 +1,8 @@
 // src/Dashboard/Sidebar/Tabs/ClassDetails.jsx
 import { useState, useEffect } from 'react';
-import { getClassById, getClassAnnouncements, postAnnouncement, deleteAnnouncement, getClassEnrolledRooster } from '../../../../api/api';
-import { SpinnerIcon, AlertBox } from '../../../Icons/Icon';
-import { useTheme } from '../../../../hooks/useTheme';
+import { getClassById, getClassAnnouncements, postAnnouncement, deleteAnnouncement, getClassEnrolledRooster } from '../../../../../api/api';
+import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
+import { useTheme } from '../../../../../hooks/useTheme';
 
 export default function ClassDetails({ classId, onBack }) {
   const [classInfo, setClassInfo] = useState(null);

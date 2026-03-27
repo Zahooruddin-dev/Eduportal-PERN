@@ -1,7 +1,7 @@
 // src/Dashboard/Sidebar/Tabs/StudentAnnouncements.jsx
 import { useState, useEffect } from 'react';
-import { getMyAnnouncements } from '../../../../api/api';
-import { SpinnerIcon } from '../../../Icons/Icon';
+import { getMyAnnouncements } from '../../../../../api/api';
+import { SpinnerIcon } from '../../../../Icons/Icon';
 
 export default function StudentAnnouncements() {
 	const [announcements, setAnnouncements] = useState([]);
