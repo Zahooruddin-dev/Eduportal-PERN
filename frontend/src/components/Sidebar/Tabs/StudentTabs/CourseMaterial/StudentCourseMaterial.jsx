@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../../../context/AuthContext';
-import { getStudentEnrolledShedule, getClassResources } from '../../../../api/api';
-import { SpinnerIcon, AlertBox } from '../../../Icons/Icon';
+import { useAuth } from '../../../../../context/AuthContext';
+import { getStudentEnrolledShedule, getClassResources } from '../../../../../api/api';
+import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
 import { FileText, ExternalLink, Link as LinkIcon } from 'lucide-react';
 
 export default function StudentCourseMaterial() {

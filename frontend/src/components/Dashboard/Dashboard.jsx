@@ -7,6 +7,7 @@ import EnrolledClasses from '../Sidebar/Tabs/StudentTabs/EnrolledClasses/Enrolle
 import ScheduleManagement from '../Sidebar/Tabs/TeacherTabs/ScheduleManagement/ScheduleManagement';
 import StudentAnnouncements from '../Sidebar/Tabs/StudentTabs/StudentAnnouncements/StudentAnnouncements';
 import CourseMaterial from '../Sidebar/Tabs/TeacherTabs/CourseMaterial/CourseMaterial';
+import StudentCourseMaterial from '../Sidebar/Tabs/StudentTabs/CourseMaterial/StudentCourseMaterial';
 
 export default function Dashboard() {
 	const { user } = useAuth();
@@ -37,6 +38,8 @@ export default function Dashboard() {
 					return <EnrolledClasses />;
 				case 'announcements':
 					return <StudentAnnouncements />;
+				case 'course-material':
+					return <StudentCourseMaterial />;
 				case 'profile':
 					return <Profile />;
 				default:

@@ -23,6 +23,7 @@ const studentNavItems = [
 
 	{ id: 'live-sessions', label: 'Live Sessions', icon: Clock },
 	{ id: 'academic-calendar', label: 'Academic Calendar', icon: Calendar },
+
 	{ id: 'course-material', label: 'Course Material', icon: BookOpen },
 	{ id: 'gradebook', label: 'Gradebook', icon: BarChart },
 	{ id: 'report', label: 'Report', icon: FileText },
