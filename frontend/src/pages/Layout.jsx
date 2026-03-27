@@ -4,6 +4,11 @@ import Classes from '../components/Sidebar/Classes/Classes';
 import Announcements from '../components/Sidebar/Announcements/Announcements';
 import Profile from '../components/Sidebar/Profile/Profile';
 import TeacherClasses from '../components/Sidebar/TeacherClasses/TeacherClasses';
+import LiveSessions from '../components/Sidebar/Students-Sidebar/LiveSessions';
+import AcademicCalender from '../components/Sidebar/Students-Sidebar/AcademicCalender';
+import CourseMaterial from '../components/Sidebar/Students-Sidebar/CourseMaterial';
+import GradeBook from '../components/Sidebar/Students-Sidebar/GradeBook';
+import Report from '../components/Sidebar/Students-Sidebar/Report';
 import { useAuth } from '../utils/AuthContext';
 import '../css/Layout.css';
 import Enrolled from '../components/Sidebar/Enrolled/Enrolled';
@@ -44,7 +49,7 @@ const Layout = () => {
 				user.role === 'teacher'
 					? 'teacher-classes'
 					: user.role === 'student'
-						? 'enrolled-classes'
+						? 'live-sessions'
 						: 'profile';
 			setActivePage(startPage);
 			setVisitedPages(new Set([startPage]));
@@ -53,6 +58,11 @@ const Layout = () => {
 	}, [user, isInitialLoad]);
 
 	const pages = [
+		{ id: 'live-sessions', component: <LiveSessions /> },
+		{ id: 'academic-calender', component: <AcademicCalender /> },
+		{ id: 'course-material', component: <CourseMaterial /> },
+		{ id: 'gradebook', component: <GradeBook /> },
+		{ id: 'report', component: <Report /> },
 		{ id: 'enrolled-classes', component: <Enrolled userId={user?.id} /> },
 		{
 			id: 'classes',
