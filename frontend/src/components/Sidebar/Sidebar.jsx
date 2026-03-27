@@ -13,11 +13,14 @@ import {
 	LogOut,
 	GraduationCap,
 	Sun,
+	Megaphone,
 	Moon,
 } from 'lucide-react';
 
 const studentNavItems = [
 	{ id: 'enrolled-classes', label: 'Enrolled Classes', icon: GraduationCap },
+	{ id: 'announcements', label: 'Announcements', icon: Megaphone },
+
 	{ id: 'live-sessions', label: 'Live Sessions', icon: Clock },
 	{ id: 'academic-calendar', label: 'Academic Calendar', icon: Calendar },
 	{ id: 'course-material', label: 'Course Material', icon: BookOpen },
@@ -144,7 +147,9 @@ export default function Sidebar({
 							aria-label='Logout'
 						>
 							<LogOut size={18} />
-							{!collapsed && <span className='text-sm font-medium'>Logout</span>}
+							{!collapsed && (
+								<span className='text-sm font-medium'>Logout</span>
+							)}
 						</button>
 					</div>
 				</div>

@@ -5,7 +5,7 @@ import Sidebar from '../Sidebar/Sidebar';
 import Profile from '../Profile/Profile';
 import EnrolledClasses from '../Sidebar/Tabs/EnrolledClasses/EnrolledClasses';
 import ScheduleManagement from '../Sidebar/Tabs/ScheduleManagement/ScheduleManagement';
-import { useTheme } from '../../hooks/useTheme';
+import StudentAnnouncements from '../Sidebar/Tabs/StudentAnnouncements/StudentAnnouncements';
 
 export default function Dashboard() {
 	const { user } = useAuth();
@@ -34,6 +34,8 @@ export default function Dashboard() {
 			switch (activeTab) {
 				case 'enrolled-classes':
 					return <EnrolledClasses />;
+				case 'announcements':
+					return <StudentAnnouncements />;
 				case 'profile':
 					return <Profile />;
 				default:
