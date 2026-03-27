@@ -44,3 +44,22 @@ export const getMyAnnouncements = () => api.get('/api/announcements/my');
 export const unenrollStudent = (studentId, classId) => {
 	return api.delete(`/api/enroll/student/${studentId}/class/${classId}`);
 };
+
+export const getClassResources = (classId) => {
+  return api.get(`/api/class/${classId}/resources`);
+};
+
+export const createResource = (classId, data) => {
+  return api.post(`/api/class/${classId}/resources`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+};
+
+export const updateResource = (classId, resourceId, data) => {
+  return api.put(`/api/class/${classId}/resources/${resourceId}`, data);
+};
+
+export const deleteResource = (classId, resourceId) => {
+  return api.delete(`/api/class/${classId}/resources/${resourceId}`);
+};
+
