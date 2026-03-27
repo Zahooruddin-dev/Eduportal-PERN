@@ -1,6 +1,5 @@
-// Sidebar.jsx
 import { useAuth } from '../../context/AuthContext';
-import { Menu, X, User, Calendar, BookOpen, FileText, BarChart, Users, Clock, GraduationCap, MessageSquare, UserCheck } from 'lucide-react';
+import { Menu, X, Calendar, BookOpen, FileText, BarChart, Clock, MessageSquare, UserCheck, LogOut } from 'lucide-react';
 
 const studentNavItems = [
   { id: 'live-sessions', label: 'Live Sessions', icon: Clock },
@@ -20,7 +19,7 @@ const teacherNavItems = [
 ];
 
 export default function Sidebar({ collapsed, setCollapsed, activeTab, setActiveTab }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const isStudent = user?.role === 'student';
   const navItems = isStudent ? studentNavItems : teacherNavItems;
 
@@ -44,7 +43,7 @@ export default function Sidebar({ collapsed, setCollapsed, activeTab, setActiveT
         </button>
       </div>
 
-      <nav className="flex-1 py-4">
+      <nav className="flex-1 py-4 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -64,33 +63,49 @@ export default function Sidebar({ collapsed, setCollapsed, activeTab, setActiveT
         })}
       </nav>
 
-      <div
-        onClick={() => setActiveTab('profile')}
-        className={`flex items-center gap-3 p-4 border-t border-[var(--color-border)] cursor-pointer hover:bg-[var(--color-border)]/50 transition-colors ${
-          activeTab === 'profile' ? 'bg-[var(--color-primary)]/10' : ''
-        }`}
-      >
-        {user?.profile ? (
-          <img
-            src={user.profile}
-            alt="profile"
-            className="w-8 h-8 rounded-full object-cover"
-          />
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white">
-            {user?.username?.charAt(0).toUpperCase()}
-          </div>
-        )}
-        {!collapsed && (
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
-              {user?.username}
-            </p>
-            <p className="text-xs text-[var(--color-text-muted)] capitalize">
-              {user?.role}
-            </p>
-          </div>
-        )}
+      {/* Footer: profile + logout */}
+      <div className="border-t border-[var(--color-border)] p-4">
+        <div className="flex items-center justify-between">
+          {/* Profile info – clickable to open profile tab */}
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`flex items-center gap-3 flex-1 min-w-0 transition-colors ${
+              activeTab === 'profile' ? 'opacity-80' : ''
+            }`}
+          >
+            {user?.profile ? (
+              <img
+                src={user.profile}
+                alt="profile"
+                className="w-8 h-8 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-sm font-medium">
+                {user?.username?.charAt(0).toUpperCase()}
+              </div>
+            )}
+            {!collapsed && (
+              <div className="flex-1 text-left overflow-hidden">
+                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                  {user?.username}
+                </p>
+                <p className="text-xs text-[var(--color-text-muted)] capitalize truncate">
+                  {user?.role}
+                </p>
+              </div>
+            )}
+          </button>
+
+          {/* Logout button – only icon when collapsed, icon+text when expanded */}
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 px-2 py-1 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/50 transition-colors"
+            aria-label="Logout"
+          >
+            <LogOut size={18} />
+            {!collapsed && <span className="text-sm font-medium">Logout</span>}
+          </button>
+        </div>
       </div>
     </aside>
   );
