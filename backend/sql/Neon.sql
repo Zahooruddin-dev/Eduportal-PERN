@@ -158,3 +158,22 @@ CREATE INDEX IF NOT EXISTS idx_classes_teacher_id ON classes(teacher_id);
 
 -- (Optional) If you often join users by role, consider:
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+
+-- Enable UUID generation if not already (PostgreSQL has gen_random_uuid() built-in)
+CREATE TABLE IF NOT EXISTS class_resources (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    class_id UUID NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+    teacher_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    type VARCHAR(20) NOT NULL CHECK (type IN ('file', 'link')),
+    content TEXT NOT NULL,  -- file path or URL
+    description TEXT,
+    tags TEXT[],  -- e.g., {'lecture_notes', 'assignment'}
+    is_published BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    expires_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_resources_class_id ON class_resources(class_id);
+CREATE INDEX IF NOT EXISTS idx_resources_teacher_id ON class_resources(teacher_id);
