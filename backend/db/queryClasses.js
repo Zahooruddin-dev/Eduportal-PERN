@@ -20,6 +20,32 @@ async function CreateNewClassQuery(
 	);
 	return rows[0];
 }
+async function updateClassQuery(
+	class_name,
+	schedule_days,
+	start_time,
+	end_time,
+	room_number,
+	teacher_id,
+	id,
+) {
+	const { rows } = await pool.query(
+		`UPDATE classes 
+       SET class_name = $1, schedule_days = $2, start_time = $3, end_time = $4, room_number = $5
+       WHERE id = $6 AND teacher_id = $7
+       RETURNING *`,
+		[
+			class_name,
+			schedule_days,
+			start_time,
+			end_time,
+			room_number,
+			id,
+			teacher_id,
+		],
+	);
+	return rows[0];
+}
 async function queryEditClassQuery(id, data) {
 	const { class_name, time_in_pakistan } = data;
 	const { rows } = await pool.query(
@@ -56,4 +82,5 @@ module.exports = {
 	getClassByIdQuery,
 	queryEditClassQuery,
 	getClassesByTeacherIdQuery,
+  updateClassQuery
 };

@@ -27,6 +27,33 @@ async function createClasses(req, res) {
 		res.status(500).json({ error: err.message });
 	}
 }
+async function updateClass(req, res) {
+	const { id } = req.params;
+	const { class_name, schedule_days, start_time, end_time, room_number } =
+		req.body;
+	const teacher_id = req.user.id;
+
+	try {
+		const updated = await db.updateClassQuery(
+			class_name,
+			schedule_days,
+			start_time,
+			end_time,
+			room_number,
+			id,
+			teacher_id,
+		);
+
+		if (updated.rowCount === 0) {
+			return res
+				.status(404)
+				.json({ error: 'Class not found or unauthorized.' });
+		}
+		res.json(updated.rows[0]);
+	} catch (err) {
+		res.status(500).json({ error: err.message });
+	}
+}
 async function deleteClass(req, res) {
 	const { id } = req.params;
 	try {
@@ -79,4 +106,5 @@ module.exports = {
 	getSpecificClass,
 	editSpecificClass,
 	getMyClasses,
+	updateClass,
 };
