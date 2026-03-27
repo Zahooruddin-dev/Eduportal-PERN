@@ -10,6 +10,7 @@ import {
 	MessageSquare,
 	UserCheck,
 	LogOut,
+	GraduationCap,
 } from 'lucide-react';
 
 const studentNavItems = [
@@ -18,8 +19,8 @@ const studentNavItems = [
 	{ id: 'course-material', label: 'Course Material', icon: BookOpen },
 	{ id: 'gradebook', label: 'Gradebook', icon: BarChart },
 	{ id: 'report', label: 'Report', icon: FileText },
+	{ id: 'enrolled-classes', label: 'Enrolled Classes', icon: GraduationCap }, // new
 ];
-
 const teacherNavItems = [
 	{ id: 'live-sessions', label: 'Live Sessions', icon: Clock },
 	{
