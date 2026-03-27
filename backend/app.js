@@ -7,7 +7,7 @@ const enrollRoutes = require('./routes/enrollRoutes');
 const authRoutes = require('./routes/authRoutes');
 const announcementRoutes = require('./routes/announcements');
 const attendanceRoutes = require('./routes/attendanceRoutes');
-const resourceRoutes = require('./routes/classResources');
+const resourceRoutes = require('./routes/classResourcesRoutes');
 
 const app = express();
 

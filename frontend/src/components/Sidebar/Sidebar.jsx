@@ -34,7 +34,7 @@ const teacherNavItems = [
 		label: 'Class & Schedule Management',
 		icon: Calendar,
 	},
-	{ id: 'course-repository', label: 'Course Repository', icon: BookOpen },
+	{ id: 'course-material', label: 'Course Material', icon: BookOpen },
 	{ id: 'gradebook', label: 'Gradebook', icon: BarChart },
 	{
 		id: 'parent-communication',
