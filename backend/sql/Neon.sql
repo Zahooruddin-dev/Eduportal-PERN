@@ -105,3 +105,9 @@ CREATE TABLE attendance (
     CONSTRAINT fk_attendance_student FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE(student_id, class_id, date)
 );
+ALTER TABLE classes
+ADD COLUMN grade_level VARCHAR(50),
+ADD COLUMN subject VARCHAR(100),
+ADD COLUMN description TEXT,
+ADD COLUMN max_students INTEGER DEFAULT 30,
+ALTER COLUMN room_number DROP NOT NULL; -- make room optional

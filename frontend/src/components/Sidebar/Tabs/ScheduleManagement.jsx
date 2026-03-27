@@ -1,6 +1,6 @@
-// src/Dashboard/ScheduleManagement.jsx
+// src/Dashboard/Sidebar/Tabs/ScheduleManagement.jsx
 import { useState, useEffect } from 'react';
-import { getMyClasses, createClass, deleteMyClass, updateClass } from '../../../api/api';
+import { getMyClasses, createClass, deleteMyClass, updateClass } from '../../../api/api'; // adjust path
 import { SpinnerIcon, AlertBox } from '../../../components/Icons/Icon';
 
 export default function ScheduleManagement() {
@@ -16,6 +16,10 @@ export default function ScheduleManagement() {
     start_time: '',
     end_time: '',
     room_number: '',
+    grade_level: '',
+    subject: '',
+    description: '',
+    max_students: 30,
   });
 
   const fetchClasses = async () => {
@@ -47,6 +51,10 @@ export default function ScheduleManagement() {
       start_time: '',
       end_time: '',
       room_number: '',
+      grade_level: '',
+      subject: '',
+      description: '',
+      max_students: 30,
     });
     setEditingClass(null);
     setError('');
@@ -79,7 +87,11 @@ export default function ScheduleManagement() {
       schedule_days: cls.schedule_days,
       start_time: cls.start_time,
       end_time: cls.end_time,
-      room_number: cls.room_number,
+      room_number: cls.room_number || '',
+      grade_level: cls.grade_level || '',
+      subject: cls.subject || '',
+      description: cls.description || '',
+      max_students: cls.max_students || 30,
     });
     setShowModal(true);
   };
@@ -136,14 +148,30 @@ export default function ScheduleManagement() {
               key={cls.id}
               className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
             >
-              <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
-                {cls.class_name}
-              </h3>
+              <div className="flex justify-between items-start">
+                <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
+                  {cls.class_name}
+                </h3>
+                <span className="text-xs bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-2 py-1 rounded-full">
+                  {cls.grade_level || 'N/A'}
+                </span>
+              </div>
+              {cls.subject && (
+                <p className="text-sm text-[var(--color-text-secondary)] mb-2">
+                  📚 {cls.subject}
+                </p>
+              )}
               <div className="space-y-1 text-sm text-[var(--color-text-secondary)]">
                 <p>📅 {cls.schedule_days}</p>
                 <p>⏰ {cls.start_time} – {cls.end_time}</p>
-                <p>🚪 Room {cls.room_number}</p>
+                {cls.room_number && <p>🚪 Room {cls.room_number}</p>}
+                {cls.max_students && <p>👥 Max {cls.max_students} students</p>}
               </div>
+              {cls.description && (
+                <p className="mt-2 text-sm text-[var(--color-text-muted)] line-clamp-2">
+                  {cls.description}
+                </p>
+              )}
               <div className="flex gap-2 mt-4">
                 <button
                   onClick={() => handleEdit(cls)}
@@ -166,41 +194,46 @@ export default function ScheduleManagement() {
       {/* Modal for Create/Edit */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] max-w-md w-full p-6">
+          <div className="bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
             <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-4">
               {editingClass ? 'Edit Class' : 'Create New Class'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                  Class Name
-                </label>
-                <input
-                  type="text"
-                  name="class_name"
-                  value={formData.class_name}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-                />
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                    Class Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="class_name"
+                    value={formData.class_name}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                    Schedule Days *
+                  </label>
+                  <input
+                    type="text"
+                    name="schedule_days"
+                    value={formData.schedule_days}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="e.g., Mon,Wed,Fri"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                  Schedule (e.g., Mon,Wed,Fri)
-                </label>
-                <input
-                  type="text"
-                  name="schedule_days"
-                  value={formData.schedule_days}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-                />
-              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                    Start Time
+                    Start Time *
                   </label>
                   <input
                     type="time"
@@ -213,7 +246,7 @@ export default function ScheduleManagement() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                    End Time
+                    End Time *
                   </label>
                   <input
                     type="time"
@@ -225,19 +258,78 @@ export default function ScheduleManagement() {
                   />
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                    Room Number
+                  </label>
+                  <input
+                    type="text"
+                    name="room_number"
+                    value={formData.room_number}
+                    onChange={handleInputChange}
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                    Grade Level
+                  </label>
+                  <input
+                    type="text"
+                    name="grade_level"
+                    value={formData.grade_level}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Grade 10"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                    Subject
+                  </label>
+                  <input
+                    type="text"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Mathematics"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                    Max Students
+                  </label>
+                  <input
+                    type="number"
+                    name="max_students"
+                    value={formData.max_students}
+                    onChange={handleInputChange}
+                    min="1"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                  Room Number
+                  Description
                 </label>
-                <input
-                  type="text"
-                  name="room_number"
-                  value={formData.room_number}
+                <textarea
+                  name="description"
+                  rows="3"
+                  value={formData.description}
                   onChange={handleInputChange}
-                  required
+                  placeholder="Course description, objectives, etc."
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
                 />
               </div>
+
               <div className="flex gap-3 justify-end mt-6">
                 <button
                   type="button"

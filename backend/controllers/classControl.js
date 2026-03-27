@@ -9,48 +9,77 @@ async function getClasses(req, res) {
 	}
 }
 async function createClasses(req, res) {
-	const { class_name, schedule_days, start_time, end_time, room_number } =
-		req.body;
+	const {
+		class_name,
+		schedule_days,
+		start_time,
+		end_time,
+		room_number,
+		grade_level,
+		subject,
+		description,
+		max_students,
+	} = req.body;
 	const teacher_id = req.user.id;
 
 	try {
-		const newClass = await db.CreateNewClassQuery(
+		const newClass = await db.CreateNewClassQuery({
 			class_name,
 			schedule_days,
 			start_time,
 			end_time,
 			room_number,
+			grade_level,
+			subject,
+			description,
+			max_students,
 			teacher_id,
-		);
+		});
 		res.status(201).json(newClass);
 	} catch (err) {
+		console.error(err); // log for debugging
 		res.status(500).json({ error: err.message });
 	}
 }
+
 async function updateClass(req, res) {
 	const { id } = req.params;
-	const { class_name, schedule_days, start_time, end_time, room_number } =
-		req.body;
+	const {
+		class_name,
+		schedule_days,
+		start_time,
+		end_time,
+		room_number,
+		grade_level,
+		subject,
+		description,
+		max_students,
+	} = req.body;
 	const teacher_id = req.user.id;
 
 	try {
-		const updated = await db.updateClassQuery(
+		const updated = await db.updateClassQuery({
 			class_name,
 			schedule_days,
 			start_time,
 			end_time,
 			room_number,
+			grade_level,
+			subject,
+			description,
+			max_students,
 			id,
 			teacher_id,
-		);
+		});
 
-		if (updated.rowCount === 0) {
+		if (!updated) {
 			return res
 				.status(404)
 				.json({ error: 'Class not found or unauthorized.' });
 		}
-		res.json(updated.rows[0]);
+		res.json(updated);
 	} catch (err) {
+		console.error(err);
 		res.status(500).json({ error: err.message });
 	}
 }
