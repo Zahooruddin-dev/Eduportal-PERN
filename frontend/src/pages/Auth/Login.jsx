@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mail, Lock, LogIn, AlertCircle, Loader, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { loginUser } from '../../api/authApi';
 import { useAuth } from '../../utils/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 
 function SkeletonLoader() {
   return (
@@ -12,8 +12,10 @@ function SkeletonLoader() {
       aria-label="Signing you in, please wait"
       aria-live="polite"
     >
-      <div className="rounded-2xl overflow-hidden"
-        style={{ background: 'var(--sb-bg-elevated)', border: '1px solid var(--sb-border)' }}>
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{ background: 'var(--sb-bg-elevated)', border: '1px solid var(--sb-border)' }}
+      >
         <div className="p-8 flex flex-col items-center gap-4">
           <div className="w-14 h-14 rounded-full animate-pulse" style={{ background: 'var(--sb-hover)' }} />
           <div className="w-36 h-6 rounded-lg animate-pulse" style={{ background: 'var(--sb-hover)' }} />
@@ -47,7 +49,6 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [emailTouched, setEmailTouched] = useState(false);
 
   const passwordRef = useRef(null);
   const errorRef = useRef(null);
@@ -70,7 +71,6 @@ export default function Login() {
   };
 
   const handleEmailBlur = () => {
-    setEmailTouched(true);
     const msg = validateEmail(formData.email);
     if (msg) setFieldErrors((prev) => ({ ...prev, email: msg }));
   };
@@ -80,7 +80,6 @@ export default function Login() {
       e.preventDefault();
       const msg = validateEmail(formData.email);
       if (msg) {
-        setEmailTouched(true);
         setFieldErrors((prev) => ({ ...prev, email: msg }));
         return;
       }
@@ -96,7 +95,6 @@ export default function Login() {
     if (!formData.password) errs.password = 'Password is required.';
     if (Object.keys(errs).length) {
       setFieldErrors(errs);
-      setEmailTouched(true);
       return;
     }
     setError('');
@@ -127,17 +125,13 @@ export default function Login() {
   });
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: 'var(--app-bg)' }}>
+    <div className="auth-page">
       <SkeletonLoader />
     </div>
   );
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4 py-12"
-      style={{ background: 'var(--app-bg)' }}
-    >
+    <div className="auth-page">
       <a
         href="#login-email"
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm font-medium"

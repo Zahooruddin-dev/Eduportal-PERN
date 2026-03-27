@@ -127,13 +127,13 @@ export default function Register() {
   });
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--app-bg)' }}>
+    <div className="auth-page">
       <SkeletonLoader />
     </div>
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12" style={{ background: 'var(--app-bg)' }}>
+    <div className="auth-page">
       <a
         href="#reg-username"
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm font-medium"

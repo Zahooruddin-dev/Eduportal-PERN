@@ -114,13 +114,13 @@ export default function ForgotPassword() {
   });
 
   if (loading) return (
-    <div className="fixed inset-0 flex items-center justify-center px-4 overflow-y-auto" style={{ background: 'var(--app-bg)', zIndex: 9999 }}>
+    <div className="auth-page">
       <SkeletonLoader step={step} />
     </div>
   );
 
   if (success) return (
-    <div className="fixed inset-0 flex items-center justify-center px-4 overflow-y-auto" style={{ background: 'var(--app-bg)', zIndex: 9999 }}>
+    <div className="auth-page">
       <div className="w-full max-w-md">
         <div
           className="rounded-2xl overflow-hidden"
@@ -153,7 +153,7 @@ export default function ForgotPassword() {
   );
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center px-4 py-12 overflow-y-auto" style={{ background: 'var(--app-bg)', zIndex: 9999 }}>
+    <div className="auth-page">
       <a
         href="#fp-form"
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm font-medium"

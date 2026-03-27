@@ -49,11 +49,10 @@
 	--sb-avatar-bg: #1f2b2c;
 	--sb-avatar-text: #f1f6f6;
 
+	--sb-danger: rgba(239, 68, 68, 0.85);
 	--sb-danger-bg: rgba(239, 68, 68, 0.08);
 	--sb-danger-border: rgba(239, 68, 68, 0.25);
 	--sb-danger-focus: rgba(239, 68, 68, 0.15);
-
-	--sb-danger: rgba(239, 68, 68, 0.85);
 	--sb-danger-hover-bg: rgba(239, 68, 68, 0.07);
 
 	--sb-scrollbar-thumb: rgba(176, 241, 238, 0.24);
@@ -98,11 +97,10 @@
 	--sb-avatar-bg: #d4ebeb;
 	--sb-avatar-text: #123739;
 
+	--sb-danger: #c0392b;
 	--sb-danger-bg: rgba(192, 57, 43, 0.07);
 	--sb-danger-border: rgba(192, 57, 43, 0.22);
 	--sb-danger-focus: rgba(192, 57, 43, 0.12);
-
-	--sb-danger: #c0392b;
 	--sb-danger-hover-bg: rgba(192, 57, 43, 0.06);
 
 	--sb-scrollbar-thumb: rgba(15, 104, 108, 0.28);
@@ -135,6 +133,19 @@ body {
 #root {
 	display: flex;
 	min-height: 100vh;
+}
+
+/* ── Auth pages — escapes sidebar layout, always centered ── */
+.auth-page {
+	position: fixed;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 1.5rem;
+	overflow-y: auto;
+	background-color: var(--app-bg);
+	z-index: 9999;
 }
 
 /* ── Scrollbar ── */
