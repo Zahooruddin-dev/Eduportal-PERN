@@ -1,50 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  /* Backgrounds */
   --color-bg: #f7f7f8;
   --color-surface: #ffffff;
   --color-input-bg: #fafafa;
-
-  /* Borders */
   --color-border: #e4e4e7;
-
-  /* Brand */
-  --color-primary: #4f46e5;
-  --color-primary-hover: #4338ca;
-
-  /* Text */
+  --color-primary: #14b89c;
+  --color-primary-hover: #0e9f86;
   --color-text-primary: #09090b;
   --color-text-secondary: #3f3f46;
   --color-text-muted: #71717a;
 }
 
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #09090b;
-    --color-surface: #111113;
-    --color-input-bg: #18181b;
-
-    --color-border: #27272a;
-
-    --color-primary: #6366f1;
-    --color-primary-hover: #818cf8;
-
-    --color-text-primary: #fafafa;
-    --color-text-secondary: #d4d4d8;
-    --color-text-muted: #71717a;
-  }
-}
-
-/* If you use a .dark class instead of prefers-color-scheme */
 .dark {
   --color-bg: #09090b;
   --color-surface: #111113;
   --color-input-bg: #18181b;
   --color-border: #27272a;
-  --color-primary: #6366f1;
-  --color-primary-hover: #818cf8;
+  --color-primary: #2dd4bf;
+  --color-primary-hover: #5eead4;
   --color-text-primary: #fafafa;
   --color-text-secondary: #d4d4d8;
   --color-text-muted: #71717a;
