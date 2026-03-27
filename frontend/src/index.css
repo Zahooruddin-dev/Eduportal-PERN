@@ -1,173 +1,181 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
 
 *,
 *::before,
 *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
 }
 
 :root {
-  --font-display: 'DM Serif Display', Georgia, serif;
-  --font-body: 'DM Sans', system-ui, sans-serif;
+	--font-display: 'DM Serif Display', Georgia, serif;
+	--font-body: 'DM Sans', system-ui, sans-serif;
 
-  --sidebar-width: 272px;
-  --sidebar-collapsed-width: 68px;
+	--sidebar-width: 272px;
+	--sidebar-collapsed-width: 68px;
 
-  /* ── Dark theme (default) ── */
-  --sb-bg:              #0d0c0b;
-  --sb-bg-elevated:     #131210;
-  --sb-border:          rgba(255, 255, 255, 0.055);
-  --sb-border-strong:   rgba(255, 255, 255, 0.10);
+	/* ── Dark theme (default) ── */
+	--sb-bg: #0d0c0b;
+	--sb-bg-elevated: #131210;
+	--sb-border: rgba(255, 255, 255, 0.055);
+	--sb-border-strong: rgba(255, 255, 255, 0.1);
 
-  --sb-text:            #f1f6f6;
-  --sb-text-secondary:  #b8c8c8;
-  --sb-text-dim:        #6d7f80;
+	--sb-text: #f1f6f6;
+	--sb-text-secondary: #b8c8c8;
+	--sb-text-dim: #6d7f80;
 
-  --sb-accent:          #57d6d1;
-  --sb-accent-light:    #9ef2ed;
-  --sb-accent-bg:       rgba(87, 214, 209, 0.16);
-  --sb-accent-border:   rgba(87, 214, 209, 0.34);
+	--sb-accent: #57d6d1;
+	--sb-accent-light: #9ef2ed;
+	--sb-accent-bg: rgba(87, 214, 209, 0.16);
+	--sb-accent-border: rgba(87, 214, 209, 0.34);
 
-  --sb-hover:           rgba(255, 255, 255, 0.038);
-  --sb-active-bg:       rgba(87, 214, 209, 0.13);
+	--sb-hover: rgba(255, 255, 255, 0.038);
+	--sb-active-bg: rgba(87, 214, 209, 0.13);
 
-  --sb-badge-student-color:  #60b8e8;
-  --sb-badge-student-bg:     rgba(96, 184, 232, 0.09);
-  --sb-badge-student-border: rgba(96, 184, 232, 0.2);
+	--sb-badge-student-color: #60b8e8;
+	--sb-badge-student-bg: rgba(96, 184, 232, 0.09);
+	--sb-badge-student-border: rgba(96, 184, 232, 0.2);
 
-  --sb-badge-teacher-color:  #a78df5;
-  --sb-badge-teacher-bg:     rgba(167, 141, 245, 0.09);
-  --sb-badge-teacher-border: rgba(167, 141, 245, 0.2);
+	--sb-badge-teacher-color: #a78df5;
+	--sb-badge-teacher-bg: rgba(167, 141, 245, 0.09);
+	--sb-badge-teacher-border: rgba(167, 141, 245, 0.2);
 
-  --sb-badge-admin-color:    #57d6d1;
-  --sb-badge-admin-bg:       rgba(87, 214, 209, 0.14);
-  --sb-badge-admin-border:   rgba(87, 214, 209, 0.32);
+	--sb-badge-admin-color: #57d6d1;
+	--sb-badge-admin-bg: rgba(87, 214, 209, 0.14);
+	--sb-badge-admin-border: rgba(87, 214, 209, 0.32);
 
-  --sb-avatar-bg:       #1f2b2c;
-  --sb-avatar-text:     #f1f6f6;
+	--sb-avatar-bg: #1f2b2c;
+	--sb-avatar-text: #f1f6f6;
 
-  --sb-danger:          rgba(239, 68, 68, 0.85);
-  --sb-danger-hover-bg: rgba(239, 68, 68, 0.07);
+	--sb-danger-bg: rgba(239, 68, 68, 0.08);
+	--sb-danger-border: rgba(239, 68, 68, 0.25);
+	--sb-danger-focus: rgba(239, 68, 68, 0.15);
 
-  --sb-scrollbar-thumb: rgba(176, 241, 238, 0.24);
-  --sb-scrollbar-track: transparent;
+	--sb-danger: rgba(239, 68, 68, 0.85);
+	--sb-danger-hover-bg: rgba(239, 68, 68, 0.07);
 
-  /* ── App-level ── */
-  --app-bg:    #070c0d;
-  --app-text:  #eef6f6;
-  --app-surface: #0f1617;
+	--sb-scrollbar-thumb: rgba(176, 241, 238, 0.24);
+	--sb-scrollbar-track: transparent;
+
+	/* ── App-level ── */
+	--app-bg: #070c0d;
+	--app-text: #eef6f6;
+	--app-surface: #0f1617;
 }
 
 [data-theme='light'] {
-  --sb-bg:              #f4fbfb;
-  --sb-bg-elevated:     #ebf6f6;
-  --sb-border:          rgba(0, 0, 0, 0.07);
-  --sb-border-strong:   rgba(0, 0, 0, 0.12);
+	--sb-bg: #f4fbfb;
+	--sb-bg-elevated: #ebf6f6;
+	--sb-border: rgba(0, 0, 0, 0.07);
+	--sb-border-strong: rgba(0, 0, 0, 0.12);
 
-  --sb-text:            #0f2e31;
-  --sb-text-secondary:  #325f63;
-  --sb-text-dim:        #7ea3a7;
+	--sb-text: #0f2e31;
+	--sb-text-secondary: #325f63;
+	--sb-text-dim: #7ea3a7;
 
-  --sb-accent:          #13a7a2;
-  --sb-accent-light:    #0c7f7b;
-  --sb-accent-bg:       rgba(19, 167, 162, 0.13);
-  --sb-accent-border:   rgba(19, 167, 162, 0.28);
+	--sb-accent: #13a7a2;
+	--sb-accent-light: #0c7f7b;
+	--sb-accent-bg: rgba(19, 167, 162, 0.13);
+	--sb-accent-border: rgba(19, 167, 162, 0.28);
 
-  --sb-hover:           rgba(0, 0, 0, 0.04);
-  --sb-active-bg:       rgba(19, 167, 162, 0.1);
+	--sb-hover: rgba(0, 0, 0, 0.04);
+	--sb-active-bg: rgba(19, 167, 162, 0.1);
 
-  --sb-badge-student-color:  #1a7db5;
-  --sb-badge-student-bg:     rgba(26, 125, 181, 0.07);
-  --sb-badge-student-border: rgba(26, 125, 181, 0.2);
+	--sb-badge-student-color: #1a7db5;
+	--sb-badge-student-bg: rgba(26, 125, 181, 0.07);
+	--sb-badge-student-border: rgba(26, 125, 181, 0.2);
 
-  --sb-badge-teacher-color:  #7c56d4;
-  --sb-badge-teacher-bg:     rgba(124, 86, 212, 0.07);
-  --sb-badge-teacher-border: rgba(124, 86, 212, 0.2);
+	--sb-badge-teacher-color: #7c56d4;
+	--sb-badge-teacher-bg: rgba(124, 86, 212, 0.07);
+	--sb-badge-teacher-border: rgba(124, 86, 212, 0.2);
 
-  --sb-badge-admin-color:    #0f8e89;
-  --sb-badge-admin-bg:       rgba(19, 167, 162, 0.11);
-  --sb-badge-admin-border:   rgba(19, 167, 162, 0.26);
+	--sb-badge-admin-color: #0f8e89;
+	--sb-badge-admin-bg: rgba(19, 167, 162, 0.11);
+	--sb-badge-admin-border: rgba(19, 167, 162, 0.26);
 
-  --sb-avatar-bg:       #d4ebeb;
-  --sb-avatar-text:     #123739;
+	--sb-avatar-bg: #d4ebeb;
+	--sb-avatar-text: #123739;
 
-  --sb-danger:          #c0392b;
-  --sb-danger-hover-bg: rgba(192, 57, 43, 0.06);
+	--sb-danger-bg: rgba(192, 57, 43, 0.07);
+	--sb-danger-border: rgba(192, 57, 43, 0.22);
+	--sb-danger-focus: rgba(192, 57, 43, 0.12);
 
-  --sb-scrollbar-thumb: rgba(15, 104, 108, 0.28);
-  --sb-scrollbar-track: transparent;
+	--sb-danger: #c0392b;
+	--sb-danger-hover-bg: rgba(192, 57, 43, 0.06);
 
-  --app-bg:    #eff8f8;
-  --app-text:  #14383b;
-  --app-surface: #f7fcfc;
+	--sb-scrollbar-thumb: rgba(15, 104, 108, 0.28);
+	--sb-scrollbar-track: transparent;
+
+	--app-bg: #eff8f8;
+	--app-text: #14383b;
+	--app-surface: #f7fcfc;
 }
 
 html {
-  font-size: 16px;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+	font-size: 16px;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	text-rendering: optimizeLegibility;
 }
 
 body {
-  font-family: var(--font-body);
-  background-color: var(--app-bg);
-  color: var(--app-text);
-  transition:
-    background-color 0.25s ease,
-    color 0.25s ease;
-  min-height: 100vh;
-  line-height: 1.6;
-  letter-spacing: 0.005em;
+	font-family: var(--font-body);
+	background-color: var(--app-bg);
+	color: var(--app-text);
+	transition:
+		background-color 0.25s ease,
+		color 0.25s ease;
+	min-height: 100vh;
+	line-height: 1.6;
+	letter-spacing: 0.005em;
 }
 
 #root {
-  display: flex;
-  min-height: 100vh;
+	display: flex;
+	min-height: 100vh;
 }
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar {
-  width: 4px;
+	width: 4px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--sb-scrollbar-track);
+	background: var(--sb-scrollbar-track);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--sb-scrollbar-thumb);
-  border-radius: 99px;
+	background: var(--sb-scrollbar-thumb);
+	border-radius: 99px;
 }
 
 /* ── Focus ring ── */
 :focus-visible {
-  outline: 2px solid var(--sb-accent);
-  outline-offset: 2px;
-  border-radius: 6px;
+	outline: 2px solid var(--sb-accent);
+	outline-offset: 2px;
+	border-radius: 6px;
 }
 
 /* ── Selection ── */
 ::selection {
-  background: var(--sb-accent-bg);
-  color: var(--sb-accent-light);
+	background: var(--sb-accent-bg);
+	color: var(--sb-accent-light);
 }
 
 /* ── Layout helper — main content shifts with sidebar ── */
 .app-content {
-  margin-left: var(--sidebar-width);
-  flex: 1;
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 2rem;
+	margin-left: var(--sidebar-width);
+	flex: 1;
+	transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	padding: 2rem;
 }
 
 .app-content.sidebar-collapsed {
-  margin-left: var(--sidebar-collapsed-width);
+	margin-left: var(--sidebar-collapsed-width);
 }
 
 @media (max-width: 767px) {
-  .app-content {
-    margin-left: 0;
-  }
+	.app-content {
+		margin-left: 0;
+	}
 }
