@@ -14,7 +14,7 @@ const storage = new CloudinaryStorage({
 	params: {
 		folder: 'mizuka_resources',
 		access_mode: 'public', // separate folder for resources
-		resource_type: 'auto', // Cloudinary auto-detects file type
+		resource_type: 'raw', // Cloudinary auto-detects file type
 		// limiting formats for now atleast to common types, can expand later if needed:
 		// allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif', 'gif', 'pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'ppt', 'pptx', 'mp4', 'mov', 'avi', 'mkv', 'mp3', 'wav', 'zip'],
 	},

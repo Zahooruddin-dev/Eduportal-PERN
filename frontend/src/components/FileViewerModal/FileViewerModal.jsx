@@ -1,5 +1,19 @@
 import { useEffect } from 'react';
 
+/**
+ * For Cloudinary raw files (PDFs, docs, etc.), add fl_attachment=0
+ * to force inline display instead of download.
+ */
+const getInlineUrl = (url) => {
+  if (!url) return url;
+  // Only modify Cloudinary raw files
+  if (url.includes('/raw/upload/')) {
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}fl_attachment=0`;
+  }
+  return url;
+};
+
 export default function FileViewerModal({ fileUrl, title, isOpen, onClose }) {
   // Close modal on ESC key press
   useEffect(() => {
@@ -8,7 +22,6 @@ export default function FileViewerModal({ fileUrl, title, isOpen, onClose }) {
     };
     if (isOpen) {
       window.addEventListener('keydown', handleEsc);
-      // Prevent body scrolling when modal is open
       document.body.style.overflow = 'hidden';
     }
     return () => {
@@ -18,6 +31,9 @@ export default function FileViewerModal({ fileUrl, title, isOpen, onClose }) {
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  const displayUrl = getInlineUrl(fileUrl);
+  const isImage = displayUrl?.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -36,17 +52,17 @@ export default function FileViewerModal({ fileUrl, title, isOpen, onClose }) {
           </button>
         </div>
 
-        {/* Content: iframe for PDFs, img for images? but iframe works for both */}
+        {/* Content */}
         <div className="flex-1 p-4 overflow-auto min-h-0">
-          {fileUrl?.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i) ? (
+          {isImage ? (
             <img
-              src={fileUrl}
+              src={displayUrl}
               alt={title}
               className="max-w-full max-h-full object-contain mx-auto"
             />
           ) : (
             <iframe
-              src={fileUrl}
+              src={displayUrl}
               title={title}
               className="w-full h-full min-h-[70vh] border-none rounded"
               sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-downloads"

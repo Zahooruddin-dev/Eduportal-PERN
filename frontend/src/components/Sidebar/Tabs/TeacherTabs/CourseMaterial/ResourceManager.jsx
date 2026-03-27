@@ -9,8 +9,8 @@ import {
 	FileText,
 	ExternalLink,
 } from 'lucide-react';
-
 import {
+  
 	getClassResources,
 	createResource,
 	updateResource,
@@ -18,6 +18,7 @@ import {
 } from '../../../../../api/api';
 import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
 import FileViewerModal from '../../../../FileViewerModal/FileViewerModal';
+import { getFileViewUrl } from '../../../../../utils/fileUtils';
 
 export default function ResourceManager({ classId, className, onBack }) {
 	const [resources, setResources] = useState([]);
@@ -396,13 +397,13 @@ export default function ResourceManager({ classId, className, onBack }) {
 
 									<div className='mt-2'>
 										{res.type === 'file' ? (
-											 <button
-    onClick={() => setViewingFile({ url: res.content, title: res.title })}
-    className="inline-flex items-center gap-1 text-sm text-[var(--color-primary)] hover:underline"
-  >
-    <FileText size={14} />
-    View File
-  </button>
+									<button
+  onClick={() => setViewingFile({ url: getFileViewUrl(res.content), title: res.title })}
+  className="inline-flex items-center gap-1 text-sm text-[var(--color-primary)] hover:underline"
+>
+  <FileText size={14} />
+  View File
+</button>
 										) : (
 											<a
 												href={res.content}
