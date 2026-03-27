@@ -78,7 +78,21 @@ const SHARED_CSS = `
   .code-input:focus  { border-bottom-color: var(--sb-accent); }
   .code-input.ul-err { border-bottom-color: var(--sb-danger); }
   .code-input::placeholder { color: var(--sb-border-strong); letter-spacing: 0.4em; }
+.ul-input:-webkit-autofill,
+						.ul-input:-webkit-autofill:hover,
+						.ul-input:-webkit-autofill:focus {
+							-webkit-box-shadow: 0 0 0 1000px var(--sb-bg-elevated) inset !important;
+							-webkit-text-fill-color: var(--sb-text) !important;
+						}
+						.ul-input:-webkit-autofill::first-line {
+							font-family: var(--font-body);
+						}
 
+						.code-input:-webkit-autofill,
+						.code-input:-webkit-autofill:hover,
+						.code-input:-webkit-autofill:focus {
+							-webkit-box-shadow: 0 0 0 1000px var(--sb-bg-elevated) inset !important;
+							-webkit-text-fill-color: var(--sb-text) !important;
   .auth-btn {
     position: relative;
     overflow: hidden;
