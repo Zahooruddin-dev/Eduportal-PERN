@@ -1,8 +1,8 @@
 // Dashboard.jsx
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import Sidebar from './Sidebar';
-import Profile from './Profile';
+import { useAuth } from '../../context/AuthContext';
+import Sidebar from '../Sidebar/Sidebar';
+import Profile from '../Profile/Profile';
 
 export default function Dashboard() {
   const { user } = useAuth();

@@ -1,8 +1,8 @@
 // Profile.jsx
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { updateUsername, changePassword, deleteUser } from '../api/authApi';
-import { SpinnerIcon, EyeIcon } from './Icon';
+import { useAuth } from '../../context/AuthContext';
+import { updateUsername, changePassword, deleteUser } from '../../api/authApi';
+import { SpinnerIcon, EyeIcon } from '../Icons/Icon';
 
 export default function Profile() {
   const { user, login, logout } = useAuth();

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { loginUser } from '../api/authApi';
-import { SpinnerIcon,EyeIcon } from './Icon';
+import { SpinnerIcon,EyeIcon } from '../components/Icons/Icon';
 
 
 export default function Login() {

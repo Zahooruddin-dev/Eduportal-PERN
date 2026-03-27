@@ -1,5 +1,5 @@
 // Sidebar.jsx
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { Menu, X, User, Calendar, BookOpen, FileText, BarChart, Users, Clock, GraduationCap, MessageSquare, UserCheck } from 'lucide-react';
 
 const studentNavItems = [

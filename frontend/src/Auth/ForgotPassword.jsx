@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { SpinnerIcon, AlertBox, EyeIcon } from './Icon';
+import { SpinnerIcon, AlertBox, EyeIcon } from '../components/Icons/Icon';
 import { requestReset } from '../api/authApi';
 
 function RequestStep({ onSuccess }) {
