@@ -1,219 +1,237 @@
 // src/Dashboard/Sidebar/Tabs/ScheduleManagement.jsx
 import { useState, useEffect } from 'react';
 import {
-	getMyClasses,
-	createClass,
-	deleteMyClass,
-	updateClass,
+  getMyClasses,
+  createClass,
+  deleteMyClass,
+  updateClass,
+  getClassEnrolledRooster,
 } from '../../../../../api/api';
 import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
 import ClassDetails from './ClassDetails';
-import { useTheme } from '../../../../../hooks/useTheme';
 
 export default function ScheduleManagement() {
-	const [classes, setClasses] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState('');
-	const [success, setSuccess] = useState('');
-	const [showModal, setShowModal] = useState(false);
-	const [editingClass, setEditingClass] = useState(null);
-	const [selectedClass, setSelectedClass] = useState(null);
-	const [formData, setFormData] = useState({
-		class_name: '',
-		schedule_days: '',
-		start_time: '',
-		end_time: '',
-		room_number: '',
-		grade_level: '',
-		subject: '',
-		description: '',
-		max_students: 30,
-	});
+  const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [editingClass, setEditingClass] = useState(null);
+  const [selectedClass, setSelectedClass] = useState(null);
+  const [formData, setFormData] = useState({
+    class_name: '',
+    schedule_days: '',
+    start_time: '',
+    end_time: '',
+    room_number: '',
+    grade_level: '',
+    subject: '',
+    description: '',
+    max_students: 30,
+  });
 
-	const fetchClasses = async () => {
-		setLoading(true);
-		setError('');
-		try {
-			const res = await getMyClasses();
-			setClasses(res.data);
-		} catch (err) {
-			setError(err.response?.data?.error || 'Failed to load classes');
-		} finally {
-			setLoading(false);
-		}
-	};
+  const fetchClasses = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await getMyClasses();
+      const classesData = res.data;
+      // Fetch enrolled count for each class in parallel
+      const classesWithCount = await Promise.all(
+        classesData.map(async (cls) => {
+          try {
+            const rosterRes = await getClassEnrolledRooster(cls.id);
+            return { ...cls, enrolledCount: rosterRes.data.length };
+          } catch {
+            return { ...cls, enrolledCount: 0 };
+          }
+        })
+      );
+      setClasses(classesWithCount);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to load classes');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-	useEffect(() => {
-		fetchClasses();
-	}, []);
+  useEffect(() => {
+    fetchClasses();
+  }, []);
 
-	const handleInputChange = (e) => {
-		const { name, value } = e.target;
-		setFormData((prev) => ({ ...prev, [name]: value }));
-	};
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-	const resetForm = () => {
-		setFormData({
-			class_name: '',
-			schedule_days: '',
-			start_time: '',
-			end_time: '',
-			room_number: '',
-			grade_level: '',
-			subject: '',
-			description: '',
-			max_students: 30,
-		});
-		setEditingClass(null);
-		setError('');
-	};
+  const resetForm = () => {
+    setFormData({
+      class_name: '',
+      schedule_days: '',
+      start_time: '',
+      end_time: '',
+      room_number: '',
+      grade_level: '',
+      subject: '',
+      description: '',
+      max_students: 30,
+    });
+    setEditingClass(null);
+    setError('');
+  };
 
-	const handleSubmit = async (e) => {
-		e.preventDefault();
-		setError('');
-		setSuccess('');
-		try {
-			if (editingClass) {
-				await updateClass(editingClass.id, formData);
-				setSuccess('Class updated successfully');
-			} else {
-				await createClass(formData);
-				setSuccess('Class created successfully');
-			}
-			resetForm();
-			setShowModal(false);
-			fetchClasses();
-		} catch (err) {
-			setError(err.response?.data?.error || 'Operation failed');
-		}
-	};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    try {
+      if (editingClass) {
+        await updateClass(editingClass.id, formData);
+        setSuccess('Class updated successfully');
+      } else {
+        await createClass(formData);
+        setSuccess('Class created successfully');
+      }
+      resetForm();
+      setShowModal(false);
+      fetchClasses(); // refresh list
+    } catch (err) {
+      setError(err.response?.data?.error || 'Operation failed');
+    }
+  };
 
-	const handleEdit = (cls) => {
-		setEditingClass(cls);
-		setFormData({
-			class_name: cls.class_name,
-			schedule_days: cls.schedule_days,
-			start_time: cls.start_time,
-			end_time: cls.end_time,
-			room_number: cls.room_number || '',
-			grade_level: cls.grade_level || '',
-			subject: cls.subject || '',
-			description: cls.description || '',
-			max_students: cls.max_students || 30,
-		});
-		setShowModal(true);
-	};
+  const handleEdit = (cls) => {
+    setEditingClass(cls);
+    setFormData({
+      class_name: cls.class_name,
+      schedule_days: cls.schedule_days,
+      start_time: cls.start_time,
+      end_time: cls.end_time,
+      room_number: cls.room_number || '',
+      grade_level: cls.grade_level || '',
+      subject: cls.subject || '',
+      description: cls.description || '',
+      max_students: cls.max_students || 30,
+    });
+    setShowModal(true);
+  };
 
-	const handleDelete = async (id) => {
-		if (!window.confirm('Are you sure you want to delete this class?')) return;
-		try {
-			await deleteMyClass(id);
-			setSuccess('Class deleted');
-			fetchClasses();
-		} catch (err) {
-			setError(err.response?.data?.error || 'Deletion failed');
-		}
-	};
-	if (selectedClass) {
-		return (
-			<ClassDetails
-				classId={selectedClass.id}
-				onBack={() => setSelectedClass(null)}
-			/>
-		);
-	}
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this class?')) return;
+    try {
+      await deleteMyClass(id);
+      setSuccess('Class deleted');
+      fetchClasses();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Deletion failed');
+    }
+  };
 
-	if (loading) {
-		return (
-			<div className='flex justify-center items-center h-64'>
-				<SpinnerIcon />
-			</div>
-		);
-	}
+  if (selectedClass) {
+    return (
+      <ClassDetails
+        classId={selectedClass.id}
+        onBack={() => setSelectedClass(null)}
+      />
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className='flex justify-center items-center h-64'>
+        <SpinnerIcon />
+      </div>
+    );
+  }
 
 	return (
-		<div className='p-6'>
-			<div className='flex justify-between items-center mb-6'>
-				<h1 className='text-2xl font-semibold text-[var(--color-text-primary)]'>
-					My Classes
-				</h1>
-				<button
-					onClick={() => {
-						resetForm();
-						setShowModal(true);
-					}}
-					className='px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)] transition-colors'
-				>
-					+ New Class
-				</button>
-			</div>
+		  <div className='p-6'>
+      <div className='flex justify-between items-center mb-6'>
+        <h1 className='text-2xl font-semibold text-[var(--color-text-primary)]'>
+          My Classes
+        </h1>
+        <button
+          onClick={() => {
+            resetForm();
+            setShowModal(true);
+          }}
+          className='px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)] transition-colors'
+        >
+          + New Class
+        </button>
+      </div>
 
-			{error && <AlertBox message={error} />}
-			{success && (
-				<div className='mb-4 p-3 rounded-lg bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 text-sm'>
-					{success}
-				</div>
-			)}
+      {error && <AlertBox message={error} />}
+      {success && (
+        <div className='mb-4 p-3 rounded-lg bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 text-sm'>
+          {success}
+        </div>
+      )}
 
-			{classes.length === 0 ? (
-				<p className='text-[var(--color-text-muted)]'>
-					No classes yet. Create your first class!
-				</p>
-			) : (
-				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-					{classes.map((cls) => (
-						<div
-							key={cls.id}
-							onClick={() => setSelectedClass(cls)}
-							className='cursor-pointer bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow'
-						>
-							<div className='flex justify-between items-start'>
-								<h3 className='text-lg font-semibold text-[var(--color-text-primary)] mb-2'>
-									{cls.class_name}
-								</h3>
-								<span className='text-xs bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-2 py-1 rounded-full'>
-									{cls.grade_level || 'N/A'}
-								</span>
-							</div>
-							{cls.subject && (
-								<p className='text-sm text-[var(--color-text-secondary)] mb-2'>
-									📚 {cls.subject}
-								</p>
-							)}
-							<div className='space-y-1 text-sm text-[var(--color-text-secondary)]'>
-								<p>📅 {cls.schedule_days}</p>
-								<p>
-									⏰ {cls.start_time} – {cls.end_time}
-								</p>
-								{cls.room_number && <p>🚪 Room {cls.room_number}</p>}
-								{cls.max_students && <p>👥 Max {cls.max_students} students</p>}
-							</div>
-							{cls.description && (
-								<p className='mt-2 text-sm text-[var(--color-text-muted)] line-clamp-2'>
-									{cls.description}
-								</p>
-							)}
-							<div
-								className='flex gap-2 mt-4'
-								onClick={(e) => e.stopPropagation()}
-							>
-								<button
-									onClick={() => handleEdit(cls)}
-									className='px-3 py-1 text-sm text-[var(--color-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border)]/50 transition-colors'
-								>
-									Edit
-								</button>
-								<button
-									onClick={() => handleDelete(cls.id)}
-									className='px-3 py-1 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors'
-								>
-									Delete
-								</button>
-							</div>
-						</div>
-					))}
-				</div>
-			)}
+      {classes.length === 0 ? (
+        <p className='text-[var(--color-text-muted)]'>
+          No classes yet. Create your first class!
+        </p>
+      ) : (
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+          {classes.map((cls) => (
+            <div
+              key={cls.id}
+              className='bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow'
+            >
+              <div className='flex justify-between items-start'>
+                <h3 className='text-lg font-semibold text-[var(--color-text-primary)] mb-2'>
+                  {cls.class_name}
+                </h3>
+                <span className='text-xs bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-2 py-1 rounded-full'>
+                  {cls.grade_level || 'N/A'}
+                </span>
+              </div>
+              {cls.subject && (
+                <p className='text-sm text-[var(--color-text-secondary)] mb-2'>
+                  📚 {cls.subject}
+                </p>
+              )}
+              <div className='space-y-1 text-sm text-[var(--color-text-secondary)]'>
+                <p>📅 {cls.schedule_days}</p>
+                <p>⏰ {cls.start_time} – {cls.end_time}</p>
+                {cls.room_number && <p>🚪 Room {cls.room_number}</p>}
+                {cls.max_students && <p>👥 Max {cls.max_students} students</p>}
+                {cls.enrolledCount !== undefined && (
+                  <p className='text-xs text-[var(--color-primary)] mt-1'>
+                    👥 Enrolled: {cls.enrolledCount}
+                  </p>
+                )}
+              </div>
+              {cls.description && (
+                <p className='mt-2 text-sm text-[var(--color-text-muted)] line-clamp-2'>
+                  {cls.description}
+                </p>
+              )}
+              <div className='flex gap-2 mt-4'>
+                <button
+                  onClick={() => setSelectedClass(cls)}
+                  className='px-3 py-1 text-sm text-[var(--color-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border)]/50 transition-colors'
+                >
+                  View Details
+                </button>
+                <button
+                  onClick={() => handleEdit(cls)}
+                  className='px-3 py-1 text-sm text-[var(--color-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border)]/50 transition-colors'
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(cls.id)}
+                  className='px-3 py-1 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors'
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
 			{/* Modal for Create/Edit */}
 			{showModal && (
