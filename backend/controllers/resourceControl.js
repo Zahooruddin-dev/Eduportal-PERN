@@ -7,19 +7,18 @@ async function createResource(req, res) {
   const { classId } = req.params;
   const teacherId = req.user.id;
   const { title, type, content, description, tags, isPublished, expiresAt } = req.body;
-  // For file upload, the file is in req.file
-  let fileContent = null;
-  if (type === 'file' && req.file) {
-    // store relative path
-    fileContent = `/uploads/resources/${req.file.filename}`;
+  let fileUrl = null;
+
+  if (type === 'file') {
+    if (!req.file) return res.status(400).json({ error: 'File is required for type "file".' });
+    fileUrl = req.file.path; // Cloudinary URL
   } else if (type === 'link') {
-    fileContent = content; // URL provided in body
+    if (!content) return res.status(400).json({ error: 'Content (URL) is required for type "link".' });
   } else {
-    return res.status(400).json({ error: 'Invalid resource type or missing file' });
+    return res.status(400).json({ error: 'Invalid resource type.' });
   }
 
   try {
-    // Verify teacher owns the class
     const targetClass = await dbClass.getClassByIdQuery(classId);
     if (!targetClass) return res.status(404).json({ error: 'Class not found' });
     if (targetClass.teacher_id !== teacherId) {
@@ -31,11 +30,11 @@ async function createResource(req, res) {
       teacherId,
       title,
       type,
-      content: fileContent || content,
+      content: fileUrl || content, // file URL for file, user URL for link
       description,
       tags: tags ? tags.split(',') : null,
       isPublished: isPublished === 'true',
-      expiresAt: expiresAt || null
+      expiresAt: expiresAt || null,
     });
     res.status(201).json(resource);
   } catch (err) {
