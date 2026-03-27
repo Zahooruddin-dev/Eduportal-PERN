@@ -1,245 +1,171 @@
-:root {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
 
-  color: #1e293b;
-  background-color: #fafafa;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
-}
-
-* {
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
+}
+
+:root {
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+
+  --sidebar-width: 272px;
+  --sidebar-collapsed-width: 68px;
+
+  /* ── Dark theme (default) ── */
+  --sb-bg:              #0d0c0b;
+  --sb-bg-elevated:     #131210;
+  --sb-border:          rgba(255, 255, 255, 0.055);
+  --sb-border-strong:   rgba(255, 255, 255, 0.10);
+
+  --sb-text:            #ede8df;
+  --sb-text-secondary:  #7a7168;
+  --sb-text-dim:        #3a3630;
+
+  --sb-accent:          #c9923a;
+  --sb-accent-light:    #e0a84e;
+  --sb-accent-bg:       rgba(201, 146, 58, 0.09);
+  --sb-accent-border:   rgba(201, 146, 58, 0.22);
+
+  --sb-hover:           rgba(255, 255, 255, 0.038);
+  --sb-active-bg:       rgba(201, 146, 58, 0.08);
+
+  --sb-badge-student-color:  #60b8e8;
+  --sb-badge-student-bg:     rgba(96, 184, 232, 0.09);
+  --sb-badge-student-border: rgba(96, 184, 232, 0.2);
+
+  --sb-badge-teacher-color:  #a78df5;
+  --sb-badge-teacher-bg:     rgba(167, 141, 245, 0.09);
+  --sb-badge-teacher-border: rgba(167, 141, 245, 0.2);
+
+  --sb-badge-admin-color:    #c9923a;
+  --sb-badge-admin-bg:       rgba(201, 146, 58, 0.09);
+  --sb-badge-admin-border:   rgba(201, 146, 58, 0.22);
+
+  --sb-avatar-bg:       #2a2722;
+  --sb-avatar-text:     #ede8df;
+
+  --sb-danger:          rgba(239, 68, 68, 0.85);
+  --sb-danger-hover-bg: rgba(239, 68, 68, 0.07);
+
+  --sb-scrollbar-thumb: rgba(255, 255, 255, 0.07);
+  --sb-scrollbar-track: transparent;
+
+  /* ── App-level ── */
+  --app-bg:    #0a0908;
+  --app-text:  #ede8df;
+  --app-surface: #111009;
+}
+
+[data-theme='light'] {
+  --sb-bg:              #f7f4ef;
+  --sb-bg-elevated:     #f0ece5;
+  --sb-border:          rgba(0, 0, 0, 0.07);
+  --sb-border-strong:   rgba(0, 0, 0, 0.12);
+
+  --sb-text:            #1c1a17;
+  --sb-text-secondary:  #9c9081;
+  --sb-text-dim:        #cdc5b8;
+
+  --sb-accent:          #a8731f;
+  --sb-accent-light:    #c48a28;
+  --sb-accent-bg:       rgba(168, 115, 31, 0.07);
+  --sb-accent-border:   rgba(168, 115, 31, 0.2);
+
+  --sb-hover:           rgba(0, 0, 0, 0.04);
+  --sb-active-bg:       rgba(168, 115, 31, 0.07);
+
+  --sb-badge-student-color:  #1a7db5;
+  --sb-badge-student-bg:     rgba(26, 125, 181, 0.07);
+  --sb-badge-student-border: rgba(26, 125, 181, 0.2);
+
+  --sb-badge-teacher-color:  #7c56d4;
+  --sb-badge-teacher-bg:     rgba(124, 86, 212, 0.07);
+  --sb-badge-teacher-border: rgba(124, 86, 212, 0.2);
+
+  --sb-badge-admin-color:    #a8731f;
+  --sb-badge-admin-bg:       rgba(168, 115, 31, 0.07);
+  --sb-badge-admin-border:   rgba(168, 115, 31, 0.2);
+
+  --sb-avatar-bg:       #e4ddd3;
+  --sb-avatar-text:     #1c1a17;
+
+  --sb-danger:          #c0392b;
+  --sb-danger-hover-bg: rgba(192, 57, 43, 0.06);
+
+  --sb-scrollbar-thumb: rgba(0, 0, 0, 0.1);
+  --sb-scrollbar-track: transparent;
+
+  --app-bg:    #edeae4;
+  --app-text:  #1c1a17;
+  --app-surface: #f2efe9;
 }
 
 html {
-  scroll-behavior: smooth;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-  
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  font-family: var(--font-body);
+  background-color: var(--app-bg);
+  color: var(--app-text);
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
   min-height: 100vh;
-  color: #1e293b;
-  background-color: #fafafa;
+  line-height: 1.5;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  line-height: 1.2;
-  font-weight: 600;
-  color: #1e293b;
-  letter-spacing: -0.025em;
+#root {
+  display: flex;
+  min-height: 100vh;
 }
 
-h1 {
-  font-size: clamp(2rem, 5vw, 3.2em);
-  line-height: 1.1;
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--sb-scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--sb-scrollbar-thumb);
+  border-radius: 99px;
 }
 
-h2 {
-  font-size: clamp(1.5rem, 4vw, 2.4em);
-}
-
-h3 {
-  font-size: clamp(1.25rem, 3vw, 1.8em);
-}
-
-p {
-  margin-bottom: 1em;
-  color: #334155;
-  line-height: 1.6;
-}
-
-a {
-  font-weight: 500;
-  color: var(--primary-500);
-  text-decoration: none;
-  transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-a:hover {
-  color: var(--primary-600);
-}
-
-a:focus-visible {
-  outline: 2px solid var(--primary-500);
+/* ── Focus ring ── */
+:focus-visible {
+  outline: 2px solid var(--sb-accent);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
-button {
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  padding: 0.75rem 1.5rem;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  font-family: inherit;
-  background: #ffffff;
-  color: #334155;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  letter-spacing: 0.01em;
+/* ── Selection ── */
+::selection {
+  background: var(--sb-accent-bg);
+  color: var(--sb-accent-light);
 }
 
-button:hover:not(:disabled) {
-  border-color: var(--primary-500);
-  background: #f8fafc;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+/* ── Layout helper — main content shifts with sidebar ── */
+.app-content {
+  margin-left: var(--sidebar-width);
+  flex: 1;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 2rem;
 }
 
-button:focus-visible {
-  outline: 2px solid var(--primary-500);
-  outline-offset: 2px;
+.app-content.sidebar-collapsed {
+  margin-left: var(--sidebar-collapsed-width);
 }
 
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-  background: #f8fafc;
-  color: #94a3b8;
-}
-
-button:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-input,
-textarea,
-select {
-  font-family: inherit;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  line-height: inherit;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  padding: 0.875rem 1rem;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-}
-
-input:hover:not(:disabled),
-textarea:hover:not(:disabled),
-select:hover:not(:disabled) {
-  border-color: rgba(0, 0, 0, 0.12);
-}
-
-input:focus,
-textarea:focus,
-select:focus {
-  outline: none;
-  border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px rgba(6,182,212,0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-input:disabled,
-textarea:disabled,
-select:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-  background: #f8fafc;
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: #94a3b8;
-}
-
-img,
-picture,
-video,
-canvas,
-svg {
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
-
-table {
-  border-collapse: separate;
-  border-spacing: 0;
-  width: 100%;
-  color: #334155;
-}
-
-[role="button"],
-[role="link"] {
-  cursor: pointer;
-}
-
-[aria-hidden="true"] {
-  display: none;
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-@media (max-width: 768px) {
-  body {
-    min-width: 100%;
-  }
-  
-  button {
-    padding: 0.75rem 1.25rem;
-    font-size: 0.9375rem;
-  }
-
-  input,
-  textarea,
-  select {
-    padding: 0.75rem 0.875rem;
-  }
-}
-
-@media (max-width: 480px) {
-  h1 {
-    font-size: 2rem;
-  }
-  
-  button {
-    padding: 0.625rem 1rem;
-    font-size: 0.875rem;
-  }
-
-  input,
-  textarea,
-  select {
-    padding: 0.625rem 0.75rem;
-    font-size: 0.875rem;
+@media (max-width: 767px) {
+  .app-content {
+    margin-left: 0;
   }
 }
