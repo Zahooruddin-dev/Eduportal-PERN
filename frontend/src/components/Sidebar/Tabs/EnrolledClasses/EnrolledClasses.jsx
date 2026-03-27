@@ -1,4 +1,3 @@
-// src/Dashboard/Sidebar/Tabs/EnrolledClasses.jsx
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
 import {
@@ -8,7 +7,7 @@ import {
 	unenrollStudent,
 	getClassAnnouncements,
 } from '../../../../api/api';
-import { SpinnerIcon, AlertBox } from '../../../Icons/Icon';
+import { SpinnerIcon } from '../../../Icons/Icon';
 
 export default function EnrolledClasses() {
 	const { user } = useAuth();
@@ -22,6 +21,17 @@ export default function EnrolledClasses() {
 	const [announcements, setAnnouncements] = useState([]);
 	const [showAnnouncementsModal, setShowAnnouncementsModal] = useState(false);
 	const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
+
+	// Auto‑hide messages after 3 seconds
+	useEffect(() => {
+		if (error || success) {
+			const timer = setTimeout(() => {
+				setError('');
+				setSuccess('');
+			}, 3000);
+			return () => clearTimeout(timer);
+		}
+	}, [error, success]);
 
 	// Fetch enrolled classes
 	const fetchEnrolled = async () => {
@@ -37,12 +47,12 @@ export default function EnrolledClasses() {
 		}
 	};
 
-	// Fetch all available classes
+	// Fetch all available classes (filtered in useEffect)
 	const fetchAvailable = async () => {
 		setLoadingAvailable(true);
 		try {
 			const res = await getClasses();
-			// Filter out classes already enrolled
+			// Filter out already enrolled
 			const enrolledIds = enrolledClasses.map((c) => c.class_id);
 			const filtered = res.data.filter((cls) => !enrolledIds.includes(cls.id));
 			setAvailableClasses(filtered);
@@ -60,10 +70,8 @@ export default function EnrolledClasses() {
 	}, [user]);
 
 	useEffect(() => {
-		if (enrolledClasses.length > 0) {
+		if (enrolledClasses.length >= 0) {
 			fetchAvailable();
-		} else {
-			fetchAvailable(); // also fetch when enrolled is empty
 		}
 	}, [enrolledClasses]);
 
@@ -73,7 +81,7 @@ export default function EnrolledClasses() {
 		try {
 			await postEnrollement({ student_id: user.id, class_id: classId });
 			setSuccess('Successfully enrolled!');
-			fetchEnrolled(); // refresh enrolled list
+			fetchEnrolled(); // refresh list
 		} catch (err) {
 			setError(err.response?.data?.message || 'Enrollment failed');
 		}
@@ -87,7 +95,7 @@ export default function EnrolledClasses() {
 		try {
 			await unenrollStudent(user.id, classId);
 			setSuccess('Successfully unenrolled');
-			fetchEnrolled(); // refresh
+			fetchEnrolled();
 		} catch (err) {
 			setError(err.response?.data?.error || 'Unenrollment failed');
 		}
@@ -121,9 +129,13 @@ export default function EnrolledClasses() {
 				My Enrolled Classes
 			</h1>
 
-			{error && <AlertBox message={error} />}
+			{error && (
+				<div className='mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm'>
+					{error}
+				</div>
+			)}
 			{success && (
-				<div className='mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900/40 text-green-700 dark:text-green-400 text-sm'>
+				<div className='mb-4 p-3 rounded-lg bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 text-sm'>
 					{success}
 				</div>
 			)}

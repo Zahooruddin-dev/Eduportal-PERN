@@ -148,11 +148,11 @@ export default function ScheduleManagement() {
 			</div>
 
 			{error && <AlertBox message={error} />}
-			{success && (
-				<div className='mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900/40 text-green-700 dark:text-green-400 text-sm'>
-					{success}
-				</div>
-			)}
+{success && (
+  <div className="mb-4 p-3 rounded-lg bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 text-sm">
+    {success}
+  </div>
+)}
 
 			{classes.length === 0 ? (
 				<p className='text-[var(--color-text-muted)]'>
