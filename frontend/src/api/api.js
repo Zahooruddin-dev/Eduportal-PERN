@@ -85,3 +85,26 @@ export const getClassAttendance = (classId, date) => {
 export const postAttendance = (classId, data) => {
     return api.post(`/api/attendance/${classId}`, data);
 };
+export const getClassAssignments = (classId) => {
+    return api.get(`/api/class/${classId}/grades/assignments`);
+};
+export const createAssignment = (classId, data) => {
+    return api.post(`/api/class/${classId}/grades/assignments`, data);
+};
+export const updateAssignment = (classId, assignmentId, data) => {
+    return api.put(`/api/class/${classId}/grades/assignments/${assignmentId}`, data);
+};
+export const deleteAssignment = (classId, assignmentId) => {
+    return api.delete(`/api/class/${classId}/grades/assignments/${assignmentId}`);
+};
+
+// Grades
+export const getAssignmentGrades = (classId, assignmentId) => {
+    return api.get(`/api/class/${classId}/grades/assignments/${assignmentId}/grades`);
+};
+export const submitAssignmentGrades = (classId, assignmentId, data) => {
+    return api.post(`/api/class/${classId}/grades/assignments/${assignmentId}/grades`, data);
+};
+export const getStudentGradesForClass = (classId) => {
+    return api.get(`/api/class/${classId}/grades/my-grades`);
+};
