@@ -8,6 +8,8 @@ import {
 	getClassAnnouncements,
 } from '../../../../../api/api';
 import { SpinnerIcon } from '../../../../Icons/Icon';
+import Toast from '../../../../Toast';
+import ConfirmModal from '../../../../ConfirmModal';
 
 export default function EnrolledClasses() {
 	const { user } = useAuth();
@@ -17,6 +19,9 @@ export default function EnrolledClasses() {
 	const [loadingAvailable, setLoadingAvailable] = useState(true);
 	const [error, setError] = useState('');
 	const [success, setSuccess] = useState('');
+	const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
+	const [confirmOpen, setConfirmOpen] = useState(false);
+	const [unenrollTarget, setUnenrollTarget] = useState(null);
 	const [selectedClass, setSelectedClass] = useState(null);
 	const [announcements, setAnnouncements] = useState([]);
 	const [showAnnouncementsModal, setShowAnnouncementsModal] = useState(false);
@@ -81,23 +86,34 @@ export default function EnrolledClasses() {
 		try {
 			await postEnrollement({ student_id: user.id, class_id: classId });
 			setSuccess('Successfully enrolled!');
+			setToast({ isOpen: true, type: 'success', message: 'Successfully enrolled!' });
 			fetchEnrolled(); // refresh list
 		} catch (err) {
-			setError(err.response?.data?.message || 'Enrollment failed');
+			const msg = err.response?.data?.message || 'Enrollment failed';
+			setError(msg);
+			setToast({ isOpen: true, type: 'error', message: msg });
 		}
 	};
 
-	const handleUnenroll = async (classId) => {
-		if (!window.confirm('Are you sure you want to unenroll from this class?'))
-			return;
+	const requestUnenroll = (classId) => {
+		setUnenrollTarget(classId);
+		setConfirmOpen(true);
+	};
+
+	const performUnenroll = async () => {
+		if (!unenrollTarget) return;
 		setError('');
 		setSuccess('');
 		try {
-			await unenrollStudent(user.id, classId);
+			await unenrollStudent(user.id, unenrollTarget);
 			setSuccess('Successfully unenrolled');
+			setToast({ isOpen: true, type: 'success', message: 'Successfully unenrolled' });
+			setUnenrollTarget(null);
 			fetchEnrolled();
 		} catch (err) {
-			setError(err.response?.data?.error || 'Unenrollment failed');
+			const msg = err.response?.data?.error || 'Unenrollment failed';
+			setError(msg);
+			setToast({ isOpen: true, type: 'error', message: msg });
 		}
 	};
 
@@ -129,16 +145,13 @@ export default function EnrolledClasses() {
 				My Enrolled Classes
 			</h1>
 
-			{error && (
-				<div className='mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm'>
-					{error}
-				</div>
-			)}
-			{success && (
-				<div className='mb-4 p-3 rounded-lg bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 text-sm'>
-					{success}
-				</div>
-			)}
+			{/* Notifications */}
+			<Toast
+				type={toast.type}
+				message={toast.message}
+				isOpen={toast.isOpen}
+				onClose={() => setToast((t) => ({ ...t, isOpen: false }))}
+			/>
 
 			{/* Enrolled Classes Section */}
 			<div className='mb-8'>
@@ -177,7 +190,7 @@ export default function EnrolledClasses() {
 										Announcements
 									</button>
 									<button
-										onClick={() => handleUnenroll(cls.class_id)}
+										onClick={() => requestUnenroll(cls.class_id)}
 										className='px-3 py-1 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors'
 									>
 										Unenroll
@@ -286,6 +299,21 @@ export default function EnrolledClasses() {
 					</div>
 				</div>
 			)}
+
+			{/* Confirm unenroll modal */}
+			<ConfirmModal
+				isOpen={confirmOpen}
+				onClose={() => {
+					setConfirmOpen(false);
+					setUnenrollTarget(null);
+				}}
+				onConfirm={performUnenroll}
+				title='Unenroll from class'
+				message='Are you sure you want to unenroll from this class?'
+				confirmText='Unenroll'
+				cancelText='Cancel'
+				type='warning'
+			/>
 		</div>
 	);
 }
