@@ -8,6 +8,7 @@ const authRoutes = require('./routes/authRoutes');
 const announcementRoutes = require('./routes/announcements');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const resourceRoutes = require('./routes/classResourcesRoutes');
+const commentRoutes = require('./routes/comments');
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use('/api/class/:classId/announcements', announcementRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/class/:classId/resources', resourceRoutes);
+app.use('/api/class/:classId/resources/:resourceId/comments', commentRoutes);
 app.use('/api/enroll', enrollRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/uploads', express.static('uploads'));
