@@ -7,6 +7,8 @@ import {
 import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
 import { FileText, ExternalLink, Link as LinkIcon } from 'lucide-react';
 import FileViewerModal from '../../../../FileViewerModal/FileViewerModal';
+import CommentSection from '../../Shared/CommentSection';
+import { getFileViewUrl } from '../../../../../utils/fileUtils';
 
 export default function StudentCourseMaterial() {
 	const { user } = useAuth();
@@ -17,6 +19,7 @@ export default function StudentCourseMaterial() {
 	const [resources, setResources] = useState([]);
 	const [loadingResources, setLoadingResources] = useState(false);
 	const [viewingFile, setViewingFile] = useState(null);
+	const [showCommentsFor, setShowCommentsFor] = useState(null);
 
 	const fetchClasses = async () => {
 		setLoading(true);
@@ -121,12 +124,12 @@ export default function StudentCourseMaterial() {
 												{res.description}
 											</p>
 										)}
-										<div className='mt-2'>
+										<div className='flex items-center gap-4 mt-3'>
 											{res.type === 'file' ? (
 												<button
 													onClick={() =>
 														setViewingFile({
-															url: res.content,
+															url: getFileViewUrl(res.content),
 															title: res.title,
 														})
 													}
@@ -147,6 +150,12 @@ export default function StudentCourseMaterial() {
 													<ExternalLink size={12} />
 												</a>
 											)}
+											<button
+												onClick={() => setShowCommentsFor(res.id)}
+												className='inline-flex items-center gap-1 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-primary)]'
+											>
+												💬 Comments ({res.comment_count ?? 0})
+											</button>
 										</div>
 									</div>
 								</div>
@@ -157,6 +166,21 @@ export default function StudentCourseMaterial() {
 						))}
 					</div>
 				)}
+                	{showCommentsFor && (
+				<CommentSection
+					classId={selectedClass.class_id}
+					resourceId={showCommentsFor}
+					onClose={() => setShowCommentsFor(null)}
+				/>
+			)}
+			{viewingFile && (
+				<FileViewerModal
+					fileUrl={viewingFile.url}
+					title={viewingFile.title}
+					isOpen={!!viewingFile}
+					onClose={() => setViewingFile(null)}
+				/>
+			)}
 			</div>
 		);
 	}
@@ -194,16 +218,10 @@ export default function StudentCourseMaterial() {
 							</div>
 						</div>
 					))}
+  
 				</div>
 			)}
-			{viewingFile && (
-				<FileViewerModal
-					fileUrl={viewingFile.url}
-					title={viewingFile.title}
-					isOpen={!!viewingFile}
-					onClose={() => setViewingFile(null)}
-				/>
-			)}
+		
 		</div>
 	);
 }

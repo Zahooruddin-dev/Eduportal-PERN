@@ -396,7 +396,7 @@ export default function ResourceManager({ classId, className, onBack }) {
 										</div>
 									)}
 
-									<div className='mt-2'>
+									<div className='flex items-center gap-4 mt-3'>
 										{res.type === 'file' ? (
 											<button
 												onClick={() =>
@@ -419,17 +419,17 @@ export default function ResourceManager({ classId, className, onBack }) {
 											>
 												<LinkIcon size={14} />
 												Visit Link
-												<ExternalLink size={12} />
 											</a>
 										)}
+										<button
+											onClick={() => setShowCommentsFor(res.id)}
+											className='inline-flex items-center gap-1 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-primary)]'
+										>
+											💬 Comments ({res.comment_count ?? 0})
+										</button>
 									</div>
 								</div>
-								<button
-									onClick={() => setShowCommentsFor(res.id)}
-									className='text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]'
-								>
-									Comments ({res.comment_count ?? 0})
-								</button>
+
 								<div className='flex gap-2'>
 									<button
 										onClick={() => handleTogglePublish(res)}

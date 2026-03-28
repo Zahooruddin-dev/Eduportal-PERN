@@ -8,8 +8,8 @@ import {
 	deleteResource,
 } from '../../../../../api/api';
 import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
-
 import ResourceManager from './ResourceManager';
+import CommentSection from '../../Shared/CommentSection';
 
 export default function CourseMaterial() {
 	const { user } = useAuth();
@@ -17,6 +17,7 @@ export default function CourseMaterial() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
 	const [selectedClass, setSelectedClass] = useState(null);
+	const [showCommentsFor, setShowCommentsFor] = useState(null);
 
 	const fetchClasses = async () => {
 		setLoading(true);
