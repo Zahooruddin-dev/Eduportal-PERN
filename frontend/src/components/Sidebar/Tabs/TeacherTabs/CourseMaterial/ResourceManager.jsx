@@ -10,7 +10,6 @@ import {
 	ExternalLink,
 } from 'lucide-react';
 import {
-  
 	getClassResources,
 	createResource,
 	updateResource,
@@ -397,13 +396,18 @@ export default function ResourceManager({ classId, className, onBack }) {
 
 									<div className='mt-2'>
 										{res.type === 'file' ? (
-									<button
-  onClick={() => setViewingFile({ url: getFileViewUrl(res.content), title: res.title })}
-  className="inline-flex items-center gap-1 text-sm text-[var(--color-primary)] hover:underline"
->
-  <FileText size={14} />
-  View File
-</button>
+											<button
+												onClick={() =>
+													setViewingFile({
+														url: getFileViewUrl(res.content),
+														title: res.title,
+													})
+												}
+												className='inline-flex items-center gap-1 text-sm text-[var(--color-primary)] hover:underline'
+											>
+												<FileText size={14} />
+												View File
+											</button>
 										) : (
 											<a
 												href={res.content}
@@ -448,14 +452,14 @@ export default function ResourceManager({ classId, className, onBack }) {
 					))}
 				</div>
 			)}
-      {viewingFile && (
-  <FileViewerModal
-    fileUrl={viewingFile.url}
-    title={viewingFile.title}
-    isOpen={!!viewingFile}
-    onClose={() => setViewingFile(null)}
-  />
-)}
+			{viewingFile && (
+				<FileViewerModal
+					fileUrl={viewingFile.url}
+					title={viewingFile.title}
+					isOpen={!!viewingFile}
+					onClose={() => setViewingFile(null)}
+				/>
+			)}
 		</div>
 	);
 }
