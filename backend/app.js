@@ -22,7 +22,6 @@ app.use('/api/announcements', announcementRoutes);
 app.use('/api/class/:classId/resources', resourceRoutes);
 app.use('/api/class/:classId/resources/:resourceId/comments', commentRoutes);
 app.use('/api/class/:classId/grades', gradeRoutes);
-
 app.use('/api/enroll', enrollRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/uploads', express.static('uploads'));
