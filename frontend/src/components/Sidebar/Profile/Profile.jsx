@@ -1,8 +1,8 @@
 // Profile.jsx
 import { useState, useRef, useEffect } from 'react';
-import { useAuth } from '../../../../../context/AuthContext';
-import { updateUsername, changePassword, deleteUser } from '../../../../../api/authApi';
-import { SpinnerIcon, EyeIcon } from '../../../../Icons/Icon';
+import { useAuth } from '../../../context/AuthContext';
+import { updateUsername, changePassword, deleteUser } from '../../../api/authApi';
+import { SpinnerIcon, EyeIcon } from '../../Icons/Icon';
 import { AlertTriangle, CheckCircle, XCircle, User, Key, Trash2, Camera } from 'lucide-react';
 
 export default function Profile() {
