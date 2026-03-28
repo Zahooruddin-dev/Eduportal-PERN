@@ -78,3 +78,10 @@ export const updateResourceComment = (classId, resourceId, commentId, data) => {
 export const deleteResourceComment = (classId, resourceId, commentId) => {
     return api.delete(`/api/class/${classId}/resources/${resourceId}/comments/${commentId}`);
 };
+export const getClassAttendance = (classId, date) => {
+    return api.get(`/api/attendance/${classId}`, { params: { date } });
+};
+
+export const postAttendance = (classId, data) => {
+    return api.post(`/api/attendance/${classId}`, data);
+};

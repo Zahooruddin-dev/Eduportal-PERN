@@ -191,3 +191,13 @@ CREATE TABLE IF NOT EXISTS resource_comments (
 CREATE INDEX IF NOT EXISTS idx_resource_comments_resource_id ON resource_comments(resource_id);
 CREATE INDEX IF NOT EXISTS idx_resource_comments_parent_id ON resource_comments(parent_comment_id);
 CREATE INDEX IF NOT EXISTS idx_resource_comments_user_id ON resource_comments(user_id);
+CREATE TABLE IF NOT EXISTS attendance (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    class_id UUID NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+    student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('present', 'absent', 'late', 'excused')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE (student_id, class_id, date)
+);
