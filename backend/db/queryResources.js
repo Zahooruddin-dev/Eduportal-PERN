@@ -33,17 +33,29 @@ async function createResourceQuery(resourceData) {
 }
 
 async function getResourcesByClassQuery(classId, teacherId) {
-	const query = teacherId
-		? `SELECT r.*, 
-            (SELECT COUNT(*) FROM resource_comments WHERE resource_id = r.id) AS comment_count
-           FROM class_resources r
-           WHERE r.class_id = $1`
-		: `SELECT r.*, 
-            (SELECT COUNT(*) FROM resource_comments WHERE resource_id = r.id) AS comment_count
-           FROM class_resources r
-           WHERE r.class_id = $1 AND r.is_published = true`;
-	const { rows } = await pool.query(query, [classId]);
-	return rows;
+  // teacherId is present for teachers (they see all, including expired)
+  if (teacherId) {
+    const { rows } = await pool.query(
+      `SELECT r.*,
+        (SELECT COUNT(*) FROM resource_comments WHERE resource_id = r.id) AS comment_count
+       FROM class_resources r
+       WHERE r.class_id = $1`,
+      [classId]
+    );
+    return rows;
+  } else {
+    // student view: only published and not expired
+    const { rows } = await pool.query(
+      `SELECT r.*,
+        (SELECT COUNT(*) FROM resource_comments WHERE resource_id = r.id) AS comment_count
+       FROM class_resources r
+       WHERE r.class_id = $1
+         AND r.is_published = true
+         AND (r.expires_at IS NULL OR r.expires_at > NOW())`,
+      [classId]
+    );
+    return rows;
+  }
 }
 async function getResourceByIdQuery(resourceId) {
 	const { rows } = await pool.query(
