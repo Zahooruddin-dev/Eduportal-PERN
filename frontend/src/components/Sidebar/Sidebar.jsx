@@ -22,7 +22,11 @@ import ConfirmModal from '../ConfirmModal';
 const studentNavItems = [
 	{ id: 'enrolled-classes', label: 'Enrolled Classes', icon: GraduationCap },
 	{ id: 'announcements', label: 'Announcements', icon: Megaphone },
-  {id:'teacher-communication', label:'Teacher Communication', icon: MessageSquare},
+	{
+		id: 'teacher-communication',
+		label: 'Teacher Communication',
+		icon: MessageSquare,
+	},
 	{ id: 'academic-calendar', label: 'Academic Calendar', icon: Calendar },
 
 	{ id: 'course-material', label: 'Course Material', icon: BookOpen },
@@ -42,7 +46,7 @@ const teacherNavItems = [
 		label: 'Student Communication',
 		icon: MessageSquare,
 	},
-	{ id: 'student-attendance', label: 'Student Attendance', icon: UserCheck },
+	{ id: 'teacher-attendance', label: 'Student Attendance', icon: UserCheck },
 ];
 
 export default function Sidebar({

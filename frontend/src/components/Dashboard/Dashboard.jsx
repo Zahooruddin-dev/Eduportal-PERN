@@ -55,7 +55,7 @@ export default function Dashboard() {
 					return <ScheduleManagement />;
 				case 'course-material':
 					return <CourseMaterial />;
-				case 'student-attendance':
+				case 'teacher-attendance':
 					return <TeacherAttendance />;
 				case 'profile':
 					return <Profile />;
