@@ -18,6 +18,7 @@ import {
 import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
 import FileViewerModal from '../../../../FileViewerModal/FileViewerModal';
 import { getFileViewUrl } from '../../../../../utils/fileUtils';
+import CommentSection from '../../Shared/CommentSection';
 
 export default function ResourceManager({ classId, className, onBack }) {
 	const [resources, setResources] = useState([]);
@@ -37,6 +38,7 @@ export default function ResourceManager({ classId, className, onBack }) {
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [uploading, setUploading] = useState(false);
 	const [viewingFile, setViewingFile] = useState(null);
+	const [showCommentsFor, setShowCommentsFor] = useState(null);
 
 	const fetchResources = async () => {
 		setLoading(true);
@@ -422,6 +424,12 @@ export default function ResourceManager({ classId, className, onBack }) {
 										)}
 									</div>
 								</div>
+								<button
+									onClick={() => setShowCommentsFor(res.id)}
+									className='text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]'
+								>
+									Comments ({res.comment_count ?? 0})
+								</button>
 								<div className='flex gap-2'>
 									<button
 										onClick={() => handleTogglePublish(res)}
@@ -451,6 +459,13 @@ export default function ResourceManager({ classId, className, onBack }) {
 						</div>
 					))}
 				</div>
+			)}
+			{showCommentsFor && (
+				<CommentSection
+					classId={classId}
+					resourceId={showCommentsFor}
+					onClose={() => setShowCommentsFor(null)}
+				/>
 			)}
 			{viewingFile && (
 				<FileViewerModal
