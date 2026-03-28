@@ -12,10 +12,10 @@ import {
 } from '../../../../../api/api';
 import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
 import { Plus, Edit2, Trash2, Save, X, ChevronDown, ChevronUp } from 'lucide-react';
-import Toast from '../../../../../components/Toast';
-import ConfirmModal from '../../../../../components/ConfirmModal';
+import Toast from '../../../../Toast';
+import ConfirmModal from '../../../../ConfirmModal';
 
-export default function TeacherGradebook() {
+export default function TeacherAssignments() {
   const { user } = useAuth();
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);

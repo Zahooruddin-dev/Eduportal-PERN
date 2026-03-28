@@ -40,7 +40,7 @@ const teacherNavItems = [
 		icon: Calendar,
 	},
 	{ id: 'course-material', label: 'Course Material', icon: BookOpen },
-	{ id: 'gradebook', label: 'Gradebook', icon: BarChart },
+	{ id: 'assignments', label: 'Assignments', icon: BarChart },
 	{
 		id: 'student-communication',
 		label: 'Student Communication',
