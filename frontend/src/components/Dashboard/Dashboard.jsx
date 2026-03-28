@@ -43,17 +43,7 @@ export default function Dashboard() {
 				case 'profile':
 					return <Profile />;
 				default:
-					return (
-						<div className='p-6'>
-							<h1 className='text-2xl font-semibold text-[var(--color-text-primary)]'>
-								Welcome, {user?.username}!
-							</h1>
-							<p className='mt-2 text-[var(--color-text-muted)]'>
-								This is your student dashboard. Select an option from the
-								sidebar.
-							</p>
-						</div>
-					);
+					return <EnrolledClasses />;
 			}
 		}
 
@@ -67,17 +57,7 @@ export default function Dashboard() {
 				case 'profile':
 					return <Profile />;
 				default:
-					return (
-						<div className='p-6'>
-							<h1 className='text-2xl font-semibold text-[var(--color-text-primary)]'>
-								Welcome, {user?.username}!
-							</h1>
-							<p className='mt-2 text-[var(--color-text-muted)]'>
-								This is your teacher dashboard. Select an option from the
-								sidebar.
-							</p>
-						</div>
-					);
+					return <ScheduleManagement />;
 			}
 		}
 
