@@ -1,9 +1,11 @@
-// Profile.jsx
+// Profile.jsx (updated)
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { updateUsername, changePassword, deleteUser } from '../../../api/authApi';
 import { SpinnerIcon, EyeIcon } from '../../Icons/Icon';
-import { AlertTriangle, CheckCircle, XCircle, User, Key, Trash2, Camera } from 'lucide-react';
+import { User, Key, Camera, Trash2 } from 'lucide-react';
+import ConfirmModal from '../../../components/ConfirmModal';
+import Toast from '../../../components/Toast';
 
 export default function Profile() {
   const { user, login, logout } = useAuth();
@@ -21,6 +23,8 @@ export default function Profile() {
     newPassword: '',
   });
   const [avatarPreview, setAvatarPreview] = useState(user?.profile || null);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
   const fileInputRef = useRef(null);
 
   // Update avatar preview when user profile changes
@@ -29,6 +33,10 @@ export default function Profile() {
       setAvatarPreview(user.profile);
     }
   }, [user]);
+
+  const showToast = (type, message) => {
+    setToast({ isOpen: true, type, message });
+  };
 
   const handleProfileChange = (e) => {
     const { name, value, files } = e.target;
@@ -63,13 +71,12 @@ export default function Profile() {
     }
     try {
       const res = await updateUsername(formData);
-      login(res.data.token); // update context
-      setSuccess('Profile updated successfully');
-      // Clear file input
+      login(res.data.token);
+      showToast('success', 'Profile updated successfully');
       if (fileInputRef.current) fileInputRef.current.value = '';
       setProfileForm((prev) => ({ ...prev, image: null }));
     } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+      showToast('error', err.response?.data?.message || 'Update failed');
     } finally {
       setLoading(false);
     }
@@ -78,7 +85,7 @@ export default function Profile() {
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     if (passwordForm.newPassword.length < 6) {
-      setError('New password must be at least 6 characters');
+      showToast('error', 'New password must be at least 6 characters');
       return;
     }
     setLoading(true);
@@ -86,41 +93,28 @@ export default function Profile() {
     setSuccess('');
     try {
       await changePassword(passwordForm);
-      setSuccess('Password changed successfully');
+      showToast('success', 'Password changed successfully');
       setPasswordForm({ currentPassword: '', newPassword: '' });
     } catch (err) {
-      setError(err.response?.data?.message || 'Password change failed');
+      showToast('error', err.response?.data?.message || 'Password change failed');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteAccount = async () => {
-    const confirmDelete = window.confirm(
-      '⚠️ WARNING: This action is permanent! Your account and all associated data will be deleted. This cannot be undone. Are you absolutely sure?'
-    );
-    if (!confirmDelete) return;
     setLoading(true);
-    setError('');
     try {
       await deleteUser({ email: user.email, password: passwordForm.currentPassword });
       logout();
     } catch (err) {
-      setError(err.response?.data?.message || 'Deletion failed');
+      showToast('error', err.response?.data?.message || 'Deletion failed');
       setLoading(false);
     }
   };
 
-  // Auto‑clear success/error after 5 seconds
-  useEffect(() => {
-    if (error || success) {
-      const timer = setTimeout(() => {
-        setError('');
-        setSuccess('');
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [error, success]);
+  // Auto‑clear error/success (not needed anymore, we use toast)
+  // We keep them for backward compatibility, but remove the local state messages.
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
@@ -133,26 +127,6 @@ export default function Profile() {
           Manage your account information and security preferences
         </p>
       </div>
-
-      {/* Alerts */}
-      {error && (
-        <div
-          role="alert"
-          className="mb-6 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400"
-        >
-          <XCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
-          <span>{error}</span>
-        </div>
-      )}
-      {success && (
-        <div
-          role="status"
-          className="mb-6 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900/40 dark:bg-green-950/30 dark:text-green-400"
-        >
-          <CheckCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
-          <span>{success}</span>
-        </div>
-      )}
 
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Profile update card */}
@@ -322,14 +296,14 @@ export default function Profile() {
         <div>
           <div className="rounded-2xl border border-red-200 bg-red-50/30 p-6 dark:border-red-900/40 dark:bg-red-950/20">
             <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
-              <AlertTriangle size={20} />
+              <Trash2 size={20} />
               <h2 className="text-lg font-medium">Danger Zone</h2>
             </div>
             <p className="mt-2 text-sm text-red-600 dark:text-red-400">
               Once you delete your account, there is no going back. Please be certain.
             </p>
             <button
-              onClick={handleDeleteAccount}
+              onClick={() => setConfirmModalOpen(true)}
               disabled={loading}
               className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-300 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-500/20 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 dark:border-red-800 dark:text-red-400"
               aria-label="Delete account permanently"
@@ -340,6 +314,26 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModalOpen}
+        onClose={() => setConfirmModalOpen(false)}
+        onConfirm={handleDeleteAccount}
+        title="Delete Account"
+        message="Are you absolutely sure? This action cannot be undone and all your data will be permanently removed."
+        confirmText="Yes, delete my account"
+        cancelText="Cancel"
+        type="danger"
+      />
+
+      {/* Toast Notification */}
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        isOpen={toast.isOpen}
+        onClose={() => setToast({ isOpen: false, type: 'success', message: '' })}
+      />
     </div>
   );
 }
