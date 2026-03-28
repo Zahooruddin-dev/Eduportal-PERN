@@ -201,3 +201,30 @@ CREATE TABLE IF NOT EXISTS attendance (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE (student_id, class_id, date)
 );
+CREATE INDEX IF NOT EXISTS idx_attendance_class_id ON attendance(class_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_student_id ON attendance(student_id);
+CREATE INDEX IF NOT EXISTS idx_resource_comments_user_id ON resource_comments(user_id);
+-- Assignments table
+CREATE TABLE IF NOT EXISTS assignments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    class_id UUID NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    type VARCHAR(50) DEFAULT 'assignment',
+    max_score NUMERIC(10,2) NOT NULL,
+    due_date DATE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Grades table
+CREATE TABLE IF NOT EXISTS grades (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    assignment_id UUID NOT NULL REFERENCES assignments(id) ON DELETE CASCADE,
+    student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    score NUMERIC(10,2),
+    feedback TEXT,
+    submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(assignment_id, student_id)
+);
