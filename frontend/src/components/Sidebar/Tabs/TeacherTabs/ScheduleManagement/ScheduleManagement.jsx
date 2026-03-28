@@ -7,17 +7,22 @@ import {
   updateClass,
   getClassEnrolledRooster,
 } from '../../../../../api/api';
-import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
+import { SpinnerIcon } from '../../../../Icons/Icon';
 import ClassDetails from './ClassDetails';
+import Toast from '../../../../Toast';
+import ConfirmModal from '../../../../ConfirmModal';
 
 export default function ScheduleManagement() {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
   const [showModal, setShowModal] = useState(false);
   const [editingClass, setEditingClass] = useState(null);
   const [selectedClass, setSelectedClass] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [classToDelete, setClassToDelete] = useState(null);
   const [formData, setFormData] = useState({
     class_name: '',
     schedule_days: '',
@@ -88,15 +93,19 @@ export default function ScheduleManagement() {
       if (editingClass) {
         await updateClass(editingClass.id, formData);
         setSuccess('Class updated successfully');
+        setToast({ isOpen: true, type: 'success', message: 'Class updated successfully' });
       } else {
         await createClass(formData);
         setSuccess('Class created successfully');
+        setToast({ isOpen: true, type: 'success', message: 'Class created successfully' });
       }
       resetForm();
       setShowModal(false);
       fetchClasses(); // refresh list
     } catch (err) {
-      setError(err.response?.data?.error || 'Operation failed');
+      const msg = err.response?.data?.error || 'Operation failed';
+      setError(msg);
+      setToast({ isOpen: true, type: 'error', message: msg });
     }
   };
 
@@ -116,14 +125,22 @@ export default function ScheduleManagement() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this class?')) return;
+  const requestDelete = (cls) => {
+    setClassToDelete(cls);
+    setConfirmOpen(true);
+  };
+
+  const performDelete = async () => {
+    if (!classToDelete) return;
     try {
-      await deleteMyClass(id);
-      setSuccess('Class deleted');
+      await deleteMyClass(classToDelete.id);
+      setToast({ isOpen: true, type: 'success', message: 'Class deleted' });
+      setClassToDelete(null);
       fetchClasses();
     } catch (err) {
-      setError(err.response?.data?.error || 'Deletion failed');
+      const msg = err.response?.data?.error || 'Deletion failed';
+      setToast({ isOpen: true, type: 'error', message: msg });
+      setError(msg);
     }
   };
 
@@ -161,12 +178,13 @@ export default function ScheduleManagement() {
         </button>
       </div>
 
-      {error && <AlertBox message={error} />}
-      {success && (
-        <div className='mb-4 p-3 rounded-lg bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 text-sm'>
-          {success}
-        </div>
-      )}
+      {/* Notifications */}
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        isOpen={toast.isOpen}
+        onClose={() => setToast((t) => ({ ...t, isOpen: false }))}
+      />
 
       {classes.length === 0 ? (
         <p className='text-[var(--color-text-muted)]'>
@@ -202,7 +220,22 @@ export default function ScheduleManagement() {
                     👥 Enrolled: {cls.enrolledCount}
                   </p>
                 )}
-              </div>
+
+                  {/* Confirm delete modal */}
+                  <ConfirmModal
+                    isOpen={confirmOpen}
+                    onClose={() => {
+                      setConfirmOpen(false);
+                      setClassToDelete(null);
+                    }}
+                    onConfirm={performDelete}
+                    title='Delete Class'
+                    message='Are you sure you want to delete this class? This action cannot be undone.'
+                    confirmText='Delete'
+                    cancelText='Cancel'
+                    type='danger'
+                  />
+            	</div>
               {cls.description && (
                 <p className='mt-2 text-sm text-[var(--color-text-muted)] line-clamp-2'>
                   {cls.description}
@@ -222,7 +255,7 @@ export default function ScheduleManagement() {
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDelete(cls.id)}
+                  onClick={() => requestDelete(cls)}
                   className='px-3 py-1 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors'
                 >
                   Delete
