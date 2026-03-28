@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import Sidebar from '../Sidebar/Sidebar';
-import Profile from '../Profile/Profile';
+import Profile from '../Sidebar/Tabs/Shared/Profile/Profile';
 import EnrolledClasses from '../Sidebar/Tabs/StudentTabs/EnrolledClasses/EnrolledClasses';
 import ScheduleManagement from '../Sidebar/Tabs/TeacherTabs/ScheduleManagement/ScheduleManagement';
 import StudentAnnouncements from '../Sidebar/Tabs/StudentTabs/StudentAnnouncements/StudentAnnouncements';
