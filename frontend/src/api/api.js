@@ -85,26 +85,64 @@ export const getClassAttendance = (classId, date) => {
 export const postAttendance = (classId, data) => {
     return api.post(`/api/attendance/${classId}`, data);
 };
+// Assignments
 export const getClassAssignments = (classId) => {
-    return api.get(`/api/class/${classId}/grades/assignments`);
-};
-export const createAssignment = (classId, data) => {
-    return api.post(`/api/class/${classId}/grades/assignments`, data);
-};
-export const updateAssignment = (classId, assignmentId, data) => {
-    return api.put(`/api/class/${classId}/grades/assignments/${assignmentId}`, data);
-};
-export const deleteAssignment = (classId, assignmentId) => {
-    return api.delete(`/api/class/${classId}/grades/assignments/${assignmentId}`);
+  return api.get(`/api/class/${classId}/assignments`);
 };
 
-// Grades
+export const createAssignment = (classId, data) => {
+  return api.post(`/api/class/${classId}/assignments`, data);
+};
+
+export const updateAssignment = (classId, assignmentId, data) => {
+  return api.put(`/api/class/${classId}/assignments/${assignmentId}`, data);
+};
+
+export const deleteAssignment = (classId, assignmentId) => {
+  return api.delete(`/api/class/${classId}/assignments/${assignmentId}`);
+};
+
+// Grades for assignment
 export const getAssignmentGrades = (classId, assignmentId) => {
-    return api.get(`/api/class/${classId}/grades/assignments/${assignmentId}/grades`);
+  return api.get(`/api/class/${classId}/assignments/${assignmentId}/grades`);
 };
+
 export const submitAssignmentGrades = (classId, assignmentId, data) => {
-    return api.post(`/api/class/${classId}/grades/assignments/${assignmentId}/grades`, data);
+  return api.post(`/api/class/${classId}/assignments/${assignmentId}/grades`, data);
 };
+
+// Attachments
+export const getAssignmentAttachments = (classId, assignmentId) => {
+  return api.get(`/api/class/${classId}/assignments/${assignmentId}/attachments`);
+};
+
+export const addAssignmentAttachment = (classId, assignmentId, data) => {
+  return api.post(`/api/class/${classId}/assignments/${assignmentId}/attachments`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+};
+
+export const deleteAssignmentAttachment = (classId, assignmentId, attachmentId) => {
+  return api.delete(`/api/class/${classId}/assignments/${assignmentId}/attachments/${attachmentId}`);
+};
+
+// Submissions (student)
+export const getMyAssignmentSubmission = (classId, assignmentId) => {
+  return api.get(`/api/class/${classId}/assignments/${assignmentId}/my-submission`);
+};
+
+export const submitAssignment = (classId, assignmentId, data) => {
+  return api.post(`/api/class/${classId}/assignments/${assignmentId}/submit`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+};
+
+// For teacher: get all submissions for an assignment
+export const getAssignmentSubmissions = (classId, assignmentId) => {
+  return api.get(`/api/class/${classId}/assignments/${assignmentId}/submissions`);
+};
+
+// For student: get grades for a specific class (already in use)
 export const getStudentGradesForClass = (classId) => {
-    return api.get(`/api/class/${classId}/grades/my-grades`);
+  return api.get(`/api/class/${classId}/assignments/my-grades`);
 };
