@@ -11,7 +11,18 @@ export default function AssignmentFormModal({ isOpen, onClose, onSubmit, initial
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(form);
+    // Validate title
+    if (!form.title.trim()) {
+      alert('Title is required');
+      return;
+    }
+    // Convert maxScore to number
+    const payload = {
+      ...form,
+      maxScore: parseFloat(form.maxScore),
+      dueDate: form.dueDate || null,
+    };
+    onSubmit(payload);
   };
 
   if (!isOpen) return null;
@@ -23,10 +34,92 @@ export default function AssignmentFormModal({ isOpen, onClose, onSubmit, initial
           {initialData ? 'Edit Assignment' : 'New Assignment'}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* form fields as before */}
-          <div className="flex justify-end gap-3 mt-4">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-xl">Cancel</button>
-            <button type="submit" className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl">{initialData ? 'Update' : 'Create'}</button>
+          {/* Title */}
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
+              Title *
+            </label>
+            <input
+              type="text"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-xl bg-[var(--color-input-bg)] text-[var(--color-text-primary)]"
+              required
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
+              Description (optional)
+            </label>
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              rows="3"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-xl bg-[var(--color-input-bg)] text-[var(--color-text-primary)]"
+            />
+          </div>
+
+          {/* Type */}
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
+              Type
+            </label>
+            <select
+              value={form.type}
+              onChange={(e) => setForm({ ...form, type: e.target.value })}
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-xl bg-[var(--color-input-bg)] text-[var(--color-text-primary)]"
+            >
+              <option value="assignment">Assignment</option>
+              <option value="quiz">Quiz</option>
+              <option value="exam">Exam</option>
+            </select>
+          </div>
+
+          {/* Max Score */}
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
+              Max Score *
+            </label>
+            <input
+              type="number"
+              step="any"
+              value={form.maxScore}
+              onChange={(e) => setForm({ ...form, maxScore: e.target.value })}
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-xl bg-[var(--color-input-bg)] text-[var(--color-text-primary)]"
+              required
+            />
+          </div>
+
+          {/* Due Date */}
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
+              Due Date (optional)
+            </label>
+            <input
+              type="date"
+              value={form.dueDate}
+              onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-xl bg-[var(--color-input-bg)] text-[var(--color-text-primary)]"
+            />
+          </div>
+
+          {/* Buttons */}
+          <div className="flex justify-end gap-3 mt-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-surface)]"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)]"
+            >
+              {initialData ? 'Update' : 'Create'}
+            </button>
           </div>
         </form>
       </div>

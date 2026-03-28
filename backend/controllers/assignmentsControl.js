@@ -1,6 +1,5 @@
-const db = require('../db/queryGrades');
+const db = require('../db/queryAssignment');
 const dbClass = require('../db/queryClasses');
-const dbEnroll = require('../db/queryEnrollment');
 async function addAttachment(req, res) {
 	const { assignmentId } = req.params;
 	const { title, type, content } = req.body;
@@ -27,7 +26,7 @@ async function addAttachment(req, res) {
 	}
 
 	try {
-		const attachment = await dbAttachments.addAttachmentQuery(
+		const attachment = await db.addAttachmentQuery(
 			assignmentId,
 			title,
 			type,
@@ -44,7 +43,7 @@ async function getAttachments(req, res) {
 	const { assignmentId } = req.params;
 	try {
 		const attachments =
-			await dbAttachments.getAttachmentsByAssignmentQuery(assignmentId);
+			await db.getAttachmentsByAssignmentQuery(assignmentId);
 		res.json(attachments);
 	} catch (err) {
 		res.status(500).json({ error: err.message });
@@ -54,7 +53,7 @@ async function getAttachments(req, res) {
 async function deleteAttachment(req, res) {
 	const { assignmentId, attachmentId } = req.params;
 	try {
-		const deleted = await dbAttachments.deleteAttachmentQuery(
+		const deleted = await db.deleteAttachmentQuery(
 			attachmentId,
 			assignmentId,
 		);
@@ -95,7 +94,7 @@ async function submitAssignment(req, res) {
 	}
 
 	try {
-		const submission = await dbSubmissions.upsertSubmissionQuery(
+		const submission = await db.upsertSubmissionQuery(
 			assignmentId,
 			studentId,
 			type,
@@ -113,10 +112,10 @@ async function getSubmissionsForTeacher(req, res) {
 	// teacher only – check permission via assignment's class
 	try {
 		const submissions =
-			await dbSubmissions.getSubmissionsByAssignmentQuery(assignmentId);
+			await db.getSubmissionsByAssignmentQuery(assignmentId);
 		// Also include existing grades from `grades` table for each student
 		// We can merge later in frontend, or here
-		const grades = await dbGrades.getGradesForAssignmentQuery(assignmentId);
+		const grades = await db.getGradesForAssignmentQuery(assignmentId);
 		const gradeMap = {};
 		grades.forEach((g) => (gradeMap[g.student_id] = g));
 
@@ -135,14 +134,14 @@ async function getMySubmission(req, res) {
 	const { assignmentId } = req.params;
 	const studentId = req.user.id;
 	try {
-		const submission = await dbSubmissions.getStudentSubmissionQuery(
+		const submission = await db.getStudentSubmissionQuery(
 			assignmentId,
 			studentId,
 		);
 		if (!submission)
 			return res.status(404).json({ error: 'No submission found' });
 		// Also get grade and feedback from grades table
-		const grades = await dbGrades.getGradesForAssignmentQuery(assignmentId);
+		const grades = await db.getGradesForAssignmentQuery(assignmentId);
 		const grade = grades.find((g) => g.student_id === studentId);
 		res.json({ ...submission, score: grade?.score, feedback: grade?.feedback });
 	} catch (err) {
