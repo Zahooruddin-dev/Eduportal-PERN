@@ -28,16 +28,14 @@ export default function ConfirmModal({
 
   if (!isOpen) return null;
 
-  const bgColor = type === 'danger' ? 'bg-red-50 dark:bg-red-950/20' : 'bg-amber-50 dark:bg-amber-950/20';
-  const borderColor = type === 'danger' ? 'border-red-200 dark:border-red-800' : 'border-amber-200 dark:border-amber-800';
-  const iconColor = type === 'danger' ? 'text-red-600' : 'text-amber-600';
+  const iconColor = type === 'danger' ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400';
   const confirmBtnClass = type === 'danger'
     ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
     : 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className={`max-w-md w-full rounded-2xl border ${borderColor} ${bgColor} shadow-xl`}>
+      <div className="max-w-md w-full rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] shadow-xl">
         <div className="flex justify-between items-center p-4 border-b border-[var(--color-border)]">
           <div className="flex items-center gap-2">
             <AlertTriangle className={`h-5 w-5 ${iconColor}`} />
@@ -45,7 +43,7 @@ export default function ConfirmModal({
           </div>
           <button
             onClick={onClose}
-            className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+            className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
             aria-label="Close"
           >
             <X size={20} />
