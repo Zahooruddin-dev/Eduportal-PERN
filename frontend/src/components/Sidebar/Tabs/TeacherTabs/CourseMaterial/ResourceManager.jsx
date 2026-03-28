@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
-	CloudUpload,
 	Link as LinkIcon,
-	Edit,
 	Trash2,
 	Eye,
 	EyeOff,
 	FileText,
-	ExternalLink,
+  ChevronDown 
 } from 'lucide-react';
 import {
 	getClassResources,
@@ -20,7 +18,7 @@ import FileViewerModal from '../../../../FileViewerModal/FileViewerModal';
 import { getFileViewUrl } from '../../../../../utils/fileUtils';
 import CommentSection from '../../Shared/CommentSection';
 
-export default function ResourceManager({ classId, className, onBack }) {
+export default function ResourceManager({ classId, className, classes, onClassChange }) {
 	const [resources, setResources] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
@@ -146,24 +144,39 @@ export default function ResourceManager({ classId, className, onBack }) {
 
 	return (
 		<div className='p-6'>
-			<button
-				onClick={onBack}
-				className='mb-6 text-[var(--color-primary)] hover:underline flex items-center gap-1'
-			>
-				← Back to Classes
-			</button>
 
-			<div className='flex justify-between items-center mb-6'>
-				<h1 className='text-2xl font-semibold text-[var(--color-text-primary)]'>
-					Resources for {className}
-				</h1>
-				<button
-					onClick={() => setShowAddForm(!showAddForm)}
-					className='px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)] transition-colors'
-				>
-					+ Add Resource
-				</button>
-			</div>
+
+	<div className="flex items-center justify-between mb-6">
+  <div className="flex items-center gap-4">
+
+    <div className="relative">
+      <select
+        value={classId}
+        onChange={(e) => {
+          const selectedId = e.target.value;
+          const selectedClass = classes.find(c => c.id === selectedId);
+          if (selectedClass) {
+            onClassChange(selectedClass.id, selectedClass.class_name);
+          }
+        }}
+        className="appearance-none bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl pl-4 pr-8 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] cursor-pointer"
+      >
+        {classes.map(cls => (
+          <option key={cls.id} value={cls.id}>
+            {cls.class_name}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-[var(--color-text-muted)]" size={16} />
+    </div>
+  </div>
+  <button
+    onClick={() => setShowAddForm(!showAddForm)}
+    className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)] transition-colors"
+  >
+    + Add Resource
+  </button>
+</div>
 
 			{error && <AlertBox message={error} />}
 			{success && (

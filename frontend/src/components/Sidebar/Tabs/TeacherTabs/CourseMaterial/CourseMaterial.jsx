@@ -1,15 +1,9 @@
+// CourseMaterial.jsx
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../../../context/AuthContext';
-import {
-	getMyClasses,
-	getClassResources,
-	createResource,
-	updateResource,
-	deleteResource,
-} from '../../../../../api/api';
+import { getMyClasses } from '../../../../../api/api';
 import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
 import ResourceManager from './ResourceManager';
-import CommentSection from '../../Shared/CommentSection';
 
 export default function CourseMaterial() {
 	const { user } = useAuth();
@@ -17,7 +11,6 @@ export default function CourseMaterial() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
 	const [selectedClass, setSelectedClass] = useState(null);
-	const [showCommentsFor, setShowCommentsFor] = useState(null);
 
 	const fetchClasses = async () => {
 		setLoading(true);
@@ -36,6 +29,13 @@ export default function CourseMaterial() {
 		fetchClasses();
 	}, []);
 
+	// When classes are loaded and we have no selected class, selects the first one
+	useEffect(() => {
+		if (classes.length > 0 && !selectedClass) {
+			setSelectedClass(classes[0]);
+		}
+	}, [classes]);
+
 	if (loading) {
 		return (
 			<div className='flex justify-center items-center h-64'>
@@ -44,12 +44,16 @@ export default function CourseMaterial() {
 		);
 	}
 
+	// If we have a selected class, shows the resource manager
 	if (selectedClass) {
 		return (
 			<ResourceManager
 				classId={selectedClass.id}
 				className={selectedClass.class_name}
-				onBack={() => setSelectedClass(null)}
+				classes={classes}
+				onClassChange={(newId, newName) => {
+					setSelectedClass({ id: newId, class_name: newName });
+				}}
 			/>
 		);
 	}
@@ -60,36 +64,10 @@ export default function CourseMaterial() {
 				Course Repository
 			</h1>
 			{error && <AlertBox message={error} />}
-			{classes.length === 0 ? (
+			{classes.length === 0 && (
 				<p className='text-[var(--color-text-muted)]'>
 					You haven't created any classes yet.
 				</p>
-			) : (
-				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-					{classes.map((cls) => (
-						<div
-							key={cls.id}
-							className='bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow'
-						>
-							<h3 className='text-lg font-semibold text-[var(--color-text-primary)]'>
-								{cls.class_name}
-							</h3>
-							{cls.subject && (
-								<p className='text-sm text-[var(--color-text-secondary)] mt-1'>
-									{cls.subject}
-								</p>
-							)}
-							<div className='mt-4'>
-								<button
-									onClick={() => setSelectedClass(cls)}
-									className='px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)] transition-colors'
-								>
-									Manage Resources
-								</button>
-							</div>
-						</div>
-					))}
-				</div>
 			)}
 		</div>
 	);
