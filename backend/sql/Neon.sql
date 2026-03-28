@@ -177,3 +177,17 @@ CREATE TABLE IF NOT EXISTS class_resources (
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_resources_class_id ON class_resources(class_id);
 CREATE INDEX IF NOT EXISTS idx_resources_teacher_id ON class_resources(teacher_id);
+CREATE TABLE IF NOT EXISTS resource_comments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    resource_id UUID NOT NULL REFERENCES class_resources(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    parent_comment_id UUID REFERENCES resource_comments(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_resource_comments_resource_id ON resource_comments(resource_id);
+CREATE INDEX IF NOT EXISTS idx_resource_comments_parent_id ON resource_comments(parent_comment_id);
+CREATE INDEX IF NOT EXISTS idx_resource_comments_user_id ON resource_comments(user_id);
