@@ -1,12 +1,12 @@
 // src/components/AssignmentCard.jsx
 import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Edit2, Trash2, Paperclip } from 'lucide-react';
-import { getAssignmentAttachments, deleteAssignmentAttachment, getAssignmentSubmissions } from '../../api/api';
-import { SpinnerIcon } from '../Icons/Icon';
-import FileViewerModal from '../FileViewerModal/FileViewerModal';
-import { getFileViewUrl } from '../../utils/fileUtils';
+import { getAssignmentAttachments, deleteAssignmentAttachment, getAssignmentSubmissions, addAssignmentAttachment } from '../../../../../api/api';
+import { SpinnerIcon } from '../../../../Icons/Icon';
 import AttachmentManager from './AttachmentManager';
 import GradeTable from './GradeTable';
+import { getFileViewUrl } from '../../../../../utils/fileUtils';
+import FileViewerModal from '../../../../FileViewerModal/FileViewerModal';
 
 export default function AssignmentCard({ assignment, classId, students, grades, onGradeChange, onSaveGrades, savingGrades, onEdit, onDelete }) {
   const [expanded, setExpanded] = useState(false);

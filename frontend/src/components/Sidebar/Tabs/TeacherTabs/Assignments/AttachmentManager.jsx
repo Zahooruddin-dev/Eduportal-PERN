@@ -1,6 +1,6 @@
 // src/components/AttachmentManager.jsx
 import { useState } from 'react';
-import { SpinnerIcon } from '../Icons/Icon';
+import { SpinnerIcon } from '../../../../Icons/Icon';
 import { X, Link as LinkIcon, FileText } from 'lucide-react';
 
 export default function AttachmentManager({ isOpen, onClose, onAdd, uploading }) {

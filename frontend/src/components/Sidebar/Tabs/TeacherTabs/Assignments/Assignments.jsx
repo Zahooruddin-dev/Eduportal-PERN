@@ -14,7 +14,7 @@ import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
 import { Plus } from 'lucide-react';
 import Toast from '../../../../Toast';
 import ConfirmModal from '../../../../ConfirmModal';
-import AssignmentCard from '../../../../components/AssignmentCard';
+import AssignmentCard from './AssignmentCard';
 
 export default function TeacherAssignments() {
   const { user } = useAuth();

@@ -9,7 +9,7 @@ import StudentAnnouncements from '../Sidebar/Tabs/StudentTabs/StudentAnnouncemen
 import CourseMaterial from '../Sidebar/Tabs/TeacherTabs/CourseMaterial/CourseMaterial';
 import StudentCourseMaterial from '../Sidebar/Tabs/StudentTabs/CourseMaterial/StudentCourseMaterial';
 import TeacherAttendance from '../Sidebar/Tabs/TeacherTabs/TeacherAttendance/TeacherAttendance';
-import TeacherAssignments from '../Sidebar/Tabs/TeacherTabs/Assignments/TeacherGradebook';
+import TeacherAssignments from '../Sidebar/Tabs/TeacherTabs/Assignments/Assignments';
 
 export default function Dashboard() {
 	const { user } = useAuth();
