@@ -15,17 +15,17 @@ export default function Toast({ type = 'success', message, isOpen, onClose, dura
   if (!isOpen) return null;
 
   const icons = {
-    success: <CheckCircle className="h-5 w-5 text-green-500" />,
-    error: <XCircle className="h-5 w-5 text-red-500" />,
-    info: <Info className="h-5 w-5 text-blue-500" />,
-    warning: <AlertTriangle className="h-5 w-5 text-amber-500" />,
+    success: <CheckCircle className="h-5 w-5 text-green-500 dark:text-green-400" />,
+    error: <XCircle className="h-5 w-5 text-red-500 dark:text-red-400" />,
+    info: <Info className="h-5 w-5 text-blue-500 dark:text-blue-400" />,
+    warning: <AlertTriangle className="h-5 w-5 text-amber-500 dark:text-amber-400" />,
   };
 
   const bgColors = {
-    success: 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800',
-    error: 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800',
-    info: 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800',
-    warning: 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800',
+    success: 'bg-white dark:bg-gray-800 border-green-200 dark:border-green-800',
+    error: 'bg-white dark:bg-gray-800 border-red-200 dark:border-red-800',
+    info: 'bg-white dark:bg-gray-800 border-blue-200 dark:border-blue-800',
+    warning: 'bg-white dark:bg-gray-800 border-amber-200 dark:border-amber-800',
   };
 
   const textColors = {
@@ -36,13 +36,13 @@ export default function Toast({ type = 'success', message, isOpen, onClose, dura
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2 fade-in duration-300">
-      <div className={`flex items-center gap-3 rounded-xl border p-4 shadow-lg ${bgColors[type]}`}>
+    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-bottom-2 fade-in duration-300">
+      <div className={`flex items-center gap-3 rounded-xl border p-4 shadow-lg ${bgColors[type]} max-w-sm w-full`}>
         {icons[type]}
-        <p className={`text-sm font-medium ${textColors[type]}`}>{message}</p>
+        <p className={`text-sm font-medium ${textColors[type]} flex-1`}>{message}</p>
         <button
           onClick={onClose}
-          className="ml-2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+          className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
           aria-label="Dismiss"
         >
           <X size={16} />
