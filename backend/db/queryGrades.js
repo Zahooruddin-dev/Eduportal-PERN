@@ -98,7 +98,10 @@ async function getStudentGradesForClassQuery(studentId, classId) {
     );
     return rows;
 }
-
+async function getAssignmentByIdQuery(id) {
+    const { rows } = await pool.query('SELECT * FROM assignments WHERE id = $1', [id]);
+    return rows[0];
+}
 module.exports = {
     createAssignmentQuery,
     getAssignmentsByClassQuery,
@@ -108,4 +111,5 @@ module.exports = {
     getGradesForAssignmentQuery,
     getGradesForStudentQuery,
     getStudentGradesForClassQuery,
+    getAssignmentByIdQuery
 };
