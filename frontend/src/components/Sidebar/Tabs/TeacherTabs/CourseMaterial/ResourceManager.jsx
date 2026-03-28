@@ -5,7 +5,7 @@ import {
 	Eye,
 	EyeOff,
 	FileText,
-  ChevronDown 
+	ChevronDown,
 } from 'lucide-react';
 import {
 	getClassResources,
@@ -13,16 +13,26 @@ import {
 	updateResource,
 	deleteResource,
 } from '../../../../../api/api';
-import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
+import { SpinnerIcon } from '../../../../Icons/Icon';
+import Toast from '../../../../Toast';
+import ConfirmModal from '../../../../ConfirmModal';
 import FileViewerModal from '../../../../FileViewerModal/FileViewerModal';
 import { getFileViewUrl } from '../../../../../utils/fileUtils';
 import CommentSection from '../../Shared/CommentSection';
 
-export default function ResourceManager({ classId, className, classes, onClassChange }) {
+export default function ResourceManager({
+	classId,
+	className,
+	classes,
+	onClassChange,
+}) {
 	const [resources, setResources] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
 	const [success, setSuccess] = useState('');
+	const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
+	const [confirmOpen, setConfirmOpen] = useState(false);
+	const [resourceToDelete, setResourceToDelete] = useState(null);
 	const [showAddForm, setShowAddForm] = useState(false);
 	const [formData, setFormData] = useState({
 		title: '',
@@ -45,7 +55,9 @@ export default function ResourceManager({ classId, className, classes, onClassCh
 			const res = await getClassResources(classId);
 			setResources(res.data);
 		} catch (err) {
-			setError('Failed to load resources');
+			const msg = err.response?.data?.error || 'Failed to load resources';
+			setError(msg);
+			setToast({ isOpen: true, type: 'error', message: msg });
 		} finally {
 			setLoading(false);
 		}
@@ -90,6 +102,7 @@ export default function ResourceManager({ classId, className, classes, onClassCh
 			}
 			await createResource(classId, formDataToSend);
 			setSuccess('Resource added successfully!');
+			setToast({ isOpen: true, type: 'success', message: 'Resource added successfully!' });
 			setShowAddForm(false);
 			setFormData({
 				title: '',
@@ -103,7 +116,9 @@ export default function ResourceManager({ classId, className, classes, onClassCh
 			setSelectedFile(null);
 			fetchResources();
 		} catch (err) {
-			setError(err.response?.data?.error || 'Failed to create resource');
+			const msg = err.response?.data?.error || 'Failed to create resource';
+			setError(msg);
+			setToast({ isOpen: true, type: 'error', message: msg });
 		} finally {
 			setUploading(false);
 		}
@@ -114,23 +129,33 @@ export default function ResourceManager({ classId, className, classes, onClassCh
 			await updateResource(classId, resource.id, {
 				is_published: !resource.is_published,
 			});
-			setSuccess(
-				`Resource ${!resource.is_published ? 'published' : 'unpublished'}`,
-			);
+			const msg = `Resource ${!resource.is_published ? 'published' : 'unpublished'}`;
+			setSuccess(msg);
+			setToast({ isOpen: true, type: 'success', message: msg });
 			fetchResources();
 		} catch (err) {
-			setError('Failed to update resource');
+			const msg = err.response?.data?.error || 'Failed to update resource';
+			setError(msg);
+			setToast({ isOpen: true, type: 'error', message: msg });
 		}
 	};
 
-	const handleDelete = async (resourceId) => {
-		if (!window.confirm('Delete this resource?')) return;
+	const requestDelete = (res) => {
+		setResourceToDelete(res);
+		setConfirmOpen(true);
+	};
+
+	const performDelete = async () => {
+		if (!resourceToDelete) return;
 		try {
-			await deleteResource(classId, resourceId);
-			setSuccess('Resource deleted');
+			await deleteResource(classId, resourceToDelete.id);
+			setToast({ isOpen: true, type: 'success', message: 'Resource deleted' });
+			setResourceToDelete(null);
 			fetchResources();
 		} catch (err) {
-			setError('Failed to delete resource');
+			const msg = err.response?.data?.error || 'Failed to delete resource';
+			setError(msg);
+			setToast({ isOpen: true, type: 'error', message: msg });
 		}
 	};
 
@@ -144,46 +169,47 @@ export default function ResourceManager({ classId, className, classes, onClassCh
 
 	return (
 		<div className='p-6'>
-
-
-	<div className="flex items-center justify-between mb-6">
-  <div className="flex items-center gap-4">
-
-    <div className="relative">
-      <select
-        value={classId}
-        onChange={(e) => {
-          const selectedId = e.target.value;
-          const selectedClass = classes.find(c => c.id === selectedId);
-          if (selectedClass) {
-            onClassChange(selectedClass.id, selectedClass.class_name);
-          }
-        }}
-        className="appearance-none bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl pl-4 pr-8 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] cursor-pointer"
-      >
-        {classes.map(cls => (
-          <option key={cls.id} value={cls.id}>
-            {cls.class_name}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-[var(--color-text-muted)]" size={16} />
-    </div>
-  </div>
-  <button
-    onClick={() => setShowAddForm(!showAddForm)}
-    className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)] transition-colors"
-  >
-    + Add Resource
-  </button>
-</div>
-
-			{error && <AlertBox message={error} />}
-			{success && (
-				<div className='mb-4 p-3 rounded-lg bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 text-sm'>
-					{success}
+			<div className='flex items-center justify-between mb-6'>
+				<div className='flex items-center gap-4'>
+					<div className='relative'>
+						<select
+							value={classId}
+							onChange={(e) => {
+								const selectedId = e.target.value;
+								const selectedClass = classes.find((c) => c.id === selectedId);
+								if (selectedClass) {
+									onClassChange(selectedClass.id, selectedClass.class_name);
+								}
+							}}
+							className='appearance-none bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl pl-4 pr-8 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] cursor-pointer'
+						>
+							{classes.map((cls) => (
+								<option key={cls.id} value={cls.id}>
+									{cls.class_name}
+								</option>
+							))}
+						</select>
+						<ChevronDown
+							className='absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-[var(--color-text-muted)]'
+							size={16}
+						/>
+					</div>
 				</div>
-			)}
+				<button
+					onClick={() => setShowAddForm(!showAddForm)}
+					className='px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)] transition-colors'
+				>
+					+ Add Resource
+				</button>
+			</div>
+
+			{/* Notifications */}
+			<Toast
+				type={toast.type}
+				message={toast.message}
+				isOpen={toast.isOpen}
+				onClose={() => setToast((t) => ({ ...t, isOpen: false }))}
+			/>
 
 			{/* Add Resource Form */}
 			{showAddForm && (
@@ -369,8 +395,8 @@ export default function ResourceManager({ classId, className, classes, onClassCh
 										<span
 											className={`text-xs px-2 py-1 rounded-full ${
 												res.type === 'file'
-													? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-													: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+													? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
+													: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200'
 											}`}
 										>
 											{res.type === 'file' ? 'File' : 'Link'}
@@ -378,7 +404,7 @@ export default function ResourceManager({ classId, className, classes, onClassCh
 										<span
 											className={`text-xs px-2 py-1 rounded-full ${
 												res.is_published
-													? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+													? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
 													: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
 											}`}
 										>
@@ -386,7 +412,7 @@ export default function ResourceManager({ classId, className, classes, onClassCh
 										</span>
 										{res.expires_at &&
 											new Date(res.expires_at) < new Date() && (
-												<span className='text-xs px-2 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'>
+												<span className='text-xs px-2 py-1 rounded-full bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'>
 													Expired
 												</span>
 											)}
@@ -456,7 +482,7 @@ export default function ResourceManager({ classId, className, classes, onClassCh
 										)}
 									</button>
 									<button
-										onClick={() => handleDelete(res.id)}
+										onClick={() => requestDelete(res)}
 										className='p-1 text-red-500 hover:text-red-700'
 										title='Delete'
 									>
@@ -488,6 +514,21 @@ export default function ResourceManager({ classId, className, classes, onClassCh
 					onClose={() => setViewingFile(null)}
 				/>
 			)}
+
+			{/* Confirm delete modal */}
+			<ConfirmModal
+				isOpen={confirmOpen}
+				onClose={() => {
+					setConfirmOpen(false);
+					setResourceToDelete(null);
+				}}
+				onConfirm={performDelete}
+				title='Delete Resource'
+				message='Are you sure you want to delete this resource? This action cannot be undone.'
+				confirmText='Delete'
+				cancelText='Cancel'
+				type='danger'
+			/>
 		</div>
 	);
 }
