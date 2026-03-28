@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 export default function AssignmentFormModal({ isOpen, onClose, onSubmit, initialData = null }) {
   const [form, setForm] = useState({
     title: initialData?.title || '',

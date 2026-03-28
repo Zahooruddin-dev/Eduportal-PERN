@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { getAssignmentAttachments, addAssignmentAttachment, deleteAssignmentAttachment } from '../../../../api/api';
+import { getAssignmentAttachments, addAssignmentAttachment, deleteAssignmentAttachment } from '../../../../../api/api';
 import { FileText, Link as LinkIcon, Trash2, Plus } from 'lucide-react';
-import { getFileViewUrl } from '../../../../utils/fileUtils';
-import FileViewerModal from '../../../FileViewerModal/FileViewerModal';
+import { getFileViewUrl } from '../../../../../utils/fileUtils';
+import FileViewerModal from '../../../../FileViewerModal/FileViewerModal';
 
 export default function AttachmentManager({ classId, assignmentId }) {
   const [attachments, setAttachments] = useState([]);
