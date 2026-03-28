@@ -21,18 +21,22 @@ const storage = new CloudinaryStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowedMimes = [
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-    'image/avif',
-    'image/gif',
-  ];
-  if (allowedMimes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Only image files (JPEG, PNG, WEBP, AVIF, GIF) are allowed.'), false);
-  }
+	const allowedMimes = [
+		'image/jpeg',
+		'image/png',
+		'image/webp',
+		'image/avif',
+		'image/gif',
+		'application/pdf',
+	];
+	if (allowedMimes.includes(file.mimetype)) {
+		cb(null, true);
+	} else {
+		cb(
+			new Error('Only image files (JPEG, PNG, WEBP, AVIF, GIF, PDF) are allowed.'),
+			false,
+		);
+	}
 };
 const uploadResource = multer({ storage, fileFilter });
 

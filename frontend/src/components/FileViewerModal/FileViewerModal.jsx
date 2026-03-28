@@ -61,12 +61,11 @@ export default function FileViewerModal({ fileUrl, title, isOpen, onClose }) {
               className="max-w-full max-h-full object-contain mx-auto"
             />
           ) : (
-            <iframe
-              src={displayUrl}
-              title={title}
-              className="w-full h-full min-h-[70vh] border-none rounded"
-              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-downloads"
-            />
+           <embed
+  src={displayUrl}
+  type="application/pdf"
+  className="w-full h-full min-h-[70vh] border-none rounded"
+/>
           )}
         </div>
       </div>
