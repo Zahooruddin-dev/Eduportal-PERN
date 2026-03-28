@@ -40,7 +40,7 @@ export default function StudentCourseMaterial() {
 	const fetchResources = async (classId) => {
 		setLoadingResources(true);
 		try {
-			const res = await getClassResources(classId); // only returns published resources
+			const res = await getClassResources(classId); // only returns published, non‑expired
 			setResources(res.data);
 		} catch (err) {
 			setError('Failed to load resources');
@@ -100,12 +100,13 @@ export default function StudentCourseMaterial() {
 											<span
 												className={`text-xs px-2 py-1 rounded-full ${
 													res.type === 'file'
-														? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-														: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+														? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
+														: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200'
 												}`}
 											>
 												{res.type === 'file' ? 'File' : 'Link'}
 											</span>
+											{/* Tags */}
 											{res.tags && res.tags.length > 0 && (
 												<div className='flex gap-1'>
 													{res.tags.map((tag, idx) => (
@@ -166,21 +167,23 @@ export default function StudentCourseMaterial() {
 						))}
 					</div>
 				)}
-                	{showCommentsFor && (
-				<CommentSection
-					classId={selectedClass.class_id}
-					resourceId={showCommentsFor}
-					onClose={() => setShowCommentsFor(null)}
-				/>
-			)}
-			{viewingFile && (
-				<FileViewerModal
-					fileUrl={viewingFile.url}
-					title={viewingFile.title}
-					isOpen={!!viewingFile}
-					onClose={() => setViewingFile(null)}
-				/>
-			)}
+
+				{/* Modals */}
+				{showCommentsFor && (
+					<CommentSection
+						classId={selectedClass.class_id}
+						resourceId={showCommentsFor}
+						onClose={() => setShowCommentsFor(null)}
+					/>
+				)}
+				{viewingFile && (
+					<FileViewerModal
+						fileUrl={viewingFile.url}
+						title={viewingFile.title}
+						isOpen={!!viewingFile}
+						onClose={() => setViewingFile(null)}
+					/>
+				)}
 			</div>
 		);
 	}
@@ -218,10 +221,8 @@ export default function StudentCourseMaterial() {
 							</div>
 						</div>
 					))}
-  
 				</div>
 			)}
-		
 		</div>
 	);
 }
