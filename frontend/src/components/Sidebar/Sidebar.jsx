@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import {
@@ -16,6 +17,8 @@ import {
 	Megaphone,
 	Moon,
 } from 'lucide-react';
+import Toast from '../Toast';
+import ConfirmModal from '../ConfirmModal';
 
 const studentNavItems = [
 	{ id: 'enrolled-classes', label: 'Enrolled Classes', icon: GraduationCap },
@@ -52,6 +55,8 @@ export default function Sidebar({
 	setActiveTab,
 }) {
 	const { user, logout } = useAuth();
+	const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
+	const [toast, setToast] = useState({ isOpen: false, type: 'info', message: '' });
 	const { theme, toggle } = useTheme();
 	const isStudent = user?.role === 'student';
 	const navItems = isStudent ? studentNavItems : teacherNavItems;
@@ -143,7 +148,7 @@ export default function Sidebar({
 
 						{/* Logout button */}
 						<button
-							onClick={logout}
+							onClick={() => setConfirmLogoutOpen(true)}
 							className='flex items-center gap-2 px-2 py-1 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/50 transition-colors'
 							aria-label='Logout'
 						>
@@ -155,6 +160,31 @@ export default function Sidebar({
 					</div>
 				</div>
 			</div>
+
+			{/* Toast for feedback */}
+			<Toast
+				type={toast.type}
+				message={toast.message}
+				isOpen={toast.isOpen}
+				onClose={() => setToast((t) => ({ ...t, isOpen: false }))}
+			/>
+
+			{/* Confirm logout modal */}
+			<ConfirmModal
+				isOpen={confirmLogoutOpen}
+				onClose={() => setConfirmLogoutOpen(false)}
+				onConfirm={() => {
+					setToast({ isOpen: true, type: 'success', message: 'Logging out...' });
+					setTimeout(() => {
+						logout();
+					}, 700);
+				}}
+				title='Logout'
+				message='Are you sure you want to log out?'
+				confirmText='Logout'
+				cancelText='Cancel'
+				type='warning'
+			/>
 		</aside>
 	);
 }
