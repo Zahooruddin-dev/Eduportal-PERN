@@ -228,3 +228,24 @@ CREATE TABLE IF NOT EXISTS grades (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(assignment_id, student_id)
 );
+-- Assignment attachments (resources provided by teacher)
+CREATE TABLE IF NOT EXISTS assignment_attachments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    assignment_id UUID NOT NULL REFERENCES assignments(id) ON DELETE CASCADE,
+    title VARCHAR(255),
+    type VARCHAR(20) NOT NULL CHECK (type IN ('file', 'link')),
+    content TEXT NOT NULL, -- Cloudinary URL or external link
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Student submissions
+CREATE TABLE IF NOT EXISTS assignment_submissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    assignment_id UUID NOT NULL REFERENCES assignments(id) ON DELETE CASCADE,
+    student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    submission_type VARCHAR(20) NOT NULL CHECK (submission_type IN ('file', 'link')),
+    submission_content TEXT NOT NULL, -- Cloudinary URL or external link
+    submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(assignment_id, student_id) -- one submission per assignment per student
+);
