@@ -63,3 +63,18 @@ export const deleteResource = (classId, resourceId) => {
   return api.delete(`/api/class/${classId}/resources/${resourceId}`);
 };
 
+export const getResourceComments = (classId, resourceId) => {
+    return api.get(`/api/class/${classId}/resources/${resourceId}/comments`);
+};
+
+export const createResourceComment = (classId, resourceId, data) => {
+    return api.post(`/api/class/${classId}/resources/${resourceId}/comments`, data);
+};
+
+export const updateResourceComment = (classId, resourceId, commentId, data) => {
+    return api.put(`/api/class/${classId}/resources/${resourceId}/comments/${commentId}`, data);
+};
+
+export const deleteResourceComment = (classId, resourceId, commentId) => {
+    return api.delete(`/api/class/${classId}/resources/${resourceId}/comments/${commentId}`);
+};
