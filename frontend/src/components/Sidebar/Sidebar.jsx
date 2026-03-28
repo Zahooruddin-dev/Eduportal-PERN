@@ -8,7 +8,6 @@ import {
 	BookOpen,
 	FileText,
 	BarChart,
-	Clock,
 	MessageSquare,
 	UserCheck,
 	LogOut,
@@ -23,8 +22,7 @@ import ConfirmModal from '../ConfirmModal';
 const studentNavItems = [
 	{ id: 'enrolled-classes', label: 'Enrolled Classes', icon: GraduationCap },
 	{ id: 'announcements', label: 'Announcements', icon: Megaphone },
-
-	{ id: 'live-sessions', label: 'Live Sessions', icon: Clock },
+  {id:'teacher-communication', label:'Teacher Communication', icon: MessageSquare},
 	{ id: 'academic-calendar', label: 'Academic Calendar', icon: Calendar },
 
 	{ id: 'course-material', label: 'Course Material', icon: BookOpen },
@@ -32,7 +30,6 @@ const studentNavItems = [
 	{ id: 'report', label: 'Report', icon: FileText },
 ];
 const teacherNavItems = [
-	{ id: 'live-sessions', label: 'Live Sessions', icon: Clock },
 	{
 		id: 'schedule-management',
 		label: 'Class & Schedule Management',
@@ -41,8 +38,8 @@ const teacherNavItems = [
 	{ id: 'course-material', label: 'Course Material', icon: BookOpen },
 	{ id: 'gradebook', label: 'Gradebook', icon: BarChart },
 	{
-		id: 'parent-communication',
-		label: 'Parent Communication',
+		id: 'student-communication',
+		label: 'Student Communication',
 		icon: MessageSquare,
 	},
 	{ id: 'student-attendance', label: 'Student Attendance', icon: UserCheck },
@@ -56,7 +53,11 @@ export default function Sidebar({
 }) {
 	const { user, logout } = useAuth();
 	const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
-	const [toast, setToast] = useState({ isOpen: false, type: 'info', message: '' });
+	const [toast, setToast] = useState({
+		isOpen: false,
+		type: 'info',
+		message: '',
+	});
 	const { theme, toggle } = useTheme();
 	const isStudent = user?.role === 'student';
 	const navItems = isStudent ? studentNavItems : teacherNavItems;
@@ -174,7 +175,11 @@ export default function Sidebar({
 				isOpen={confirmLogoutOpen}
 				onClose={() => setConfirmLogoutOpen(false)}
 				onConfirm={() => {
-					setToast({ isOpen: true, type: 'success', message: 'Logging out...' });
+					setToast({
+						isOpen: true,
+						type: 'success',
+						message: 'Logging out...',
+					});
 					setTimeout(() => {
 						logout();
 					}, 700);
