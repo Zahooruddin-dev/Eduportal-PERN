@@ -138,6 +138,7 @@ function SidebarBody({
 	toggle,
 	onClose,
 	onLogout,
+	showCloseX = false,
 }) {
 	const isCollapsed = collapsed && !isMobile;
 
@@ -158,7 +159,7 @@ function SidebarBody({
 						alt='Mizuka Portal logo'
 						className={[
 							'shrink-0 object-contain transition-all duration-300',
-							isCollapsed ? 'h-7 w-7' : 'h-8 w-8',
+							isCollapsed ? 'h-9 w-9' : 'h-10 w-10',
 						].join(' ')}
 					/>
 					<div
@@ -176,7 +177,7 @@ function SidebarBody({
 					</div>
 				</div>
 
-				{isMobile ? (
+				{(isMobile || showCloseX) ? (
 					<button
 						type='button'
 						onClick={onClose}
@@ -186,26 +187,24 @@ function SidebarBody({
 						<X size={18} aria-hidden='true' />
 					</button>
 				) : (
-					<button
-						type='button'
-						onClick={() => onClose()}
-						aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-						aria-expanded={!collapsed}
-						className='p-1.5 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 transition-all duration-150 shrink-0'
-					>
-						<span
-							className={[
-								'block transition-transform duration-300',
-								collapsed ? 'rotate-0' : 'rotate-0',
-							].join(' ')}
-						>
-							{collapsed ? (
-								<ChevronRight size={16} aria-hidden='true' />
-							) : (
-								<ChevronLeft size={16} aria-hidden='true' />
-							)}
-						</span>
-					</button>
+					!collapsed && (
+						<button
+							type='button'
+							onClick={() => onClose()}
+							aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+							aria-expanded={!collapsed}
+							className='p-1.5 rounded-lg relative z-10 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 transition-all duration-150 shrink-0'
+							>
+							<span
+								className={[
+									'block transition-transform duration-300',
+									collapsed ? 'rotate-0' : 'rotate-0',
+								].join(' ')}
+							>
+								<ChevronLeft size={18} aria-hidden='true' />
+							</span>
+							</button>
+					)
 				)}
 			</div>
 
@@ -370,6 +369,8 @@ export default function Sidebar({
 		}, 260);
 	};
 
+
+
 	useEffect(() => {
 		const handleKey = (e) => {
 			if (e.key === 'Escape' && mobileOpen) closeMobile();
@@ -407,6 +408,18 @@ export default function Sidebar({
 				<Menu size={18} aria-hidden='true' />
 			</button>
 
+			{/* Desktop opener shown when sidebar is collapsed - expands the persistent sidebar */}
+			{collapsed && (
+				<button
+					type='button'
+					onClick={() => setCollapsed(false)}
+					aria-label='Open navigation menu'
+					className='hidden lg:flex fixed top-4 left-4 z-30 h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-secondary)] shadow-sm transition-all duration-150 hover:text-[var(--color-text-primary)] hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]'
+				>
+					<Menu size={18} aria-hidden='true' />
+				</button>
+			)}
+
 			<div
 				className={[
 					'hidden lg:flex h-full overflow-hidden transition-all duration-300 ease-in-out',
@@ -420,6 +433,8 @@ export default function Sidebar({
 					onClose={() => setCollapsed((v) => !v)}
 				/>
 			</div>
+
+			{/* desktop overlay removed - desktop keeps persistent sidebar */}
 
 			{mobileOpen && (
 				<div
@@ -453,6 +468,7 @@ export default function Sidebar({
 							collapsed={false}
 							isMobile={true}
 							onClose={closeMobile}
+							showCloseX={true}
 						/>
 					</div>
 				</div>
