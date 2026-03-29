@@ -28,7 +28,7 @@ async function getStudentScheduleQuery(studentId) {
   const { rows } = await pool.query(
     `SELECT 
         users.username as student_name,
-        classes.id as class_id,
+        classes.id as id,
         classes.class_name,
         classes.schedule_days,
         classes.start_time,
