@@ -15,18 +15,27 @@ async function addAttachment(req, res) {
 	let fileUrl = null;
 	if (type === 'file') {
 		if (!req.file) return res.status(400).json({ error: 'File required' });
-		const uploadResult = await new Promise((resolve, reject) => {
-			const uploadStream = cloudinary.uploader.upload_stream(
-				{
-					folder: 'assignment_attachments',
-					resource_type: 'auto',
-					access_mode: 'public',
-				},
-				(err, result) => (err ? reject(err) : resolve(result)),
-			);
-			uploadStream.end(req.file.buffer);
-		});
-		fileUrl = uploadResult.secure_url;
+		// If multer-storage-cloudinary was used, the file is already uploaded and
+		// the URL is available on req.file.path (or req.file.url). Otherwise,
+		// fall back to streaming the buffer to Cloudinary.
+		if (req.file.path || req.file.url || req.file.secure_url) {
+			fileUrl = req.file.path || req.file.url || req.file.secure_url;
+		} else if (req.file.buffer) {
+			const uploadResult = await new Promise((resolve, reject) => {
+				const uploadStream = cloudinary.uploader.upload_stream(
+					{
+						folder: 'assignment_attachments',
+						resource_type: 'auto',
+						access_mode: 'public',
+					},
+					(err, result) => (err ? reject(err) : resolve(result)),
+				);
+				uploadStream.end(req.file.buffer);
+			});
+			fileUrl = uploadResult.secure_url;
+		} else {
+			return res.status(400).json({ error: 'Uploaded file not found' });
+		}
 	} else if (type === 'link') {
 		if (!content) return res.status(400).json({ error: 'Link required' });
 		fileUrl = content;
@@ -89,18 +98,24 @@ async function submitAssignment(req, res) {
 	let submissionUrl = null;
 	if (type === 'file') {
 		if (!req.file) return res.status(400).json({ error: 'File required' });
-		const uploadResult = await new Promise((resolve, reject) => {
-			const uploadStream = cloudinary.uploader.upload_stream(
-				{
-					folder: 'assignment_submissions',
-					resource_type: 'auto',
-					access_mode: 'public',
-				},
-				(err, result) => (err ? reject(err) : resolve(result)),
-			);
-			uploadStream.end(req.file.buffer);
-		});
-		submissionUrl = uploadResult.secure_url;
+		if (req.file.path || req.file.url || req.file.secure_url) {
+			submissionUrl = req.file.path || req.file.url || req.file.secure_url;
+		} else if (req.file.buffer) {
+			const uploadResult = await new Promise((resolve, reject) => {
+				const uploadStream = cloudinary.uploader.upload_stream(
+					{
+						folder: 'assignment_submissions',
+						resource_type: 'auto',
+						access_mode: 'public',
+					},
+					(err, result) => (err ? reject(err) : resolve(result)),
+				);
+				uploadStream.end(req.file.buffer);
+			});
+			submissionUrl = uploadResult.secure_url;
+		} else {
+			return res.status(400).json({ error: 'Uploaded file not found' });
+		}
 	} else if (type === 'link') {
 		if (!content) return res.status(400).json({ error: 'Link required' });
 		submissionUrl = content;
