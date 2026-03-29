@@ -111,7 +111,9 @@ export default function EnrolledClasses() {
 	};
 
 	const requestUnenroll = (classId) => {
-		setUnenrollTarget(classId);
+		// accept either class_id or id
+		const id = classId;
+		setUnenrollTarget(id);
 		setConfirmOpen(true);
 	};
 
@@ -135,8 +137,9 @@ export default function EnrolledClasses() {
 	const handleShowAnnouncements = async (cls) => {
 		setSelectedClass(cls);
 		setLoadingAnnouncements(true);
+		const id = cls.class_id ?? cls.id;
 		try {
-			const res = await getClassAnnouncements(cls.class_id);
+			const res = await getClassAnnouncements(id);
 			setAnnouncements(res.data);
 			setShowAnnouncementsModal(true);
 		} catch (err) {
@@ -181,7 +184,7 @@ export default function EnrolledClasses() {
 					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
 						{enrolledClasses.map((cls) => (
 							<div
-								key={cls.class_id}
+								key={cls.class_id ?? cls.id}
 								className='bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 shadow-sm'
 							>
 								<h3 className='text-lg font-semibold text-[var(--color-text-primary)] mb-1'>
@@ -205,7 +208,7 @@ export default function EnrolledClasses() {
 										Announcements
 									</button>
 									<button
-										onClick={() => requestUnenroll(cls.class_id)}
+										onClick={() => requestUnenroll(cls.class_id ?? cls.id)}
 										className='px-3 py-1 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors'
 									>
 										Unenroll
