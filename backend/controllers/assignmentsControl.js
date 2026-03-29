@@ -84,7 +84,7 @@ async function submitAssignment(req, res) {
 	const studentId = req.user && req.user.id;
 	if (!isValidUUID(assignmentId) || !isValidUUID(studentId))
 		return res.status(400).json({ error: 'Invalid or missing id(s)' });
-	const { type, content } = req.body; // type: 'file' or 'link'
+	const { type, content } = req.body; // type: 'file' | 'link' | 'text'
 
 	let submissionUrl = null;
 	if (type === 'file') {
@@ -103,6 +103,9 @@ async function submitAssignment(req, res) {
 		submissionUrl = uploadResult.secure_url;
 	} else if (type === 'link') {
 		if (!content) return res.status(400).json({ error: 'Link required' });
+		submissionUrl = content;
+	} else if (type === 'text') {
+		if (!content) return res.status(400).json({ error: 'Text content required' });
 		submissionUrl = content;
 	} else {
 		return res.status(400).json({ error: 'Invalid submission type' });

@@ -129,6 +129,42 @@ async function getAssignmentByIdQuery(id) {
 	]);
 	return rows[0];
 }
+
+// Submissions
+async function upsertSubmissionQuery(assignmentId, studentId, submissionType, submissionContent) {
+	const { rows } = await pool.query(
+		`INSERT INTO assignment_submissions (assignment_id, student_id, submission_type, submission_content)
+		 VALUES ($1, $2, $3, $4)
+		 ON CONFLICT (assignment_id, student_id)
+		 DO UPDATE SET
+		   submission_type = EXCLUDED.submission_type,
+		   submission_content = EXCLUDED.submission_content,
+		   updated_at = NOW()
+		 RETURNING *`,
+		[assignmentId, studentId, submissionType, submissionContent],
+	);
+	return rows[0];
+}
+
+async function getSubmissionsByAssignmentQuery(assignmentId) {
+	const { rows } = await pool.query(
+		`SELECT s.*, u.username, u.profile_pic
+		 FROM assignment_submissions s
+		 JOIN users u ON s.student_id = u.id
+		 WHERE s.assignment_id = $1
+		 ORDER BY s.submitted_at DESC`,
+		[assignmentId],
+	);
+	return rows;
+}
+
+async function getStudentSubmissionQuery(assignmentId, studentId) {
+	const { rows } = await pool.query(
+		`SELECT * FROM assignment_submissions WHERE assignment_id = $1 AND student_id = $2`,
+		[assignmentId, studentId],
+	);
+	return rows[0];
+}
 module.exports = {
 	addAttachmentQuery,
 	getAttachmentsByAssignmentQuery,
@@ -142,4 +178,7 @@ module.exports = {
 	getGradesForStudentQuery,
 	getStudentGradesForClassQuery,
 	getAssignmentByIdQuery,
+	upsertSubmissionQuery,
+	getSubmissionsByAssignmentQuery,
+	getStudentSubmissionQuery,
 };

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { updateUsername, changePassword, deleteUser } from '../../../api/authApi';
 import { SpinnerIcon, EyeIcon } from '../../Icons/Icon';
-import { User, Key, Camera, Trash2, CheckCircle2, XCircle, X, AlertTriangle } from 'lucide-react';
+import { User, Key, Trash2, Camera, CheckCircle2, XCircle, AlertTriangle, X } from 'lucide-react';
 import ConfirmModal from '../../../components/ConfirmModal';
 
 function Toast({ type = 'success', message, isOpen, onClose }) {
@@ -32,26 +32,10 @@ function Toast({ type = 'success', message, isOpen, onClose }) {
   if (!visible) return null;
 
   const configs = {
-    success: {
-      icon: <CheckCircle2 size={18} aria-hidden="true" />,
-      bar: 'bg-[var(--color-primary)]',
-      iconColor: 'text-[var(--color-primary)]',
-      label: 'Success',
-    },
-    error: {
-      icon: <XCircle size={18} aria-hidden="true" />,
-      bar: 'bg-red-500',
-      iconColor: 'text-red-500',
-      label: 'Error',
-    },
-    warning: {
-      icon: <AlertTriangle size={18} aria-hidden="true" />,
-      bar: 'bg-amber-500',
-      iconColor: 'text-amber-500',
-      label: 'Warning',
-    },
+    success: { icon: <CheckCircle2 size={16} aria-hidden="true" />, bar: 'bg-[var(--color-primary)]', iconColor: 'text-[var(--color-primary)]', label: 'Success' },
+    error:   { icon: <XCircle size={16} aria-hidden="true" />,       bar: 'bg-red-500',                iconColor: 'text-red-500',                label: 'Error'   },
+    warning: { icon: <AlertTriangle size={16} aria-hidden="true" />, bar: 'bg-amber-500',              iconColor: 'text-amber-500',              label: 'Warning' },
   };
-
   const cfg = configs[type] ?? configs.success;
 
   return (
@@ -61,74 +45,49 @@ function Toast({ type = 'success', message, isOpen, onClose }) {
       aria-atomic="true"
       aria-label={`${cfg.label}: ${message}`}
       className={[
-        'fixed bottom-6 right-4 z-50 flex w-[calc(100vw-2rem)] max-w-sm flex-col overflow-hidden',
-        'rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl',
+        'fixed bottom-5 right-4 z-50 flex w-[calc(100vw-2rem)] max-w-xs flex-col overflow-hidden',
+        'rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl',
         'transition-all duration-300',
-        exiting
-          ? 'translate-y-4 opacity-0 scale-95'
-          : 'translate-y-0 opacity-100 scale-100',
+        exiting ? 'translate-y-3 opacity-0 scale-95' : 'translate-y-0 opacity-100 scale-100',
       ].join(' ')}
     >
-      <div className="flex items-start gap-3 px-4 pt-4 pb-3">
-        <span className={`mt-0.5 shrink-0 ${cfg.iconColor}`}>{cfg.icon}</span>
-        <p className="flex-1 text-sm font-medium text-[var(--color-text-primary)] leading-snug">
-          {message}
-        </p>
+      <div className="flex items-center gap-3 px-3.5 pt-3.5 pb-3">
+        <span className={`shrink-0 ${cfg.iconColor}`}>{cfg.icon}</span>
+        <p className="flex-1 text-sm font-medium text-[var(--color-text-primary)] leading-snug">{message}</p>
         <button
           type="button"
           onClick={startExit}
           aria-label="Dismiss notification"
-          className="shrink-0 rounded-lg p-1 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-border)] hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+          className="shrink-0 rounded-md p-1 text-[var(--color-text-muted)] transition hover:bg-[var(--color-border)] hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
         >
-          <X size={14} aria-hidden="true" />
+          <X size={13} aria-hidden="true" />
         </button>
       </div>
       <div
-        className={`h-1 w-full origin-left ${cfg.bar}`}
-        style={{ animation: 'toast-progress 4s linear forwards' }}
         aria-hidden="true"
+        className={`h-0.5 w-full origin-left ${cfg.bar}`}
+        style={{ animation: 'toast-shrink 4s linear forwards' }}
       />
-      <style>{`
-        @keyframes toast-progress {
-          from { transform: scaleX(1); }
-          to   { transform: scaleX(0); }
-        }
-      `}</style>
+      <style>{`@keyframes toast-shrink { from { transform: scaleX(1); } to { transform: scaleX(0); } }`}</style>
     </div>
   );
 }
 
-function AvatarCircle({ preview, username }) {
+function FieldRow({ label, htmlFor, hint, children }) {
   return (
-    <div className="h-20 w-20 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center overflow-hidden ring-2 ring-[var(--color-border)]">
-      {preview ? (
-        <img src={preview} alt="" aria-hidden="true" className="h-full w-full object-cover" />
-      ) : (
-        <span aria-hidden="true" className="text-2xl font-semibold text-[var(--color-primary)]">
-          {(username.charAt(0) || '?').toUpperCase()}
-        </span>
-      )}
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-4 sm:items-start py-5 border-b border-[var(--color-border)] last:border-0">
+      <div className="sm:pt-2.5">
+        <label htmlFor={htmlFor} className="block text-sm font-medium text-[var(--color-text-secondary)]">
+          {label}
+        </label>
+        {hint && <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">{hint}</p>}
+      </div>
+      <div className="sm:col-span-2">{children}</div>
     </div>
   );
 }
 
-function SectionCard({ children, className = '' }) {
-  return (
-    <div className={`rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm ${className}`}>
-      {children}
-    </div>
-  );
-}
-
-function FieldLabel({ htmlFor, children }) {
-  return (
-    <label htmlFor={htmlFor} className="block text-sm font-medium text-[var(--color-text-secondary)]">
-      {children}
-    </label>
-  );
-}
-
-function TextInput({ id, name, value, onChange, required, type = 'text', minLength, className = '', ...rest }) {
+function TextInput({ id, name, value, onChange, required, type = 'text', className = '', ...rest }) {
   return (
     <input
       id={id}
@@ -138,14 +97,13 @@ function TextInput({ id, name, value, onChange, required, type = 'text', minLeng
       onChange={onChange}
       required={required}
       aria-required={required}
-      minLength={minLength}
-      className={`block w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-4 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 ${className}`}
+      className={`block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 ${className}`}
       {...rest}
     />
   );
 }
 
-function PasswordInput({ id, name, value, onChange, show, onToggle, label }) {
+function PasswordInput({ id, name, value, onChange, show, onToggle, label, minLength }) {
   return (
     <div className="relative">
       <TextInput
@@ -155,6 +113,7 @@ function PasswordInput({ id, name, value, onChange, show, onToggle, label }) {
         value={value}
         onChange={onChange}
         required
+        minLength={minLength}
         className="pr-10"
         aria-label={label}
       />
@@ -177,7 +136,7 @@ function PrimaryButton({ loading, loadingText, children, ...rest }) {
       type="submit"
       disabled={loading}
       aria-busy={loading}
-      className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--color-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 disabled:opacity-50"
+      className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--color-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 disabled:opacity-50"
       {...rest}
     >
       {loading && <SpinnerIcon />}
@@ -186,8 +145,15 @@ function PrimaryButton({ loading, loadingText, children, ...rest }) {
   );
 }
 
+const TABS = [
+  { id: 'profile',  label: 'Profile',  Icon: User   },
+  { id: 'security', label: 'Security', Icon: Key    },
+  { id: 'account',  label: 'Account',  Icon: Trash2 },
+];
+
 export default function Profile() {
   const { user, login, logout } = useAuth();
+  const [tab, setTab] = useState('profile');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -273,153 +239,188 @@ export default function Profile() {
   };
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold text-[var(--color-text-primary)] sm:text-3xl">
-          Profile Settings
-        </h1>
-        <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-          Manage your account information and security preferences
-        </p>
-      </header>
+    <main className="max-w-2xl mx-auto px-4 py-8 sm:px-6">
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          <SectionCard>
-            <div className="flex items-center gap-2 mb-1">
-              <User size={20} className="text-[var(--color-primary)]" aria-hidden="true" />
-              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
-                Profile Information
-              </h2>
-            </div>
-            <p className="text-sm text-[var(--color-text-muted)] mb-6">
-              Update your username and profile picture
-            </p>
-
-            <form onSubmit={handleProfileSubmit} className="space-y-6" noValidate>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-                <div className="relative shrink-0">
-                  <AvatarCircle preview={avatarPreview} username={profileForm.username} />
-                  <label
-                    htmlFor="image"
-                    className="absolute -bottom-1 -right-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-md transition-colors hover:bg-[var(--color-primary-hover)] focus-within:ring-2 focus-within:ring-[var(--color-primary)] focus-within:ring-offset-2"
-                  >
-                    <Camera size={15} aria-hidden="true" />
-                    <span className="sr-only">Upload profile picture</span>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      id="image"
-                      name="image"
-                      accept="image/*"
-                      onChange={handleProfileChange}
-                      className="sr-only"
-                      aria-describedby="avatar-hint"
-                    />
-                  </label>
-                </div>
-                <p id="avatar-hint" className="text-sm text-[var(--color-text-muted)]">
-                  Click the camera icon to upload a new profile picture. JPG, PNG or GIF accepted.
-                </p>
-              </div>
-
-              <div>
-                <FieldLabel htmlFor="username">Username</FieldLabel>
-                <TextInput
-                  id="username"
-                  name="username"
-                  value={profileForm.username}
-                  onChange={handleProfileChange}
-                  required
-                  className="mt-1"
-                  autoComplete="username"
-                />
-              </div>
-
-              <div className="flex justify-end">
-                <PrimaryButton loading={loading} loadingText="Saving…">
-                  Save Changes
-                </PrimaryButton>
-              </div>
-            </form>
-          </SectionCard>
-
-          <SectionCard>
-            <div className="flex items-center gap-2 mb-1">
-              <Key size={20} className="text-[var(--color-primary)]" aria-hidden="true" />
-              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
-                Change Password
-              </h2>
-            </div>
-            <p className="text-sm text-[var(--color-text-muted)] mb-6">
-              Ensure your account is protected with a strong password
-            </p>
-
-            <form onSubmit={handlePasswordSubmit} className="space-y-6" noValidate>
-              <div>
-                <FieldLabel htmlFor="currentPassword">Current Password</FieldLabel>
-                <div className="mt-1">
-                  <PasswordInput
-                    id="currentPassword"
-                    name="currentPassword"
-                    value={passwordForm.currentPassword}
-                    onChange={handlePasswordChange}
-                    show={showPassword}
-                    onToggle={() => setShowPassword((v) => !v)}
-                    label="Current password"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <FieldLabel htmlFor="newPassword">New Password</FieldLabel>
-                <div className="mt-1">
-                  <PasswordInput
-                    id="newPassword"
-                    name="newPassword"
-                    value={passwordForm.newPassword}
-                    onChange={handlePasswordChange}
-                    show={showNewPassword}
-                    onToggle={() => setShowNewPassword((v) => !v)}
-                    label="New password"
-                    minLength={6}
-                  />
-                </div>
-                <p id="new-password-hint" className="mt-1.5 text-xs text-[var(--color-text-muted)]">
-                  Must be at least 6 characters.
-                </p>
-              </div>
-
-              <div className="flex justify-end">
-                <PrimaryButton loading={loading} loadingText="Changing…">
-                  Change Password
-                </PrimaryButton>
-              </div>
-            </form>
-          </SectionCard>
+      <div className="flex items-center gap-4 mb-7">
+        <div className="h-12 w-12 rounded-full shrink-0 bg-[var(--color-primary)]/10 flex items-center justify-center overflow-hidden ring-2 ring-[var(--color-border)]">
+          {avatarPreview ? (
+            <img src={avatarPreview} alt="" aria-hidden="true" className="h-full w-full object-cover" />
+          ) : (
+            <span aria-hidden="true" className="text-lg font-semibold text-[var(--color-primary)]">
+              {(profileForm.username.charAt(0) || '?').toUpperCase()}
+            </span>
+          )}
         </div>
+        <div className="min-w-0">
+          <p className="text-base font-semibold text-[var(--color-text-primary)] truncate">
+            {profileForm.username || 'Your account'}
+          </p>
+          <p className="text-sm text-[var(--color-text-muted)] truncate">{user?.email}</p>
+        </div>
+      </div>
 
-        <aside>
-          <div className="rounded-2xl border border-red-200 bg-red-50/40 p-6 dark:border-red-900/40 dark:bg-red-950/20">
-            <div className="flex items-center gap-2 text-red-600 dark:text-red-400 mb-2">
-              <Trash2 size={20} aria-hidden="true" />
-              <h2 className="text-base font-semibold">Danger Zone</h2>
+      <div
+        role="tablist"
+        aria-label="Settings sections"
+        className="flex gap-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1 mb-5"
+      >
+        {TABS.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            role="tab"
+            type="button"
+            id={`tab-${id}`}
+            aria-selected={tab === id}
+            aria-controls={`panel-${id}`}
+            onClick={() => setTab(id)}
+            className={[
+              'flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]',
+              tab === id
+                ? 'bg-[var(--color-bg)] text-[var(--color-text-primary)] shadow-sm'
+                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]',
+            ].join(' ')}
+          >
+            <Icon size={14} aria-hidden="true" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div
+        id="panel-profile"
+        role="tabpanel"
+        aria-labelledby="tab-profile"
+        hidden={tab !== 'profile'}
+        className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-6"
+      >
+        <form onSubmit={handleProfileSubmit} noValidate>
+          <FieldRow label="Photo" htmlFor="image" hint="JPG, PNG or GIF">
+            <div className="flex items-center gap-3">
+              <div className="relative shrink-0">
+                <div className="h-11 w-11 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center overflow-hidden ring-2 ring-[var(--color-border)]">
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="" aria-hidden="true" className="h-full w-full object-cover" />
+                  ) : (
+                    <span aria-hidden="true" className="text-sm font-semibold text-[var(--color-primary)]">
+                      {(profileForm.username.charAt(0) || '?').toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <label
+                  htmlFor="image"
+                  className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow transition hover:bg-[var(--color-primary-hover)] focus-within:ring-2 focus-within:ring-[var(--color-primary)] focus-within:ring-offset-1"
+                >
+                  <Camera size={10} aria-hidden="true" />
+                  <span className="sr-only">Upload profile picture</span>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    id="image"
+                    name="image"
+                    accept="image/*"
+                    onChange={handleProfileChange}
+                    className="sr-only"
+                  />
+                </label>
+              </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              >
+                Change photo
+              </button>
             </div>
-            <p className="text-sm text-red-600/80 dark:text-red-400/80 mb-4 leading-relaxed">
-              Deleting your account is permanent and cannot be undone. All your data will be removed.
+          </FieldRow>
+
+          <FieldRow label="Username" htmlFor="username">
+            <TextInput
+              id="username"
+              name="username"
+              value={profileForm.username}
+              onChange={handleProfileChange}
+              required
+              autoComplete="username"
+            />
+          </FieldRow>
+
+          <div className="flex justify-end py-4">
+            <PrimaryButton loading={loading} loadingText="Saving…">
+              Save changes
+            </PrimaryButton>
+          </div>
+        </form>
+      </div>
+
+      <div
+        id="panel-security"
+        role="tabpanel"
+        aria-labelledby="tab-security"
+        hidden={tab !== 'security'}
+        className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-6"
+      >
+        <form onSubmit={handlePasswordSubmit} noValidate>
+          <FieldRow label="Current password" htmlFor="currentPassword">
+            <PasswordInput
+              id="currentPassword"
+              name="currentPassword"
+              value={passwordForm.currentPassword}
+              onChange={handlePasswordChange}
+              show={showPassword}
+              onToggle={() => setShowPassword((v) => !v)}
+              label="Current password"
+            />
+          </FieldRow>
+
+          <FieldRow label="New password" htmlFor="newPassword" hint="At least 6 characters">
+            <PasswordInput
+              id="newPassword"
+              name="newPassword"
+              value={passwordForm.newPassword}
+              onChange={handlePasswordChange}
+              show={showNewPassword}
+              onToggle={() => setShowNewPassword((v) => !v)}
+              label="New password"
+              minLength={6}
+            />
+          </FieldRow>
+
+          <div className="flex justify-end py-4">
+            <PrimaryButton loading={loading} loadingText="Changing…">
+              Update password
+            </PrimaryButton>
+          </div>
+        </form>
+      </div>
+
+      <div
+        id="panel-account"
+        role="tabpanel"
+        aria-labelledby="tab-account"
+        hidden={tab !== 'account'}
+        className="rounded-xl border border-red-200 bg-red-50/30 dark:border-red-900/40 dark:bg-red-950/20 p-6"
+      >
+        <div className="flex items-start gap-4">
+          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/30">
+            <Trash2 size={16} className="text-red-600 dark:text-red-400" aria-hidden="true" />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold text-red-700 dark:text-red-300">Delete account</h2>
+            <p className="mt-1 text-sm text-red-600/80 dark:text-red-400/80 leading-relaxed">
+              This permanently removes your account and all associated data. This action cannot be reversed.
             </p>
             <button
               type="button"
               onClick={() => setConfirmModalOpen(true)}
               disabled={loading}
               aria-label="Delete account permanently"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-300 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-500/20 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 dark:border-red-800 dark:text-red-400"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-3.5 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 dark:border-red-800 dark:bg-transparent dark:text-red-400 dark:hover:bg-red-900/20"
             >
-              <Trash2 size={15} aria-hidden="true" />
-              Delete Account
+              <Trash2 size={14} aria-hidden="true" />
+              Delete my account
             </button>
           </div>
-        </aside>
+        </div>
       </div>
 
       <ConfirmModal
