@@ -31,6 +31,7 @@ const studentNavItems = [
 
 	{ id: 'course-material', label: 'Course Material', icon: BookOpen },
 	{ id: 'gradebook', label: 'Gradebook', icon: BarChart },
+	{ id: 'assignments', label: 'Assignments', icon: FileText },
 	{ id: 'report', label: 'Report', icon: FileText },
 ];
 const teacherNavItems = [
@@ -40,7 +41,7 @@ const teacherNavItems = [
 		icon: Calendar,
 	},
 	{ id: 'course-material', label: 'Course Material', icon: BookOpen },
-	{ id: 'assignments', label: 'Assignments', icon: BarChart },
+	{ id: 'assignments', label: 'Assignments', icon: FileText },
 	{
 		id: 'student-communication',
 		label: 'Student Communication',

@@ -10,6 +10,7 @@ import CourseMaterial from '../Sidebar/Tabs/TeacherTabs/CourseMaterial/CourseMat
 import StudentCourseMaterial from '../Sidebar/Tabs/StudentTabs/CourseMaterial/StudentCourseMaterial';
 import TeacherAttendance from '../Sidebar/Tabs/TeacherTabs/TeacherAttendance/TeacherAttendance';
 import TeacherAssignments from '../Sidebar/Tabs/TeacherTabs/Assignments/Assignments';
+import StudentAssignments from '../Sidebar/Tabs/StudentTabs/StudentAssignments/StudentAssignments';
 
 export default function Dashboard() {
 	const { user } = useAuth();
@@ -44,6 +45,8 @@ export default function Dashboard() {
 					return <StudentCourseMaterial />;
 				case 'profile':
 					return <Profile />;
+				case 'assignments':
+					return <StudentAssignments />;
 				default:
 					return <EnrolledClasses />;
 			}
