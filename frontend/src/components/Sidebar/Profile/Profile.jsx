@@ -75,7 +75,7 @@ function Toast({ type = 'success', message, isOpen, onClose }) {
 
 function FieldRow({ label, htmlFor, hint, children }) {
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-4 sm:items-start py-5 border-b border-[var(--color-border)] last:border-0">
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-6 sm:items-start py-6 border-b border-[var(--color-border)] last:border-0">
       <div className="sm:pt-2.5">
         <label htmlFor={htmlFor} className="block text-sm font-medium text-[var(--color-text-secondary)]">
           {label}
@@ -97,7 +97,7 @@ function TextInput({ id, name, value, onChange, required, type = 'text', classNa
       onChange={onChange}
       required={required}
       aria-required={required}
-      className={`block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 ${className}`}
+      className={`block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-4 py-3 text-sm text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 ${className}`}
       {...rest}
     />
   );
@@ -136,7 +136,7 @@ function PrimaryButton({ loading, loadingText, children, ...rest }) {
       type="submit"
       disabled={loading}
       aria-busy={loading}
-      className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--color-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 disabled:opacity-50"
+      className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-primary)] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--color-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 disabled:opacity-50"
       {...rest}
     >
       {loading && <SpinnerIcon />}
@@ -239,23 +239,24 @@ export default function Profile() {
   };
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-8 sm:px-6">
+    <main className="min-h-screen flex flex-col items-center px-4 py-12 sm:px-6">
+      <div className="w-full max-w-xl">
 
-      <div className="flex items-center gap-4 mb-7">
-        <div className="h-12 w-12 rounded-full shrink-0 bg-[var(--color-primary)]/10 flex items-center justify-center overflow-hidden ring-2 ring-[var(--color-border)]">
+      <div className="flex flex-col items-center text-center gap-3 mb-10">
+        <div className="h-20 w-20 rounded-full shrink-0 bg-[var(--color-primary)]/10 flex items-center justify-center overflow-hidden ring-2 ring-[var(--color-border)]">
           {avatarPreview ? (
             <img src={avatarPreview} alt="" aria-hidden="true" className="h-full w-full object-cover" />
           ) : (
-            <span aria-hidden="true" className="text-lg font-semibold text-[var(--color-primary)]">
+            <span aria-hidden="true" className="text-2xl font-semibold text-[var(--color-primary)]">
               {(profileForm.username.charAt(0) || '?').toUpperCase()}
             </span>
           )}
         </div>
-        <div className="min-w-0">
-          <p className="text-base font-semibold text-[var(--color-text-primary)] truncate">
+        <div>
+          <p className="text-lg font-semibold text-[var(--color-text-primary)]">
             {profileForm.username || 'Your account'}
           </p>
-          <p className="text-sm text-[var(--color-text-muted)] truncate">{user?.email}</p>
+          <p className="text-sm text-[var(--color-text-muted)]">{user?.email}</p>
         </div>
       </div>
 
@@ -274,13 +275,13 @@ export default function Profile() {
             aria-controls={`panel-${id}`}
             onClick={() => setTab(id)}
             className={[
-              'flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]',
+              'flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]',
               tab === id
                 ? 'bg-[var(--color-bg)] text-[var(--color-text-primary)] shadow-sm'
                 : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]',
             ].join(' ')}
           >
-            <Icon size={14} aria-hidden="true" />
+            <Icon size={15} aria-hidden="true" />
             {label}
           </button>
         ))}
@@ -291,26 +292,26 @@ export default function Profile() {
         role="tabpanel"
         aria-labelledby="tab-profile"
         hidden={tab !== 'profile'}
-        className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-6"
+        className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-7"
       >
         <form onSubmit={handleProfileSubmit} noValidate>
           <FieldRow label="Photo" htmlFor="image" hint="JPG, PNG or GIF">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <div className="relative shrink-0">
-                <div className="h-11 w-11 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center overflow-hidden ring-2 ring-[var(--color-border)]">
+                <div className="h-14 w-14 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center overflow-hidden ring-2 ring-[var(--color-border)]">
                   {avatarPreview ? (
                     <img src={avatarPreview} alt="" aria-hidden="true" className="h-full w-full object-cover" />
                   ) : (
-                    <span aria-hidden="true" className="text-sm font-semibold text-[var(--color-primary)]">
+                    <span aria-hidden="true" className="text-base font-semibold text-[var(--color-primary)]">
                       {(profileForm.username.charAt(0) || '?').toUpperCase()}
                     </span>
                   )}
                 </div>
                 <label
                   htmlFor="image"
-                  className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow transition hover:bg-[var(--color-primary-hover)] focus-within:ring-2 focus-within:ring-[var(--color-primary)] focus-within:ring-offset-1"
+                  className="absolute -bottom-1 -right-1 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow transition hover:bg-[var(--color-primary-hover)] focus-within:ring-2 focus-within:ring-[var(--color-primary)] focus-within:ring-offset-1"
                 >
-                  <Camera size={10} aria-hidden="true" />
+                  <Camera size={12} aria-hidden="true" />
                   <span className="sr-only">Upload profile picture</span>
                   <input
                     ref={fileInputRef}
@@ -326,7 +327,7 @@ export default function Profile() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               >
                 Change photo
               </button>
@@ -344,7 +345,7 @@ export default function Profile() {
             />
           </FieldRow>
 
-          <div className="flex justify-end py-4">
+          <div className="flex justify-end py-5">
             <PrimaryButton loading={loading} loadingText="Saving…">
               Save changes
             </PrimaryButton>
@@ -357,7 +358,7 @@ export default function Profile() {
         role="tabpanel"
         aria-labelledby="tab-security"
         hidden={tab !== 'security'}
-        className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-6"
+        className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-7"
       >
         <form onSubmit={handlePasswordSubmit} noValidate>
           <FieldRow label="Current password" htmlFor="currentPassword">
@@ -385,7 +386,7 @@ export default function Profile() {
             />
           </FieldRow>
 
-          <div className="flex justify-end py-4">
+          <div className="flex justify-end py-5">
             <PrimaryButton loading={loading} loadingText="Changing…">
               Update password
             </PrimaryButton>
@@ -398,15 +399,15 @@ export default function Profile() {
         role="tabpanel"
         aria-labelledby="tab-account"
         hidden={tab !== 'account'}
-        className="rounded-xl border border-red-200 bg-red-50/30 dark:border-red-900/40 dark:bg-red-950/20 p-6"
+        className="rounded-xl border border-red-200 bg-red-50/30 dark:border-red-900/40 dark:bg-red-950/20 p-7"
       >
         <div className="flex items-start gap-4">
-          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/30">
-            <Trash2 size={16} className="text-red-600 dark:text-red-400" aria-hidden="true" />
+          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/30">
+            <Trash2 size={18} className="text-red-600 dark:text-red-400" aria-hidden="true" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-red-700 dark:text-red-300">Delete account</h2>
-            <p className="mt-1 text-sm text-red-600/80 dark:text-red-400/80 leading-relaxed">
+            <h2 className="text-base font-semibold text-red-700 dark:text-red-300">Delete account</h2>
+            <p className="mt-1.5 text-sm text-red-600/80 dark:text-red-400/80 leading-relaxed">
               This permanently removes your account and all associated data. This action cannot be reversed.
             </p>
             <button
@@ -414,13 +415,15 @@ export default function Profile() {
               onClick={() => setConfirmModalOpen(true)}
               disabled={loading}
               aria-label="Delete account permanently"
-              className="mt-4 inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-3.5 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 dark:border-red-800 dark:bg-transparent dark:text-red-400 dark:hover:bg-red-900/20"
+              className="mt-5 inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 dark:border-red-800 dark:bg-transparent dark:text-red-400 dark:hover:bg-red-900/20"
             >
-              <Trash2 size={14} aria-hidden="true" />
+              <Trash2 size={15} aria-hidden="true" />
               Delete my account
             </button>
           </div>
         </div>
+      </div>
+
       </div>
 
       <ConfirmModal
