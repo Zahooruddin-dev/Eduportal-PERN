@@ -1,5 +1,14 @@
 const db = require('../db/queryAssignment');
 const dbClass = require('../db/queryClasses');
+const pool = require('../db/Pool');
+const cloudinary = require('cloudinary').v2;
+
+function isValidUUID(id) {
+	if (!id) return false;
+	return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+		String(id),
+	);
+}
 async function addAttachment(req, res) {
 	const { assignmentId } = req.params;
 	const { title, type, content } = req.body;
@@ -41,6 +50,8 @@ async function addAttachment(req, res) {
 
 async function getAttachments(req, res) {
 	const { assignmentId } = req.params;
+	if (!isValidUUID(assignmentId))
+		return res.status(400).json({ error: 'Invalid or missing assignmentId' });
 	try {
 		const attachments =
 			await db.getAttachmentsByAssignmentQuery(assignmentId);
@@ -52,6 +63,8 @@ async function getAttachments(req, res) {
 
 async function deleteAttachment(req, res) {
 	const { assignmentId, attachmentId } = req.params;
+	if (!isValidUUID(assignmentId) || !isValidUUID(attachmentId))
+		return res.status(400).json({ error: 'Invalid or missing id(s)' });
 	try {
 		const deleted = await db.deleteAttachmentQuery(
 			attachmentId,
@@ -68,7 +81,9 @@ async function deleteAttachment(req, res) {
 // ---- Student Submissions ----
 async function submitAssignment(req, res) {
 	const { assignmentId } = req.params;
-	const studentId = req.user.id;
+	const studentId = req.user && req.user.id;
+	if (!isValidUUID(assignmentId) || !isValidUUID(studentId))
+		return res.status(400).json({ error: 'Invalid or missing id(s)' });
 	const { type, content } = req.body; // type: 'file' or 'link'
 
 	let submissionUrl = null;
@@ -109,6 +124,8 @@ async function submitAssignment(req, res) {
 
 async function getSubmissionsForTeacher(req, res) {
 	const { assignmentId } = req.params;
+	if (!isValidUUID(assignmentId))
+		return res.status(400).json({ error: 'Invalid or missing assignmentId' });
 	// teacher only – check permission via assignment's class
 	try {
 		const submissions =
@@ -132,7 +149,9 @@ async function getSubmissionsForTeacher(req, res) {
 
 async function getMySubmission(req, res) {
 	const { assignmentId } = req.params;
-	const studentId = req.user.id;
+	const studentId = req.user && req.user.id;
+	if (!isValidUUID(assignmentId) || !isValidUUID(studentId))
+		return res.status(400).json({ error: 'Invalid or missing id(s)' });
 	try {
 		const submission = await db.getStudentSubmissionQuery(
 			assignmentId,
@@ -151,6 +170,8 @@ async function getMySubmission(req, res) {
 
 async function getAssignments(req, res) {
 	const { classId } = req.params;
+	if (!isValidUUID(classId))
+		return res.status(400).json({ error: 'Invalid or missing classId' });
 	try {
 		// Check teacher permission (if user is teacher, ensure they teach this class)
 		if (req.user.role === 'teacher') {
@@ -169,6 +190,8 @@ async function getAssignments(req, res) {
 
 async function createAssignment(req, res) {
 	const { classId } = req.params;
+	if (!isValidUUID(classId))
+		return res.status(400).json({ error: 'Invalid or missing classId' });
 	const { title, description, type, maxScore, dueDate } = req.body;
 	if (!title || maxScore === undefined) {
 		return res.status(400).json({ error: 'Title and max score required' });
@@ -195,6 +218,8 @@ async function createAssignment(req, res) {
 
 async function updateAssignment(req, res) {
 	const { assignmentId } = req.params;
+	if (!isValidUUID(assignmentId))
+		return res.status(400).json({ error: 'Invalid or missing assignmentId' });
 	const { title, description, type, maxScore, dueDate } = req.body;
 	try {
 		const assignment = await db.updateAssignmentQuery(assignmentId, {
@@ -221,6 +246,8 @@ async function updateAssignment(req, res) {
 
 async function deleteAssignment(req, res) {
 	const { assignmentId } = req.params;
+	if (!isValidUUID(assignmentId))
+		return res.status(400).json({ error: 'Invalid or missing assignmentId' });
 	try {
 		// Fetch assignment first to check permission
 		const assignment = await db.getAssignmentByIdQuery(assignmentId);
@@ -249,6 +276,8 @@ async function deleteAssignment(req, res) {
 
 async function getAssignmentGrades(req, res) {
 	const { assignmentId } = req.params;
+	if (!isValidUUID(assignmentId))
+		return res.status(400).json({ error: 'Invalid or missing assignmentId' });
 	try {
 		const grades = await db.getGradesForAssignmentQuery(assignmentId);
 		res.json(grades);
@@ -265,6 +294,8 @@ async function submitGrades(req, res) {
 		return res.status(400).json({ error: 'Grades must be an array' });
 	}
 	try {
+		if (!isValidUUID(assignmentId))
+			return res.status(400).json({ error: 'Invalid or missing assignmentId' });
 		// Verify assignment exists and teacher has permission (using assignment's class)
 		const rows = await pool.query(
 			'SELECT class_id FROM assignments WHERE id = $1',
@@ -291,7 +322,9 @@ async function submitGrades(req, res) {
 
 async function getStudentGradesForClass(req, res) {
 	const { classId } = req.params;
-	const studentId = req.user.id;
+	const studentId = req.user && req.user.id;
+	if (!isValidUUID(classId) || !isValidUUID(studentId))
+		return res.status(400).json({ error: 'Invalid or missing id(s)' });
 	try {
 		const grades = await db.getStudentGradesForClassQuery(studentId, classId);
 		res.json(grades);
