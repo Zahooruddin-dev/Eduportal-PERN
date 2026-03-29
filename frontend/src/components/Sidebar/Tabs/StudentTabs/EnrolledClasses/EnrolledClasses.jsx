@@ -22,6 +22,8 @@ export default function EnrolledClasses() {
 	const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const [unenrollTarget, setUnenrollTarget] = useState(null);
+	const [enrollConfirmOpen, setEnrollConfirmOpen] = useState(false);
+	const [enrollTarget, setEnrollTarget] = useState(null);
 	const [selectedClass, setSelectedClass] = useState(null);
 	const [announcements, setAnnouncements] = useState([]);
 	const [showAnnouncementsModal, setShowAnnouncementsModal] = useState(false);
@@ -57,8 +59,8 @@ export default function EnrolledClasses() {
 		setLoadingAvailable(true);
 		try {
 			const res = await getClasses();
-			// Filter out already enrolled
-			const enrolledIds = enrolledClasses.map((c) => c.class_id);
+			// Filter out already enrolled (support either `class_id` or `id` in enrolled entries)
+			const enrolledIds = enrolledClasses.map((c) => c.class_id ?? c.id);
 			const filtered = res.data.filter((cls) => !enrolledIds.includes(cls.id));
 			setAvailableClasses(filtered);
 		} catch (err) {
@@ -75,24 +77,37 @@ export default function EnrolledClasses() {
 	}, [user]);
 
 	useEffect(() => {
-		if (enrolledClasses.length >= 0) {
+		// Only fetch available classes after enrolled list finishes loading
+		if (!loadingEnrolled) {
 			fetchAvailable();
 		}
-	}, [enrolledClasses]);
+	}, [enrolledClasses, loadingEnrolled]);
 
-	const handleEnroll = async (classId) => {
-		setError('');
-		setSuccess('');
-		try {
-			await postEnrollement({ student_id: user.id, class_id: classId });
-			setSuccess('Successfully enrolled!');
-			setToast({ isOpen: true, type: 'success', message: 'Successfully enrolled!' });
-			fetchEnrolled(); // refresh list
-		} catch (err) {
-			const msg = err.response?.data?.message || 'Enrollment failed';
-			setError(msg);
-			setToast({ isOpen: true, type: 'error', message: msg });
-		}
+	// Request to open enroll confirmation
+	const requestEnroll = (classId) => {
+	 	setEnrollTarget(classId);
+	 	setEnrollConfirmOpen(true);
+	};
+
+	// Perform actual enroll after confirmation
+	const performEnroll = async () => {
+	 	if (!enrollTarget) return;
+	 	setError('');
+	 	setSuccess('');
+	 	try {
+	 		await postEnrollement({ student_id: user.id, class_id: enrollTarget });
+	 		setSuccess('Successfully enrolled!');
+	 		setToast({ isOpen: true, type: 'success', message: 'Successfully enrolled!' });
+	 		setEnrollTarget(null);
+	 		setEnrollConfirmOpen(false);
+	 		fetchEnrolled(); // refresh list
+	 	} catch (err) {
+	 		const msg = err.response?.data?.message || 'Enrollment failed';
+	 		setError(msg);
+	 		setToast({ isOpen: true, type: 'error', message: msg });
+	 		setEnrollConfirmOpen(false);
+	 		setEnrollTarget(null);
+	 	}
 	};
 
 	const requestUnenroll = (classId) => {
@@ -239,7 +254,7 @@ export default function EnrolledClasses() {
 								)}
 								<div className='mt-4'>
 									<button
-										onClick={() => handleEnroll(cls.id)}
+										onClick={() => requestEnroll(cls.id)}
 										className='px-4 py-2 text-sm bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors'
 									>
 										Enroll
@@ -314,6 +329,21 @@ export default function EnrolledClasses() {
 				cancelText='Cancel'
 				type='warning'
 			/>
+		
+		{/* Confirm enroll modal */}
+		<ConfirmModal
+			isOpen={enrollConfirmOpen}
+			onClose={() => {
+				setEnrollConfirmOpen(false);
+				setEnrollTarget(null);
+			}}
+			onConfirm={performEnroll}
+			title='Enroll in class'
+			message='Are you sure you want to enroll in this class?'
+			confirmText='Enroll'
+			cancelText='Cancel'
+			type='success'
+		/>
 		</div>
 	);
 }
