@@ -12,6 +12,25 @@
   --color-text-muted: #71717a;
 }
 
+/* Animations for modals */
+@keyframes overlayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeScaleIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.overlay-fade {
+  animation: overlayFade 200ms ease-out forwards;
+}
+
+.fade-scale-in {
+  animation: fadeScaleIn 220ms cubic-bezier(.2,.8,.2,1) forwards;
+}
+
 .dark {
   --color-bg: #09090b;
   --color-surface: #111113;

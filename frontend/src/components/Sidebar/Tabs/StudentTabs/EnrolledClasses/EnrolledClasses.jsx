@@ -19,7 +19,11 @@ export default function EnrolledClasses() {
 	const [loadingAvailable, setLoadingAvailable] = useState(true);
 	const [error, setError] = useState('');
 	const [success, setSuccess] = useState('');
-	const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
+	const [toast, setToast] = useState({
+		isOpen: false,
+		type: 'success',
+		message: '',
+	});
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const [unenrollTarget, setUnenrollTarget] = useState(null);
 	const [enrollConfirmOpen, setEnrollConfirmOpen] = useState(false);
@@ -85,29 +89,33 @@ export default function EnrolledClasses() {
 
 	// Request to open enroll confirmation
 	const requestEnroll = (classId) => {
-	 	setEnrollTarget(classId);
-	 	setEnrollConfirmOpen(true);
+		setEnrollTarget(classId);
+		setEnrollConfirmOpen(true);
 	};
 
 	// Perform actual enroll after confirmation
 	const performEnroll = async () => {
-	 	if (!enrollTarget) return;
-	 	setError('');
-	 	setSuccess('');
-	 	try {
-	 		await postEnrollement({ student_id: user.id, class_id: enrollTarget });
-	 		setSuccess('Successfully enrolled!');
-	 		setToast({ isOpen: true, type: 'success', message: 'Successfully enrolled!' });
-	 		setEnrollTarget(null);
-	 		setEnrollConfirmOpen(false);
-	 		fetchEnrolled(); // refresh list
-	 	} catch (err) {
-	 		const msg = err.response?.data?.message || 'Enrollment failed';
-	 		setError(msg);
-	 		setToast({ isOpen: true, type: 'error', message: msg });
-	 		setEnrollConfirmOpen(false);
-	 		setEnrollTarget(null);
-	 	}
+		if (!enrollTarget) return;
+		setError('');
+		setSuccess('');
+		try {
+			await postEnrollement({ student_id: user.id, class_id: enrollTarget });
+			setSuccess('Successfully enrolled!');
+			setToast({
+				isOpen: true,
+				type: 'success',
+				message: 'Successfully enrolled!',
+			});
+			setEnrollTarget(null);
+			setEnrollConfirmOpen(false);
+			fetchEnrolled(); // refresh list
+		} catch (err) {
+			const msg = err.response?.data?.message || 'Enrollment failed';
+			setError(msg);
+			setToast({ isOpen: true, type: 'error', message: msg });
+			setEnrollConfirmOpen(false);
+			setEnrollTarget(null);
+		}
 	};
 
 	const requestUnenroll = (classId) => {
@@ -124,7 +132,11 @@ export default function EnrolledClasses() {
 		try {
 			await unenrollStudent(user.id, unenrollTarget);
 			setSuccess('Successfully unenrolled');
-			setToast({ isOpen: true, type: 'success', message: 'Successfully unenrolled' });
+			setToast({
+				isOpen: true,
+				type: 'success',
+				message: 'Successfully unenrolled',
+			});
 			setUnenrollTarget(null);
 			fetchEnrolled();
 		} catch (err) {
@@ -135,18 +147,26 @@ export default function EnrolledClasses() {
 	};
 
 	const handleShowAnnouncements = async (cls) => {
-		setSelectedClass(cls);
-		setLoadingAnnouncements(true);
 		const id = cls.class_id ?? cls.id;
+		setSelectedClass(cls);
+		// open modal immediately and show loader while fetching
+		setShowAnnouncementsModal(true);
+		setLoadingAnnouncements(true);
 		try {
 			const res = await getClassAnnouncements(id);
 			setAnnouncements(res.data);
-			setShowAnnouncementsModal(true);
 		} catch (err) {
 			setError('Failed to load announcements');
 		} finally {
 			setLoadingAnnouncements(false);
 		}
+	};
+
+	const closeAnnouncementsModal = () => {
+		setShowAnnouncementsModal(false);
+		setSelectedClass(null);
+		setAnnouncements([]);
+		setLoadingAnnouncements(false);
 	};
 
 	if (loadingEnrolled) {
@@ -271,50 +291,65 @@ export default function EnrolledClasses() {
 
 			{/* Announcements Modal */}
 			{showAnnouncementsModal && selectedClass && (
-				<div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
-					<div className='bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6'>
-						<div className='flex justify-between items-center mb-4'>
-							<h2 className='text-xl font-semibold text-[var(--color-text-primary)]'>
-								Announcements for {selectedClass.class_name}
-							</h2>
-							<button
-								onClick={() => setShowAnnouncementsModal(false)}
-								className='text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
-							>
-								✕
-							</button>
+				<div className='fixed inset-0 z-50 flex items-center justify-center p-4 overlay-fade'>
+					{/* backdrop */}
+					<div className='absolute inset-0 bg-black/50' aria-hidden='true' />
+					<section
+						role='dialog'
+						aria-modal='true'
+						aria-labelledby='announcements-title'
+						className='relative z-10 w-full max-w-3xl sm:max-w-2xl mx-auto bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-xl overflow-hidden fade-scale-in'
+					>
+						<div className='px-4 py-4 sm:px-6 sm:py-6 border-b border-[var(--color-border)]'>
+							<div className='flex items-start sm:items-center justify-between gap-4'>
+								<div className='flex-1 min-w-0'>
+									<h2 id='announcements-title' className='text-lg sm:text-xl font-semibold text-[var(--color-text-primary)] truncate'>
+										Announcements for {selectedClass.class_name}
+									</h2>
+									<p className='mt-1 text-sm text-[var(--color-text-muted)] truncate'>
+										Latest updates and notices for this class
+									</p>
+								</div>
+								<button
+									onClick={closeAnnouncementsModal}
+									aria-label='Close announcements'
+									className='ml-3 inline-flex items-center justify-center rounded-md p-2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 transition-colors'
+								>
+									✕
+								</button>
+							</div>
 						</div>
-						{loadingAnnouncements ? (
-							<div className='flex justify-center py-4'>
-								<SpinnerIcon />
-							</div>
-						) : announcements.length === 0 ? (
-							<p className='text-[var(--color-text-muted)]'>
-								No announcements yet.
-							</p>
-						) : (
-							<div className='space-y-4'>
-								{announcements.map((ann) => (
-									<div
-										key={ann.id}
-										className='border-b border-[var(--color-border)] pb-3 last:border-0'
-									>
-										<h3 className='font-semibold text-[var(--color-text-primary)]'>
-											{ann.title}
-										</h3>
-										<p className='text-xs text-[var(--color-text-muted)] mt-1'>
-											Posted on {new Date(ann.created_at).toLocaleString()}
-											{ann.expires_at &&
-												` • Expires ${new Date(ann.expires_at).toLocaleString()}`}
-										</p>
-										<p className='mt-2 text-[var(--color-text-secondary)] whitespace-pre-wrap'>
-											{ann.content}
-										</p>
-									</div>
-								))}
-							</div>
-						)}
-					</div>
+						<div className='max-h-[70vh] overflow-y-auto p-4 sm:p-6'>
+							{loadingAnnouncements ? (
+								<div className='flex items-center justify-center py-12'>
+									<SpinnerIcon />
+								</div>
+							) : announcements.length === 0 ? (
+								<div className='py-8 text-center'>
+									<p className='text-sm text-[var(--color-text-muted)]'>No announcements yet.</p>
+								</div>
+							) : (
+								<ul className='space-y-4'>
+									{announcements.map((ann) => (
+										<li key={ann.id} className='bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4 sm:p-5'>
+											<header className='flex items-start justify-between gap-4'>
+												<h3 className='text-sm sm:text-base font-semibold text-[var(--color-text-primary)]'>
+													{ann.title}
+												</h3>
+												<p className='text-xs text-[var(--color-text-muted)]'>
+													Posted on {new Date(ann.created_at).toLocaleString()}
+													{ann.expires_at && ` • Expires ${new Date(ann.expires_at).toLocaleString()}`}
+												</p>
+											</header>
+											<div className='mt-2 text-[var(--color-text-secondary)] whitespace-pre-wrap text-sm'>
+												{ann.content}
+											</div>
+										</li>
+									))}
+								</ul>
+							)}
+						</div>
+					</section>
 				</div>
 			)}
 
@@ -332,21 +367,21 @@ export default function EnrolledClasses() {
 				cancelText='Cancel'
 				type='warning'
 			/>
-		
-		{/* Confirm enroll modal */}
-		<ConfirmModal
-			isOpen={enrollConfirmOpen}
-			onClose={() => {
-				setEnrollConfirmOpen(false);
-				setEnrollTarget(null);
-			}}
-			onConfirm={performEnroll}
-			title='Enroll in class'
-			message='Are you sure you want to enroll in this class?'
-			confirmText='Enroll'
-			cancelText='Cancel'
-			type='success'
-		/>
+
+			{/* Confirm enroll modal */}
+			<ConfirmModal
+				isOpen={enrollConfirmOpen}
+				onClose={() => {
+					setEnrollConfirmOpen(false);
+					setEnrollTarget(null);
+				}}
+				onConfirm={performEnroll}
+				title='Enroll in class'
+				message='Are you sure you want to enroll in this class?'
+				confirmText='Enroll'
+				cancelText='Cancel'
+				type='success'
+			/>
 		</div>
 	);
 }
