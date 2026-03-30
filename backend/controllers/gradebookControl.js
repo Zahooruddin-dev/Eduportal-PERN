@@ -6,7 +6,14 @@ const getGradesForClass = async (req, res) => {
     const result = await pool.query('SELECT * FROM grades WHERE class_id = $1 ORDER BY created_at DESC', [classId]);
     return res.json(result.rows);
   } catch (err) {
-    return res.status(500).json({ error: 'Failed to fetch grades' });
+    console.error('gradebook:getGradesForClass error:', err && err.message ? err.message : err);
+    try {
+      const fallback = await pool.query('SELECT * FROM grades WHERE class_id::text = $1::text ORDER BY created_at DESC', [classId]);
+      return res.json(fallback.rows);
+    } catch (err2) {
+      console.error('gradebook:getGradesForClass fallback error:', err2 && err2.message ? err2.message : err2);
+      return res.status(500).json({ error: 'Failed to fetch grades', message: err2 && err2.message ? err2.message : '' });
+    }
   }
 };
 
@@ -27,7 +34,8 @@ const insertGrades = async (req, res) => {
     return res.json({ inserted });
   } catch (err) {
     await client.query('ROLLBACK');
-    return res.status(500).json({ error: 'Failed to insert grades' });
+    console.error('gradebook:insertGrades error:', err && err.message ? err.message : err);
+    return res.status(500).json({ error: 'Failed to insert grades', message: err && err.message ? err.message : '' });
   } finally {
     client.release();
   }

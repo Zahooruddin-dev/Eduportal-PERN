@@ -6,7 +6,6 @@ import {
   Type,
 } from 'lucide-react';
 
-// ─── Toolbar Button ────────────────────────────────────────────────────────────
 function ToolBtn({ icon: Icon, label, onClick, active, disabled }) {
   return (
     <button
@@ -14,10 +13,10 @@ function ToolBtn({ icon: Icon, label, onClick, active, disabled }) {
       title={label}
       disabled={disabled}
       onMouseDown={(e) => {
-        e.preventDefault(); // keep focus in editor
+        e.preventDefault();
         onClick();
       }}
-      className={`p-1.5 rounded-md transition-colors text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)] disabled:opacity-30 disabled:pointer-events-none ${
+      className={`p-1.5 rounded-md transition-colors text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)] disabled:opacity-30 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
         active ? 'bg-[var(--color-primary)]/15 text-[var(--color-primary)]' : ''
       }`}
     >
@@ -30,7 +29,6 @@ function Divider() {
   return <span className="w-px h-5 bg-[var(--color-border)] mx-0.5 shrink-0" />;
 }
 
-// ─── Font Size Select ──────────────────────────────────────────────────────────
 function FontSizeSelect({ onChange }) {
   return (
     <select
@@ -42,7 +40,7 @@ function FontSizeSelect({ onChange }) {
         e.target.value = '';
       }}
       onMouseDown={(e) => e.stopPropagation()}
-      className="h-7 text-xs bg-[var(--color-input-bg)] border border-[var(--color-border)] rounded-md px-1 text-[var(--color-text-secondary)] focus:outline-none cursor-pointer"
+      className="h-7 text-xs bg-[var(--color-input-bg)] border border-[var(--color-border)] rounded-md px-1 text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] cursor-pointer"
     >
       <option value="" disabled>Size</option>
       {['1','2','3','4','5','6','7'].map((s) => (
@@ -52,7 +50,6 @@ function FontSizeSelect({ onChange }) {
   );
 }
 
-// ─── Main Editor ───────────────────────────────────────────────────────────────
 export default function AssignmentWriteEditor({ value, onChange, placeholder = 'Start writing your assignment here…', minHeight = 320 }) {
   const editorRef = useRef(null);
   const [activeFormats, setActiveFormats] = useState({});
@@ -65,13 +62,11 @@ export default function AssignmentWriteEditor({ value, onChange, placeholder = '
     return () => { isMounted.current = false; };
   }, []);
 
-  // Sync initial value into DOM (only on mount)
   useEffect(() => {
     if (editorRef.current && value && !editorRef.current.innerHTML) {
       editorRef.current.innerHTML = value;
       updateCounts(editorRef.current.innerText || '');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateCounts = (text) => {
@@ -115,7 +110,6 @@ export default function AssignmentWriteEditor({ value, onChange, placeholder = '
   const handleKeyUp = () => checkActiveFormats();
   const handleMouseUp = () => checkActiveFormats();
 
-  // Keyboard shortcuts
   const handleKeyDown = (e) => {
     if (e.ctrlKey || e.metaKey) {
       switch (e.key.toLowerCase()) {
@@ -127,7 +121,6 @@ export default function AssignmentWriteEditor({ value, onChange, placeholder = '
         default: break;
       }
     }
-    // Tab → insert spaces instead of leaving editor
     if (e.key === 'Tab') {
       e.preventDefault();
       exec('insertHTML', '&nbsp;&nbsp;&nbsp;&nbsp;');
@@ -140,7 +133,6 @@ export default function AssignmentWriteEditor({ value, onChange, placeholder = '
   const insertH2 = () => exec('formatBlock', 'h2');
   const insertP  = () => exec('formatBlock', 'p');
 
-  // Show placeholder via CSS when empty
   const handleBlur = () => {
     if (editorRef.current && !editorRef.current.innerText.trim()) {
       editorRef.current.innerHTML = '';
@@ -150,48 +142,38 @@ export default function AssignmentWriteEditor({ value, onChange, placeholder = '
   return (
     <div className="flex flex-col rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden focus-within:ring-2 focus-within:ring-[var(--color-primary)]/30 focus-within:border-[var(--color-primary)]/50 transition-all">
 
-      {/* ── Toolbar ── */}
       <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-[var(--color-border)] bg-[var(--color-input-bg)]/60 sticky top-0 z-10">
-
-        {/* History */}
         <ToolBtn icon={RotateCcw} label="Undo (Ctrl+Z)" onClick={() => exec('undo')} />
         <ToolBtn icon={RotateCw}  label="Redo (Ctrl+Y)"  onClick={() => exec('redo')} />
         <Divider />
 
-        {/* Block format */}
         <ToolBtn icon={Type}     label="Paragraph"  onClick={insertP}  />
         <ToolBtn icon={Heading1} label="Heading 1"  onClick={insertH1} />
         <ToolBtn icon={Heading2} label="Heading 2"  onClick={insertH2} />
         <Divider />
 
-        {/* Inline format */}
         <ToolBtn icon={Bold}          label="Bold (Ctrl+B)"        onClick={() => exec('bold')}          active={activeFormats.bold} />
         <ToolBtn icon={Italic}        label="Italic (Ctrl+I)"      onClick={() => exec('italic')}        active={activeFormats.italic} />
         <ToolBtn icon={Underline}     label="Underline (Ctrl+U)"   onClick={() => exec('underline')}     active={activeFormats.underline} />
         <ToolBtn icon={Strikethrough} label="Strikethrough"        onClick={() => exec('strikeThrough')} active={activeFormats.strikeThrough} />
         <Divider />
 
-        {/* Font size */}
         <FontSizeSelect onChange={(v) => exec('fontSize', v)} />
         <Divider />
 
-        {/* Lists */}
         <ToolBtn icon={List}         label="Bullet list"   onClick={() => exec('insertUnorderedList')} active={activeFormats.insertUnorderedList} />
         <ToolBtn icon={ListOrdered}  label="Numbered list" onClick={() => exec('insertOrderedList')}  active={activeFormats.insertOrderedList} />
         <Divider />
 
-        {/* Alignment */}
         <ToolBtn icon={AlignLeft}   label="Align left"   onClick={() => exec('justifyLeft')}   active={activeFormats.justifyLeft} />
         <ToolBtn icon={AlignCenter} label="Align center" onClick={() => exec('justifyCenter')} active={activeFormats.justifyCenter} />
         <ToolBtn icon={AlignRight}  label="Align right"  onClick={() => exec('justifyRight')}  active={activeFormats.justifyRight} />
         <Divider />
 
-        {/* Block elements */}
         <ToolBtn icon={Quote} label="Blockquote" onClick={insertBlockquote} />
         <ToolBtn icon={Minus} label="Divider"    onClick={insertHR} />
       </div>
 
-      {/* ── Editor area ── */}
       <div className="relative flex-1">
         <div
           ref={editorRef}
@@ -208,7 +190,6 @@ export default function AssignmentWriteEditor({ value, onChange, placeholder = '
         />
       </div>
 
-      {/* ── Footer: word / char count ── */}
       <div className="flex items-center justify-end gap-4 px-4 py-1.5 border-t border-[var(--color-border)] bg-[var(--color-input-bg)]/40">
         <span className="text-xs text-[var(--color-text-muted)]">
           {wordCount} {wordCount === 1 ? 'word' : 'words'}
@@ -218,7 +199,6 @@ export default function AssignmentWriteEditor({ value, onChange, placeholder = '
         </span>
       </div>
 
-      {/* ── Scoped styles ── */}
       <style>{`
         .assignment-editor:empty:before {
           content: attr(data-placeholder);

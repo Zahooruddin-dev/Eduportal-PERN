@@ -64,7 +64,7 @@ function AttachmentsList({ classId, assignmentId }) {
             <button
               key={att.id}
               onClick={() => setViewingFile({ url: getFileViewUrl(att.content), title: att.title })}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[var(--color-input-bg)] border border-[var(--color-border)] rounded-lg hover:border-[var(--color-primary)]/50 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[var(--color-input-bg)] border border-[var(--color-border)] rounded-lg hover:border-[var(--color-primary)]/50 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             >
               <FileText size={12} /> {att.title}
             </button>
@@ -96,12 +96,12 @@ function AttachmentsList({ classId, assignmentId }) {
 export default function StudentAssignmentView({ cls, onBack }) {
   const [assignments, setAssignments] = useState([]);
   const [grades, setGrades] = useState([]);
-  const [submissions, setSubmissions] = useState({}); // assignmentId -> submission
+  const [submissions, setSubmissions] = useState({});
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null);
-  const [submitting, setSubmitting] = useState(null); // assignment being submitted
+  const [submitting, setSubmitting] = useState(null);
   const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
-  const [activeTab, setActiveTab] = useState('assignments'); // 'assignments' | 'grades'
+  const [activeTab, setActiveTab] = useState('assignments');
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -121,7 +121,6 @@ export default function StudentAssignmentView({ cls, onBack }) {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Fetch submission status for all assignments
   useEffect(() => {
     if (!assignments.length) return;
     const fetchAll = async () => {
@@ -143,7 +142,6 @@ export default function StudentAssignmentView({ cls, onBack }) {
 
   const handleSubmitted = async () => {
     setToast({ isOpen: true, type: 'success', message: 'Assignment submitted successfully!' });
-    // Refresh submission for that assignment
     if (submitting) {
       try {
         const res = await getMyAssignmentSubmission(cls.id, submitting.id);
@@ -152,31 +150,41 @@ export default function StudentAssignmentView({ cls, onBack }) {
     }
   };
 
-  // Grade lookup map
   const gradeMap = {};
   grades.forEach((g) => { gradeMap[g.assignment_id] = g; });
 
-  return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <button onClick={onBack} className="text-[var(--color-primary)] hover:underline flex items-center gap-1 text-sm">
-          ← Back to Classes
-        </button>
+  const AssignmentSkeleton = () => (
+    <div className="animate-pulse bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4">
+      <div className="h-5 bg-[var(--color-border)] rounded w-3/4 mb-2" />
+      <div className="h-3 bg-[var(--color-border)] rounded w-1/2 mb-1" />
+      <div className="h-3 bg-[var(--color-border)] rounded w-2/3 mb-2" />
+      <div className="flex justify-between mt-3">
+        <div className="h-8 bg-[var(--color-border)] rounded w-20" />
+        <div className="h-8 bg-[var(--color-border)] rounded w-8" />
       </div>
+    </div>
+  );
+
+  return (
+    <div className="p-4 sm:p-6">
+      <button
+        onClick={onBack}
+        className="mb-6 inline-flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 rounded-lg px-2 py-1"
+      >
+        <span aria-hidden="true">←</span> Back to Classes
+      </button>
 
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">{cls.class_name}</h1>
         {cls.subject && <p className="text-sm text-[var(--color-text-muted)] mt-0.5">{cls.subject}</p>}
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-1 p-1 bg-[var(--color-input-bg)] rounded-xl border border-[var(--color-border)] w-fit mb-6">
         {['assignments', 'grades'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium capitalize transition-colors ${
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium capitalize transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
               activeTab === tab
                 ? 'bg-[var(--color-primary)] text-white shadow-sm'
                 : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
@@ -188,11 +196,14 @@ export default function StudentAssignmentView({ cls, onBack }) {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><SpinnerIcon /></div>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <AssignmentSkeleton key={i} />
+          ))}
+        </div>
       ) : activeTab === 'assignments' ? (
-        /* ── Assignments Tab ── */
         assignments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="flex flex-col items-center justify-center py-16 text-center bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl">
             <BookOpen size={40} className="text-[var(--color-text-muted)] mb-3 opacity-40" />
             <p className="text-[var(--color-text-muted)]">No assignments yet.</p>
           </div>
@@ -205,9 +216,8 @@ export default function StudentAssignmentView({ cls, onBack }) {
               return (
                 <div
                   key={assignment.id}
-                  className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden"
+                  className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md"
                 >
-                  {/* Row */}
                   <div className="p-4 flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -233,30 +243,27 @@ export default function StudentAssignmentView({ cls, onBack }) {
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         onClick={() => setSubmitting(assignment)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
                       >
                         <Upload size={12} />
                         {sub?.submission_content ? 'Resubmit' : 'Submit'}
                       </button>
                       <button
                         onClick={() => setExpanded(isExpanded ? null : assignment.id)}
-                        className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+                        className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                       >
                         {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                       </button>
                     </div>
                   </div>
 
-                  {/* Expanded panel */}
                   {isExpanded && (
                     <div className="border-t border-[var(--color-border)] p-4 bg-[var(--color-input-bg)]/40 space-y-4">
-                      {/* Resources */}
                       <div>
                         <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide mb-2">Resources</p>
                         <AttachmentsList classId={cls.id} assignmentId={assignment.id} />
                       </div>
 
-                      {/* Feedback */}
                       {gradeMap[assignment.id]?.feedback && (
                         <div>
                           <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide mb-1">Teacher Feedback</p>
@@ -266,21 +273,25 @@ export default function StudentAssignmentView({ cls, onBack }) {
                         </div>
                       )}
 
-                      {/* Current submission preview */}
                       {sub?.submission_content && (
                         <div>
                           <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide mb-1">Your Submission</p>
                           {sub.submission_type === 'file' ? (
                             <button
                               onClick={() => {
-                                // handled in modal
+                                // handled in modal, but we can also view here
                               }}
-                              className="inline-flex items-center gap-1.5 text-xs text-[var(--color-primary)] hover:underline"
+                              className="inline-flex items-center gap-1.5 text-xs text-[var(--color-primary)] hover:underline focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                             >
                               <FileText size={12} /> View submitted file
                             </button>
                           ) : (
-                            <a href={sub.submission_content} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-[var(--color-primary)] hover:underline">
+                            <a
+                              href={sub.submission_content}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-xs text-[var(--color-primary)] hover:underline"
+                            >
                               <LinkIcon size={12} /> {sub.submission_content} <ExternalLink size={10} />
                             </a>
                           )}
@@ -294,9 +305,8 @@ export default function StudentAssignmentView({ cls, onBack }) {
           </div>
         )
       ) : (
-        /* ── Grades Tab ── */
         grades.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="flex flex-col items-center justify-center py-16 text-center bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl">
             <BookOpen size={40} className="text-[var(--color-text-muted)] mb-3 opacity-40" />
             <p className="text-[var(--color-text-muted)]">No grades recorded yet.</p>
           </div>
@@ -340,7 +350,6 @@ export default function StudentAssignmentView({ cls, onBack }) {
         )
       )}
 
-      {/* Submission modal */}
       {submitting && (
         <StudentSubmissionModal
           isOpen={!!submitting}

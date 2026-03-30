@@ -116,12 +116,10 @@ export default function StudentSubmissionModal({ isOpen, onClose, classId, assig
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 transition-all"
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
-        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl flex flex-col max-h-[95dvh] sm:max-h-[90vh]">
-
-          {/* Header */}
+        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl flex flex-col max-h-[95dvh] sm:max-h-[90vh] transform transition-all duration-200 scale-100 opacity-100">
           <div className="flex items-start justify-between p-5 border-b border-[var(--color-border)] shrink-0">
             <div className="flex-1 min-w-0 pr-4">
               <h2 className="text-base font-semibold text-[var(--color-text-primary)] truncate">
@@ -133,14 +131,15 @@ export default function StudentSubmissionModal({ isOpen, onClose, classId, assig
                 {dueDateLabel && <span>Due {dueDateLabel}</span>}
               </div>
             </div>
-            <button onClick={onClose} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] shrink-0 p-0.5">
+            <button
+              onClick={onClose}
+              className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] p-1 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            >
               <X size={20} />
             </button>
           </div>
 
-          {/* Scrollable body */}
           <div className="flex-1 overflow-y-auto p-5 space-y-4 min-h-0">
-
             {assignment?.description && (
               <p className="text-sm text-[var(--color-text-secondary)] bg-[var(--color-input-bg)] rounded-xl p-3 border border-[var(--color-border)]">
                 {assignment.description}
@@ -158,12 +157,20 @@ export default function StudentSubmissionModal({ isOpen, onClose, classId, assig
                   <p className="text-sm font-medium text-green-600 dark:text-green-400">Already submitted</p>
                   <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Submitting again will replace your current work.</p>
                   {existing.submission_type === 'file' && (
-                    <button onClick={() => setViewingFile({ url: getFileViewUrl(existing.submission_content), title: 'My submission' })} className="mt-1 text-xs flex items-center gap-1 text-green-600 dark:text-green-400 underline">
+                    <button
+                      onClick={() => setViewingFile({ url: getFileViewUrl(existing.submission_content), title: 'My submission' })}
+                      className="mt-1 text-xs flex items-center gap-1 text-green-600 dark:text-green-400 underline focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    >
                       <FileText size={11} /> View current file
                     </button>
                   )}
                   {existing.submission_type === 'link' && (
-                    <a href={existing.submission_content} target="_blank" rel="noopener noreferrer" className="mt-1 text-xs flex items-center gap-1 text-green-600 dark:text-green-400 underline">
+                    <a
+                      href={existing.submission_content}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 text-xs flex items-center gap-1 text-green-600 dark:text-green-400 underline"
+                    >
                       <LinkIcon size={11} /> View current link <ExternalLink size={9} />
                     </a>
                   )}
@@ -174,13 +181,12 @@ export default function StudentSubmissionModal({ isOpen, onClose, classId, assig
               </div>
             ) : null}
 
-            {/* Mode tabs */}
             <div className="flex gap-1 p-1 bg-[var(--color-input-bg)] rounded-xl border border-[var(--color-border)]">
               {MODES.map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
                   onClick={() => setMode(id)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
                     mode === id
                       ? 'bg-[var(--color-primary)] text-white shadow-sm'
                       : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
@@ -191,7 +197,6 @@ export default function StudentSubmissionModal({ isOpen, onClose, classId, assig
               ))}
             </div>
 
-            {/* Write */}
             {mode === 'write' && (
               <AssignmentWriteEditor
                 value={writtenContent}
@@ -201,7 +206,6 @@ export default function StudentSubmissionModal({ isOpen, onClose, classId, assig
               />
             )}
 
-            {/* File */}
             {mode === 'file' && (
               <div
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -219,7 +223,10 @@ export default function StudentSubmissionModal({ isOpen, onClose, classId, assig
                   <div className="flex items-center justify-center gap-2 text-[var(--color-primary)]">
                     <FileText size={20} />
                     <span className="text-sm font-medium truncate max-w-xs">{file.name}</span>
-                    <button onClick={(e) => { e.stopPropagation(); setFile(null); }} className="text-[var(--color-text-muted)] hover:text-red-500">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setFile(null); }}
+                      className="text-[var(--color-text-muted)] hover:text-red-500 p-0.5 rounded-md"
+                    >
                       <X size={14} />
                     </button>
                   </div>
@@ -233,7 +240,6 @@ export default function StudentSubmissionModal({ isOpen, onClose, classId, assig
               </div>
             )}
 
-            {/* Link */}
             {mode === 'link' && (
               <div className="space-y-1">
                 <label className="block text-xs font-medium text-[var(--color-text-secondary)]">
@@ -247,7 +253,12 @@ export default function StudentSubmissionModal({ isOpen, onClose, classId, assig
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]"
                 />
                 {link && (
-                  <a href={link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-[var(--color-primary)] hover:underline mt-1">
+                  <a
+                    href={link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-[var(--color-primary)] hover:underline mt-1"
+                  >
                     <ExternalLink size={11} /> Preview link
                   </a>
                 )}
@@ -259,15 +270,17 @@ export default function StudentSubmissionModal({ isOpen, onClose, classId, assig
             )}
           </div>
 
-          {/* Footer */}
           <div className="flex justify-end gap-2 p-4 border-t border-[var(--color-border)] shrink-0">
-            <button onClick={onClose} className="px-4 py-2 rounded-xl text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-input-bg)] border border-[var(--color-border)]">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-input-bg)] border border-[var(--color-border)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
             >
               {submitting ? <SpinnerIcon /> : <Upload size={14} />}
               {alreadySubmitted ? 'Resubmit' : 'Submit'}
@@ -277,7 +290,12 @@ export default function StudentSubmissionModal({ isOpen, onClose, classId, assig
       </div>
 
       {viewingFile && (
-        <FileViewerModal fileUrl={viewingFile.url} title={viewingFile.title} isOpen={!!viewingFile} onClose={() => setViewingFile(null)} />
+        <FileViewerModal
+          fileUrl={viewingFile.url}
+          title={viewingFile.title}
+          isOpen={!!viewingFile}
+          onClose={() => setViewingFile(null)}
+        />
       )}
     </>
   );
