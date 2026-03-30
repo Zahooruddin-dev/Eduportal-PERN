@@ -30,8 +30,12 @@ async function CreateNewClassQuery(data) {
 		`INSERT INTO classes (
 	      class_name, schedule_days, start_time, end_time, room_number,
 	      grade_level, subject, description, max_students, teacher_id,
-	      schedule_blocks, meeting_link, schedule_timezone
-	    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12, $13)
+	      institute_id, schedule_blocks, meeting_link, schedule_timezone
+	    ) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+			(SELECT institute_id FROM users WHERE id = $10),
+			$11::jsonb, $12, $13
+		)
     RETURNING *`,
 		[
 			class_name,

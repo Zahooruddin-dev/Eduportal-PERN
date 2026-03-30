@@ -1,20 +1,26 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { registerUser } from '../api/authApi';
+import { acceptAdminInvite } from '../api/adminApi';
 import { SpinnerIcon, EyeIcon } from '../components/Icons/Icon';
 import { StrengthBar } from './StrengthBar';
 
 export default function Register() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const adminInviteToken = searchParams.get('adminInvite');
+  const isAdminInviteSignup = Boolean(adminInviteToken);
+  const [accountType, setAccountType] = useState(
+    isAdminInviteSignup ? 'admin' : 'student',
+  );
 
   const [form, setForm] = useState({
     username: '',
     email: '',
     password: '',
     confirm: '',
-    role: 'student',
   });
   const [show, setShow] = useState({ password: false, confirm: false });
   const [error, setError] = useState('');
@@ -32,14 +38,18 @@ export default function Register() {
     const errs = {};
     if (!form.username.trim()) errs.username = 'Username is required';
     else if (form.username.length < 3) errs.username = 'At least 3 characters';
-    if (!form.email.trim()) errs.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      errs.email = 'Enter a valid email';
+    if (!isAdminInviteSignup) {
+      if (!form.email.trim()) errs.email = 'Email is required';
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+        errs.email = 'Enter a valid email';
+    }
     if (!form.password) errs.password = 'Password is required';
     else if (form.password.length < 8) errs.password = 'At least 8 characters required';
     if (!form.confirm) errs.confirm = 'Please confirm your password';
     else if (form.confirm !== form.password) errs.confirm = 'Passwords do not match';
-    if (!form.role) errs.role = 'Please select a role';
+    if (!isAdminInviteSignup && accountType === 'parent') {
+      errs.accountType = 'Parent accounts are not available yet.';
+    }
     return errs;
   };
 
@@ -53,11 +63,23 @@ export default function Register() {
     setLoading(true);
     setError('');
     try {
-      const res = await registerUser(form);
+      const payload = isAdminInviteSignup
+        ? {
+            token: adminInviteToken,
+            username: form.username,
+            password: form.password,
+          }
+        : {
+            username: form.username,
+            email: form.email,
+            password: form.password,
+            role: accountType,
+          };
+      const res = isAdminInviteSignup ? await acceptAdminInvite(payload) : await registerUser(payload);
       login(res.data.token);
-      navigate('/dashboard');
+      navigate('/');
     } catch (err) {
-      setError(err.message);
+      setError(err?.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
@@ -137,10 +159,12 @@ export default function Register() {
             </svg>
           </div>
           <h1 className='text-2xl font-semibold text-[var(--color-text-primary)] tracking-tight'>
-            Create an account
+            {isAdminInviteSignup ? 'Accept admin invitation' : 'Create an account'}
           </h1>
           <p className='mt-1.5 text-sm text-[var(--color-text-muted)]'>
-            Get started — it only takes a moment
+            {isAdminInviteSignup
+              ? 'Set your admin username and password to join your institute'
+              : 'Choose account type and create your profile'}
           </p>
         </div>
 
@@ -171,41 +195,49 @@ export default function Register() {
 
           <form onSubmit={handleSubmit} noValidate className='space-y-5'>
             {field('username', 'Username', 'text', 'johndoe', 'username', false)}
-            {field('email', 'Email address', 'email', 'you@example.com', 'email', false)}
+            {!isAdminInviteSignup && field('email', 'Email address', 'email', 'you@example.com', 'email', false)}
+
+            {!isAdminInviteSignup && (
+              <div>
+                <label
+                  htmlFor='accountType'
+                  className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'
+                >
+                  Account type
+                </label>
+                <select
+                  id='accountType'
+                  value={accountType}
+                  onChange={(e) => {
+                    setAccountType(e.target.value);
+                    if (fieldErrors.accountType) {
+                      setFieldErrors((prev) => ({ ...prev, accountType: '' }));
+                    }
+                  }}
+                  className={`w-full rounded-xl border bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:ring-2 ${
+                    fieldErrors.accountType
+                      ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20'
+                      : 'border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]/20'
+                  }`}
+                >
+                  <option value='student'>Student</option>
+                  <option value='teacher'>Teacher</option>
+                  <option value='parent' disabled>Parent (coming soon)</option>
+                  <option value='admin'>Admin</option>
+                </select>
+                {fieldErrors.accountType && (
+                  <p role='alert' className='mt-1.5 text-xs text-red-500'>
+                    {fieldErrors.accountType}
+                  </p>
+                )}
+                <p className='mt-1.5 text-xs text-[var(--color-text-muted)]'>
+                  You can register as student, teacher, or admin from this form. Parent accounts are coming soon.
+                </p>
+              </div>
+            )}
+
             {field('password', 'Password', 'password', '••••••••', 'new-password', true)}
             {field('confirm', 'Confirm password', 'password', '••••••••', 'new-password', true)}
-
-            <div>
-              <label
-                htmlFor='role'
-                className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'
-              >
-                Role
-              </label>
-              <select
-                id='role'
-                name='role'
-                value={form.role}
-                onChange={handleChange}
-                className={`w-full rounded-xl border bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:ring-2 ${
-                  fieldErrors.role
-                    ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20'
-                    : 'border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]/20'
-                }`}
-                aria-invalid={!!fieldErrors.role}
-                aria-describedby={fieldErrors.role ? 'role-error' : undefined}
-              >
-                <option value='student'>Student</option>
-                <option value='teacher'>Teacher</option>
-                <option value='admin' disabled>Admin (coming soon)</option>
-                <option value='parent' disabled>Parent (coming soon)</option>
-              </select>
-              {fieldErrors.role && (
-                <p id='role-error' role='alert' className='mt-1.5 text-xs text-red-500'>
-                  {fieldErrors.role}
-                </p>
-              )}
-            </div>
 
             <button
               type='submit'
@@ -214,7 +246,11 @@ export default function Register() {
               aria-busy={loading}
             >
               {loading && <SpinnerIcon />}
-              {loading ? 'Creating account…' : 'Create account'}
+              {loading
+                ? 'Creating account…'
+                : isAdminInviteSignup
+                  ? 'Join as admin'
+                  : `Create ${accountType} account`}
             </button>
           </form>
         </div>

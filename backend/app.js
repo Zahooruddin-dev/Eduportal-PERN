@@ -11,7 +11,9 @@ const resourceRoutes = require('./routes/classResourcesRoutes');
 const commentRoutes = require('./routes/comments');
 const assignmentRoutes = require('./routes/assignmentRoutes');
 const gradebookRoutes = require('./routes/gradebookRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const { validateUuidParam } = require('./middleware/uuidParamMiddleware');
+const { ensureAdminSchema } = require('./db/ensureAdminSchema');
 
 const app = express();
 
@@ -42,6 +44,7 @@ app.use('/api/class/:classId/resources/:resourceId/comments', commentRoutes);
 app.use('/api/class/:classId/assignments', assignmentRoutes);
 app.use('/api/enroll', enrollRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/gradebook', gradebookRoutes);
 
@@ -56,8 +59,18 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, '0.0.0.0', () => {
-	console.log(`Server is running on port ${PORT}`);
-});
+async function startServer() {
+	try {
+		await ensureAdminSchema();
+		app.listen(PORT, '0.0.0.0', () => {
+			console.log(`Server is running on port ${PORT}`);
+		});
+	} catch (error) {
+		console.error('Failed to initialize database schema:', error);
+		process.exit(1);
+	}
+}
+
+startServer();
 
 module.exports = app;

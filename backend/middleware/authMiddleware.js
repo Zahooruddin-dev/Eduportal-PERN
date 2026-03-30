@@ -26,4 +26,10 @@ const isTeacher = (req, res, next) => {
 			.json({ message: 'Require Teacher or Admin Role to have access!' });
 	}
 };
-module.exports = { verifyToken, isTeacher };
+const isAdmin = (req, res, next) => {
+	if (!req.user || req.user.role !== 'admin') {
+		return res.status(403).json({ message: 'Require Admin Role to have access!' });
+	}
+	next();
+};
+module.exports = { verifyToken, isTeacher, isAdmin };

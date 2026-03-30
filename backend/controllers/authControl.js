@@ -22,6 +22,7 @@ async function login(req, res) {
 				email: user.email,
 				profile: user.profile_pic,
 				createdAt: user.created_at,
+				instituteId: user.institute_id,
 			},
 			process.env.JWT_SECRET,
 			{ expiresIn: '1d' },
@@ -37,6 +38,7 @@ async function login(req, res) {
 				email: user.email,
 				profile: user.profile_pic,
 				createdAt: user.created_at,
+				instituteId: user.institute_id,
 			},
 		});
 	} catch (error) {
@@ -46,17 +48,52 @@ async function login(req, res) {
 
 async function register(req, res) {
 	const { username, email, password, role } = req.body;
+	const normalizedRole = String(role || 'student').trim().toLowerCase();
+	const normalizedUsername = String(username || '').trim();
+	const normalizedEmail = String(email || '').trim().toLowerCase();
+	if (!['student', 'teacher', 'admin'].includes(normalizedRole)) {
+		return res
+			.status(403)
+			.json({ message: 'Supported account types are student, teacher, and admin.' });
+	}
+	if (!normalizedUsername || !normalizedEmail || !password) {
+		return res
+			.status(400)
+			.json({ message: 'Username, email, and password are required.' });
+	}
+	if (password.length < 8) {
+		return res
+			.status(400)
+			.json({ message: 'Password must be at least 8 characters.' });
+	}
 	try {
 		const password_hash = await bcrypt.hash(password, 10);
-		const newUser = await db.registerQuery(
-			username,
-			email,
-			password_hash,
-			role,
+		const newUser = await db.registerQuery(normalizedUsername, normalizedEmail, password_hash, normalizedRole);
+
+		const token = jwt.sign(
+			{
+				id: newUser.id,
+				role: newUser.role,
+				username: newUser.username,
+				email: newUser.email,
+				profile: newUser.profile_pic,
+				createdAt: newUser.created_at,
+				instituteId: newUser.institute_id,
+			},
+			process.env.JWT_SECRET,
+			{ expiresIn: '1d' },
 		);
 		res
 			.status(201)
-			.json({ message: 'User Registered Successfully', user: newUser });
+			.json({ message: 'User Registered Successfully', token, user: {
+				id: newUser.id,
+				username: newUser.username,
+				role: newUser.role,
+				email: newUser.email,
+				profile: newUser.profile_pic,
+				createdAt: newUser.created_at,
+				instituteId: newUser.institute_id,
+			} });
 	} catch (error) {
 		if (error.code === '23505')
 			return res.status(400).json({ message: 'Email Already exists' });
@@ -83,6 +120,7 @@ async function changeUsername(req, res) {
 				email: updatedUser.email,
 				createdAt: updatedUser.created_at,
 				profile: updatedUser.profile_pic,
+				instituteId: updatedUser.institute_id,
 			},
 			process.env.JWT_SECRET,
 			{ expiresIn: '1d' },
@@ -98,6 +136,7 @@ async function changeUsername(req, res) {
 				role: updatedUser.role,
 				createdAt: updatedUser.created_at,
 				profile: updatedUser.profile_pic,
+				instituteId: updatedUser.institute_id,
 			},
 		});
 	} catch (error) {

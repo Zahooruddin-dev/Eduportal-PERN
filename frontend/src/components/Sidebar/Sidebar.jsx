@@ -17,6 +17,7 @@ import {
   Megaphone,
   Moon,
   X,
+  Users,
 } from 'lucide-react';
 import Toast from '../Toast';
 import ConfirmModal from '../ConfirmModal';
@@ -41,6 +42,10 @@ const teacherNavItems = [
   { id: 'assignments', label: 'Assignments', icon: FileText },
   { id: 'student-communication', label: 'Student Communication', icon: MessageSquare },
   { id: 'teacher-attendance', label: 'Student Attendance', icon: UserCheck },
+];
+
+const adminNavItems = [
+  { id: 'admin-user-management', label: 'User Management', icon: Users },
 ];
 
 function NavTooltip({ label, visible }) {
@@ -347,8 +352,11 @@ export default function Sidebar({
   });
   const { theme, toggle } = useTheme();
 
-  const isStudent = user?.role === 'student';
-  const navItems = isStudent ? studentNavItems : teacherNavItems;
+  const navItems = user?.role === 'student'
+    ? studentNavItems
+    : user?.role === 'admin'
+      ? adminNavItems
+      : teacherNavItems;
 
   const openMobile = () => {
     setMobileClosing(false);

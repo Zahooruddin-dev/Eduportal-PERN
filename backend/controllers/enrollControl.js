@@ -12,7 +12,19 @@ async function assertTeacherOwnsClass(classId, user) {
     return { ok: false, status: 404, error: 'Class not found.' };
   }
 
-  if (user.role !== 'admin' && classObj.teacher_id !== user.id) {
+  if (user.role === 'admin') {
+    const instituteResult = await pool.query(
+      'SELECT institute_id FROM users WHERE id = $1',
+      [user.id],
+    );
+    const adminInstituteId = instituteResult.rows[0]?.institute_id;
+    if (!adminInstituteId || adminInstituteId !== classObj.institute_id) {
+      return { ok: false, status: 403, error: 'Unauthorized to manage this class.' };
+    }
+    return { ok: true, classObj };
+  }
+
+  if (classObj.teacher_id !== user.id) {
     return { ok: false, status: 403, error: 'Unauthorized to manage this class.' };
   }
 
@@ -47,7 +59,7 @@ async function createEnrollment(req, res) {
   }
 
   try {
-    const userResult = await pool.query('SELECT id, role FROM users WHERE id = $1', [student_id]);
+    const userResult = await pool.query('SELECT id, role, institute_id FROM users WHERE id = $1', [student_id]);
     const user = userResult.rows[0];
 
     if (!user || user.role !== 'student') {
@@ -57,6 +69,10 @@ async function createEnrollment(req, res) {
     const classObj = await dbClass.getClassByIdQuery(class_id);
     if (!classObj) {
       return res.status(404).json({ error: 'Class not found.' });
+    }
+
+    if (user.institute_id !== classObj.institute_id) {
+      return res.status(403).json({ error: 'Cannot enroll outside your institute.' });
     }
 
     const status = await db.getEnrollmentStatusQuery(class_id, student_id);

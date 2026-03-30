@@ -21,6 +21,7 @@ const parseToken = () => {
       email: decoded.email || '',
       profile: decoded.profile || null,
       createdAt: decoded.createdAt || null,
+      instituteId: decoded.instituteId || null,
     };
   } catch {
     return null;

@@ -1,10 +1,24 @@
 const pool = require('./Pool');
 
-async function registerQuery(username, email, password_hash, role = 'student') {
+async function registerQuery(
+	username,
+	email,
+	password_hash,
+	role = 'student',
+	institute_id = null,
+) {
 	const { rows } = await pool.query(
 		`
-		INSERT INTO users (username,email,password_hash,role) VALUES ($1,$2,$3,$4) RETURNING id, username, email, role`,
-		[username, email, password_hash, role],
+		INSERT INTO users (username,email,password_hash,role,institute_id)
+		VALUES (
+			$1,
+			$2,
+			$3,
+			$4,
+			COALESCE($5, (SELECT id FROM institutes ORDER BY created_at ASC LIMIT 1))
+		)
+		RETURNING id, username, email, role, profile_pic, created_at, institute_id`,
+		[username, email, password_hash, role, institute_id],
 	);
 	return rows[0];
 }

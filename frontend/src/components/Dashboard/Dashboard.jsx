@@ -15,6 +15,7 @@ import Gradebook from '../Sidebar/Tabs/TeacherTabs/Gradebook/Gradebook';
 import StudentGradebook from '../Sidebar/Tabs/StudentTabs/Gradebook/StudentGradebook';
 import AcademicCalender from '../Sidebar/Tabs/StudentTabs/AcademicCalender/AcademicCalender';
 import TeacherCalender from '../Sidebar/Tabs/TeacherTabs/TeacherCalender/TeacherCalender';
+import UserManagement from '../Sidebar/Tabs/AdminTabs/UserManagement/UserManagement';
 
 export default function Dashboard() {
 	const { user } = useAuth();
@@ -22,20 +23,19 @@ export default function Dashboard() {
 	const [activeTab, setActiveTab] = useState('dashboard');
 
 	const renderContent = () => {
-		// Admin and Parent roles – not fully supported
-		if (user?.role === 'admin' || user?.role === 'parent') {
-			return (
-				<div className='flex items-center justify-center h-full'>
-					<div className='text-center'>
-						<h2 className='text-2xl font-semibold text-[var(--color-text-primary)]'>
-							{user?.role === 'admin' ? 'Admin Panel' : 'Parent Portal'}
-						</h2>
-						<p className='mt-2 text-[var(--color-text-muted)]'>
-							This role is not fully supported yet. Coming soon!
-						</p>
-					</div>
-				</div>
-			);
+		if (user?.role === 'admin') {
+			switch (activeTab) {
+				case 'admin-user-management':
+					return <UserManagement />;
+				case 'profile':
+					return <Profile />;
+				default:
+					return <UserManagement />;
+			}
+		}
+
+		if (user?.role === 'parent') {
+			return null;
 		}
 
 		// Student role
