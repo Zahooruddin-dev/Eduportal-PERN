@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Upload, Link as LinkIcon, X, FileText, CheckCircle, PenLine, ExternalLink } from 'lucide-react';
 import { getMyAssignmentSubmission, submitAssignment } from '../../../../../api/api';
 import { SpinnerIcon } from '../../../../Icons/Icon';
@@ -26,6 +26,7 @@ export default function StudentSubmissionModal({ isOpen, onClose, classId, assig
 
   useEffect(() => {
     if (!isOpen) return;
+    if (!classId || !assignment?.id) return;
     setError('');
     setFile(null);
     setLink('');
@@ -81,6 +82,11 @@ export default function StudentSubmissionModal({ isOpen, onClose, classId, assig
   };
 
   const handleSubmit = async () => {
+    if (!classId || !assignment?.id) {
+      setError('Invalid assignment context. Please close and reopen.');
+      return;
+    }
+
     const err = validate();
     if (err) { setError(err); return; }
     setError('');
@@ -182,19 +188,22 @@ export default function StudentSubmissionModal({ isOpen, onClose, classId, assig
             ) : null}
 
             <div className="flex gap-1 p-1 bg-[var(--color-input-bg)] rounded-xl border border-[var(--color-border)]">
-              {MODES.map(({ id, label, icon: Icon }) => (
+              {MODES.map((modeItem) => {
+                const ModeIcon = modeItem.icon;
+                return (
                 <button
-                  key={id}
-                  onClick={() => setMode(id)}
+                  key={modeItem.id}
+                  onClick={() => setMode(modeItem.id)}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
-                    mode === id
+                    mode === modeItem.id
                       ? 'bg-[var(--color-primary)] text-white shadow-sm'
                       : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
                   }`}
                 >
-                  <Icon size={13} /> {label}
+                  <ModeIcon size={13} /> {modeItem.label}
                 </button>
-              ))}
+                );
+              })}
             </div>
 
             {mode === 'write' && (

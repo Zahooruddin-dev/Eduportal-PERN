@@ -13,19 +13,27 @@ export default function StudentAssignments() {
   const [selectedClass, setSelectedClass] = useState(null);
 
   useEffect(() => {
+    if (!user?.id) {
+      setLoading(false);
+      setClasses([]);
+      return;
+    }
+
     const fetchEnrolled = async () => {
       setLoading(true);
+      setError('');
       try {
         const res = await getStudentEnrolledShedule(user.id);
-        setClasses(res.data);
-      } catch {
-        setError('Failed to load enrolled classes.');
+        setClasses(Array.isArray(res.data) ? res.data : []);
+      } catch (err) {
+        setClasses([]);
+        setError(err.response?.data?.error || 'Failed to load enrolled classes.');
       } finally {
         setLoading(false);
       }
     };
     fetchEnrolled();
-  }, [user.id]);
+  }, [user?.id]);
 
   const ClassCardSkeleton = () => (
     <div className="animate-pulse bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-sm">
@@ -81,7 +89,7 @@ export default function StudentAssignments() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {classes.map((cls) => (
             <div
-              key={cls.id}
+              key={cls.id ?? cls.class_id}
               onClick={() => setSelectedClass(cls)}
               className="cursor-pointer bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-[var(--color-border-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
               tabIndex={0}

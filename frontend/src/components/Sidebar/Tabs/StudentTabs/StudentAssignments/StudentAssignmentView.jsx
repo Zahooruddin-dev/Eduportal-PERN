@@ -94,41 +94,70 @@ function AttachmentsList({ classId, assignmentId }) {
 }
 
 export default function StudentAssignmentView({ cls, onBack }) {
+  const classId = cls?.id ?? cls?.class_id;
   const [assignments, setAssignments] = useState([]);
   const [grades, setGrades] = useState([]);
   const [submissions, setSubmissions] = useState({});
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null);
   const [submitting, setSubmitting] = useState(null);
+  const [submittedFilePreview, setSubmittedFilePreview] = useState(null);
   const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
   const [activeTab, setActiveTab] = useState('assignments');
 
   const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [assignRes, gradeRes] = await Promise.all([
-        getClassAssignments(cls.id),
-        getStudentGradesForClass(cls.id),
-      ]);
-      setAssignments(assignRes.data);
-      setGrades(gradeRes.data);
-    } catch {
-      // handled silently
-    } finally {
+    if (!classId) {
+      setAssignments([]);
+      setGrades([]);
       setLoading(false);
+      setToast({ isOpen: true, type: 'error', message: 'Invalid class selected.' });
+      return;
     }
-  }, [cls.id]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+    setLoading(true);
+    const [assignResult, gradeResult] = await Promise.allSettled([
+      getClassAssignments(classId),
+      getStudentGradesForClass(classId),
+    ]);
+
+    if (assignResult.status === 'fulfilled') {
+      setAssignments(Array.isArray(assignResult.value.data) ? assignResult.value.data : []);
+    } else {
+      setAssignments([]);
+      setToast({
+        isOpen: true,
+        type: 'error',
+        message:
+          assignResult.reason?.response?.data?.error ||
+          'Failed to load assignments for this class.',
+      });
+    }
+
+    if (gradeResult.status === 'fulfilled') {
+      setGrades(Array.isArray(gradeResult.value.data) ? gradeResult.value.data : []);
+    } else {
+      setGrades([]);
+    }
+
+    setLoading(false);
+  }, [classId]);
 
   useEffect(() => {
-    if (!assignments.length) return;
+    const timer = setTimeout(() => {
+      loadData();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [loadData]);
+
+  useEffect(() => {
+    if (!assignments.length || !classId) return;
     const fetchAll = async () => {
       const map = {};
       await Promise.all(
         assignments.map(async (a) => {
           try {
-            const res = await getMyAssignmentSubmission(cls.id, a.id);
+            const res = await getMyAssignmentSubmission(classId, a.id);
             map[a.id] = res.data;
           } catch {
             map[a.id] = null;
@@ -138,15 +167,21 @@ export default function StudentAssignmentView({ cls, onBack }) {
       setSubmissions(map);
     };
     fetchAll();
-  }, [assignments, cls.id]);
+  }, [assignments, classId]);
 
   const handleSubmitted = async () => {
     setToast({ isOpen: true, type: 'success', message: 'Assignment submitted successfully!' });
-    if (submitting) {
+    if (submitting && classId) {
       try {
-        const res = await getMyAssignmentSubmission(cls.id, submitting.id);
+        const res = await getMyAssignmentSubmission(classId, submitting.id);
         setSubmissions((prev) => ({ ...prev, [submitting.id]: res.data }));
-      } catch {}
+      } catch (err) {
+        setToast({
+          isOpen: true,
+          type: 'warning',
+          message: err.response?.data?.error || 'Submission was saved, but refresh failed.',
+        });
+      }
     }
   };
 
@@ -261,7 +296,7 @@ export default function StudentAssignmentView({ cls, onBack }) {
                     <div className="border-t border-[var(--color-border)] p-4 bg-[var(--color-input-bg)]/40 space-y-4">
                       <div>
                         <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide mb-2">Resources</p>
-                        <AttachmentsList classId={cls.id} assignmentId={assignment.id} />
+                        <AttachmentsList classId={classId} assignmentId={assignment.id} />
                       </div>
 
                       {gradeMap[assignment.id]?.feedback && (
@@ -278,14 +313,15 @@ export default function StudentAssignmentView({ cls, onBack }) {
                           <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide mb-1">Your Submission</p>
                           {sub.submission_type === 'file' ? (
                             <button
-                              onClick={() => {
-                                // handled in modal, but we can also view here
-                              }}
+                              onClick={() => setSubmittedFilePreview({
+                                url: getFileViewUrl(sub.submission_content),
+                                title: 'My Submitted File',
+                              })}
                               className="inline-flex items-center gap-1.5 text-xs text-[var(--color-primary)] hover:underline focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                             >
                               <FileText size={12} /> View submitted file
                             </button>
-                          ) : (
+                          ) : sub.submission_type === 'link' ? (
                             <a
                               href={sub.submission_content}
                               target="_blank"
@@ -294,6 +330,10 @@ export default function StudentAssignmentView({ cls, onBack }) {
                             >
                               <LinkIcon size={12} /> {sub.submission_content} <ExternalLink size={10} />
                             </a>
+                          ) : (
+                            <div className="text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-3 whitespace-pre-wrap">
+                              {String(sub.submission_content).replace(/<[^>]*>/g, '').trim() || 'Submitted text'}
+                            </div>
                           )}
                         </div>
                       )}
@@ -354,9 +394,18 @@ export default function StudentAssignmentView({ cls, onBack }) {
         <StudentSubmissionModal
           isOpen={!!submitting}
           onClose={() => setSubmitting(null)}
-          classId={cls.id}
+          classId={classId}
           assignment={submitting}
           onSubmitted={handleSubmitted}
+        />
+      )}
+
+      {submittedFilePreview && (
+        <FileViewerModal
+          fileUrl={submittedFilePreview.url}
+          title={submittedFilePreview.title}
+          isOpen={!!submittedFilePreview}
+          onClose={() => setSubmittedFilePreview(null)}
         />
       )}
 

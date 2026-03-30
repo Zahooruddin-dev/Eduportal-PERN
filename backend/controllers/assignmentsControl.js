@@ -316,19 +316,32 @@ async function submitGrades(req, res) {
 			return res.status(400).json({ error: 'Invalid or missing assignmentId' });
 		// Verify assignment exists and teacher has permission (using assignment's class)
 		const rows = await pool.query(
-			'SELECT class_id FROM assignments WHERE id = $1',
+			'SELECT class_id, max_score FROM assignments WHERE id = $1',
 			[assignmentId],
 		);
 		if (rows.rows.length === 0)
 			return res.status(404).json({ error: 'Assignment not found' });
 		const classId = rows.rows[0].class_id;
+		const assignmentMaxScore = rows.rows[0].max_score;
 		const targetClass = await dbClass.getClassByIdQuery(classId);
 		if (!targetClass || targetClass.teacher_id !== req.user.id) {
 			return res.status(403).json({ error: 'Unauthorized' });
 		}
 
 		const promises = grades.map((g) =>
-			db.upsertGradeQuery(assignmentId, g.studentId, g.score, g.feedback),
+			db.upsertGradeQuery(
+				assignmentId,
+				g.studentId,
+				g.score,
+				g.feedback,
+				{
+					classId,
+					teacherId: req.user.id,
+					maxScore: g.maxScore ?? assignmentMaxScore,
+					gradeType: 'assignment',
+					released: false,
+				},
+			),
 		);
 		await Promise.all(promises);
 		res.json({ message: 'Grades saved' });
