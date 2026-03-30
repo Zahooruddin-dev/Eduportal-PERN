@@ -10,6 +10,10 @@
   --color-text-primary: #09090b;
   --color-text-secondary: #3f3f46;
   --color-text-muted: #71717a;
+  --color-success: #16a34a;
+  --color-success-hover: #15803d;
+  --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
 }
 
 /* Animations for modals */
@@ -41,4 +45,8 @@
   --color-text-primary: #fafafa;
   --color-text-secondary: #d4d4d8;
   --color-text-muted: #71717a;
+  --color-success: #22c55e;
+  --color-success-hover: #16a34a;
+  --color-danger: #f87171;
+  --color-danger-hover: #ef4444;
 }

@@ -37,9 +37,16 @@ export default function CourseMaterial() {
 	}, [classes]);
 
 	if (loading) {
+		// skeleton grid while classes load
 		return (
-			<div className='flex justify-center items-center h-64'>
-				<SpinnerIcon />
+			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+				{[1,2,3].map((i) => (
+					<div key={i} className='animate-pulse bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6'>
+						<div className='h-5 bg-[var(--color-border)] rounded w-3/4 mb-4' />
+						<div className='h-3 bg-[var(--color-border)] rounded w-1/2 mb-3' />
+						<div className='h-24 bg-[var(--color-border)] rounded' />
+					</div>
+				))}
 			</div>
 		);
 	}

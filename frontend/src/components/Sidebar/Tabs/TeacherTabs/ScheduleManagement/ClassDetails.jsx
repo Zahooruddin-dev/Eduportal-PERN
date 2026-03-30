@@ -89,9 +89,16 @@ export default function ClassDetails({ classId, onBack }) {
   };
 
   if (loading) {
+    // skeleton header + details while loading
     return (
-      <div className="flex justify-center items-center h-64">
-        <SpinnerIcon />
+      <div className='p-6'>
+        <div className='animate-pulse space-y-4'>
+          <div className='h-8 w-2/5 bg-[var(--color-border)] rounded' />
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='h-24 bg-[var(--color-border)] rounded' />
+            <div className='h-24 bg-[var(--color-border)] rounded' />
+          </div>
+        </div>
       </div>
     );
   }
@@ -159,7 +166,14 @@ export default function ClassDetails({ classId, onBack }) {
           Enrolled Students ({roster.length})
         </h2>
         {loadingRoster ? (
-          <div className="flex justify-center py-4"><SpinnerIcon /></div>
+          <div className='space-y-2'>
+            {[1,2,3].map((i) => (
+              <div key={i} className='flex items-center gap-3'>
+                <div className='h-8 w-8 rounded-full bg-[var(--color-border)]' />
+                <div className='h-4 w-1/3 bg-[var(--color-border)] rounded' />
+              </div>
+            ))}
+          </div>
         ) : roster.length === 0 ? (
           <p className="text-[var(--color-text-muted)]">No students enrolled yet.</p>
         ) : (
@@ -169,7 +183,7 @@ export default function ClassDetails({ classId, onBack }) {
                 {student.profile_pic ? (
                   <img src={student.profile_pic} alt={student.username} className="w-8 h-8 rounded-full object-cover" />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)] text-sm font-medium">
+                  <div className="w-8 h-8 rounded-full bg-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-text-primary)] text-sm font-medium">
                     {student.username?.charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -228,7 +242,7 @@ export default function ClassDetails({ classId, onBack }) {
             </button>
           </div>
           {error && <AlertBox message={error} />}
-          {success && <p className="text-green-600 text-sm mt-2">{success}</p>}
+          {success && <p className="text-[var(--color-success)] text-sm mt-2">{success}</p>}
         </form>
 
         {/* Announcements List */}
@@ -248,7 +262,7 @@ export default function ClassDetails({ classId, onBack }) {
                   </div>
                   <button
                     onClick={() => handleDeleteAnnouncement(ann.id)}
-                    className="text-red-500 hover:text-red-700 text-sm"
+                    className="text-[var(--color-danger)] hover:text-[var(--color-danger-hover)] text-sm"
                     aria-label="Delete"
                   >
                     Delete
