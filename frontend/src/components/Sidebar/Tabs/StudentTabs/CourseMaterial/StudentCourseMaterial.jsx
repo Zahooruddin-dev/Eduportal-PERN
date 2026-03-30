@@ -51,7 +51,7 @@ export default function StudentCourseMaterial() {
 
 	const handleSelectClass = (cls) => {
 		setSelectedClass(cls);
-		fetchResources(cls.class_id);
+		fetchResources(cls.id);
 	};
 
 	if (loading) {
@@ -171,7 +171,7 @@ export default function StudentCourseMaterial() {
 				{/* Modals */}
 				{showCommentsFor && (
 					<CommentSection
-						classId={selectedClass.class_id}
+						classId={selectedClass?.id}
 						resourceId={showCommentsFor}
 						onClose={() => setShowCommentsFor(null)}
 					/>
@@ -202,7 +202,7 @@ export default function StudentCourseMaterial() {
 				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
 					{classes.map((cls) => (
 						<div
-							key={cls.class_id}
+							key={cls.id}
 							onClick={() => handleSelectClass(cls)}
 							className='cursor-pointer bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow'
 						>
