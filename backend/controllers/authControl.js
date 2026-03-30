@@ -71,10 +71,10 @@ async function changeUsername(req, res) {
 
 	if (!newUsername)
 		return res.status(400).json({ message: 'Username cannot be empty' });
-
-	const updatedUser = await db.updateUsername(id, newUsername, imagePath);
-	if (!updatedUser) return res.status(404).json({ message: 'User not found' });
 	try {
+		const updatedUser = await db.updateUsername(id, newUsername, imagePath);
+		if (!updatedUser) return res.status(404).json({ message: 'User not found' });
+
 		const token = jwt.sign(
 			{
 				id: updatedUser.id,
@@ -101,7 +101,8 @@ async function changeUsername(req, res) {
 			},
 		});
 	} catch (error) {
-		res.status(500).json({ message: error.message });
+		console.error('changeUsername error:', error);
+		res.status(500).json({ message: 'Failed to update profile.' });
 	}
 }
 
@@ -119,7 +120,7 @@ async function changePassword(req, res) {
 			.json({ message: 'New password must be at least 6 characters.' });
 
 	try {
-		const user = await db.loginQuery(req.user.email);
+		const user = await db.getUserByEmail(req.user.email);
 		if (!user) return res.status(404).json({ message: 'User not found.' });
 
 		const match = await bcrypt.compare(currentPassword, user.password_hash);
@@ -133,7 +134,8 @@ async function changePassword(req, res) {
 
 		res.status(200).json({ message: 'Password changed successfully.' });
 	} catch (error) {
-		res.status(500).json({ message: error.message });
+		console.error('changePassword error:', error);
+		res.status(500).json({ message: 'Failed to change password.' });
 	}
 }
 

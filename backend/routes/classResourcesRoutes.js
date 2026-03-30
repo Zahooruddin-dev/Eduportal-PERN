@@ -3,6 +3,9 @@ const router = express.Router({ mergeParams: true });
 const controller = require('../controllers/resourceControl');
 const { verifyToken, isTeacher } = require('../middleware/authMiddleware');
 const uploadResource = require('../middleware/uploadResourceMiddleware'); 
+const { validateUuidParam } = require('../middleware/uuidParamMiddleware');
+
+router.param('resourceId', validateUuidParam('resourceId', 'resource id'));
 
 // POST – upload file (file field name "file") or create link (JSON)
 router.post('/', verifyToken, isTeacher, uploadResource.single('file'), controller.createResource);

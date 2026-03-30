@@ -2,8 +2,11 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/classControl');
 const { isTeacher, verifyToken } = require('../middleware/authMiddleware');
+const { validateUuidParam } = require('../middleware/uuidParamMiddleware');
 
 require('dotenv').config;
+
+router.param('id', validateUuidParam('id', 'class id'));
 
 router.get('/', controller.getClasses);
 router.post('/', verifyToken, isTeacher, controller.createClasses);

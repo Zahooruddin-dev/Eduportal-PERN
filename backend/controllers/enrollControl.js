@@ -1,12 +1,17 @@
 const db = require('../db/queryEnrollment');
 const dbClass = require('../db/queryClasses');
 const pool = require('../db/Pool');
+const { isUuid } = require('../middleware/uuidParamMiddleware');
 
 async function createEnrollment(req, res) {
   const { student_id, class_id } = req.body;
 
   if (!student_id || !class_id) {
     return res.status(400).json({ error: 'Student and Class ID are required.' });
+  }
+
+  if (!isUuid(student_id) || !isUuid(class_id)) {
+    return res.status(400).json({ error: 'Invalid student_id or class_id format.' });
   }
 
   try {
@@ -28,7 +33,11 @@ async function createEnrollment(req, res) {
     if (err.code === '23505') {
       return res.status(400).json({ message: 'You are already enrolled in this class' });
     }
-    res.status(500).json({ error: err.message });
+    if (err.code === '22P02') {
+      return res.status(400).json({ error: 'Invalid ID format.' });
+    }
+    console.error('createEnrollment error:', err);
+    res.status(500).json({ error: 'Failed to create enrollment.' });
   }
 }
 
@@ -37,7 +46,11 @@ async function rooster(req, res) {
     const roster = await db.getClassRosterQuery(req.params.id);
     res.json(roster);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (err.code === '22P02') {
+      return res.status(400).json({ error: 'Invalid class id format.' });
+    }
+    console.error('rooster error:', err);
+    res.status(500).json({ error: 'Failed to fetch class roster.' });
   }
 }
 
@@ -50,12 +63,21 @@ async function getStudentSchedule(req, res) {
     const schedule = await db.getStudentScheduleQuery(id);
     res.status(200).json(schedule);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (err.code === '22P02') {
+      return res.status(400).json({ error: 'Invalid student id format.' });
+    }
+    console.error('getStudentSchedule error:', err);
+    res.status(500).json({ error: 'Failed to fetch student schedule.' });
   }
 }
 
 async function unenrollStudent(req, res) {
   const { studentId, classId } = req.params;
+
+  if (!isUuid(studentId) || !isUuid(classId)) {
+    return res.status(400).json({ error: 'Invalid student or class id format.' });
+  }
+
   try {
     const deleted = await db.unenrollStudentQuery(studentId, classId);
     if (!deleted) {
@@ -63,7 +85,11 @@ async function unenrollStudent(req, res) {
     }
     res.status(200).json({ message: 'Unenrolled successfully.' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (err.code === '22P02') {
+      return res.status(400).json({ error: 'Invalid ID format.' });
+    }
+    console.error('unenrollStudent error:', err);
+    res.status(500).json({ error: 'Failed to unenroll student.' });
   }
 }
 

@@ -3,6 +3,10 @@ const router = express.Router({ mergeParams: true });
 const controller = require('../controllers/assignmentsControl');
 const { verifyToken, isTeacher } = require('../middleware/authMiddleware');
 const uploadResource = require('../middleware/uploadResourceMiddleware');
+const { validateUuidParam } = require('../middleware/uuidParamMiddleware');
+
+router.param('assignmentId', validateUuidParam('assignmentId', 'assignment id'));
+router.param('attachmentId', validateUuidParam('attachmentId', 'attachment id'));
 
 // All endpoints under /api/class/:classId/grades or /api/class/:classId/assignments .
 // Teacher routes

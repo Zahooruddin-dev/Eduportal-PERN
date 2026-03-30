@@ -1,4 +1,5 @@
 const db = require('../db/queryClasses');
+const { isUuid } = require('../middleware/uuidParamMiddleware');
 
 async function getClasses(req, res) {
 	try {
@@ -44,6 +45,9 @@ async function createClasses(req, res) {
 
 async function updateClass(req, res) {
 	const { id } = req.params;
+	if (!isUuid(id)) {
+		return res.status(400).json({ error: 'Invalid class id format.' });
+	}
 	const {
 		class_name,
 		schedule_days,
@@ -80,33 +84,55 @@ async function updateClass(req, res) {
 		res.json(updated);
 	} catch (err) {
 		console.error(err);
-		res.status(500).json({ error: err.message });
+		if (err.code === '22P02') {
+			return res.status(400).json({ error: 'Invalid class id format.' });
+		}
+		res.status(500).json({ error: 'Failed to update class.' });
 	}
 }
 async function deleteClass(req, res) {
 	const { id } = req.params;
+	if (!isUuid(id)) {
+		return res.status(400).json({ error: 'Invalid class id format.' });
+	}
 	try {
 		await db.deleteClassByIdQuery(id);
 		res.status(200).json({ message: 'Class deleted successfully' });
 	} catch (err) {
-		res.status(500).json({ error: err.message });
+		if (err.code === '22P02') {
+			return res.status(400).json({ error: 'Invalid class id format.' });
+		}
+		res.status(500).json({ error: 'Failed to delete class.' });
 	}
 }
 async function getSpecificClass(req, res) {
 	const { id } = req.params;
+	if (!isUuid(id)) {
+		return res.status(400).json({ error: 'Invalid class id format.' });
+	}
 	try {
 		const subjectClass = await db.getClassByIdQuery(id);
 		if (!subjectClass)
 			return res.status(404).json({ error: 'Class not found' });
 		res.status(200).json(subjectClass);
 	} catch (err) {
-		res.status(500).json({ error: err.message });
+		if (err.code === '22P02') {
+			return res.status(400).json({ error: 'Invalid class id format.' });
+		}
+		res.status(500).json({ error: 'Failed to fetch class.' });
 	}
 }
 async function editSpecificClass(req, res) {
 	const { id } = req.params;
+	if (!isUuid(id)) {
+		return res.status(400).json({ error: 'Invalid class id format.' });
+	}
 	try {
 		const existingClass = await db.getClassByIdQuery(id);
+
+		if (!existingClass) {
+			return res.status(404).json({ error: 'Class not found' });
+		}
 
 		if (existingClass.teacher_id !== req.user.id) {
 			return res
@@ -117,7 +143,10 @@ async function editSpecificClass(req, res) {
 		const subjectClass = await db.queryEditClassQuery(id, req.body);
 		res.status(200).json(subjectClass);
 	} catch (err) {
-		res.status(500).json({ error: err.message });
+		if (err.code === '22P02') {
+			return res.status(400).json({ error: 'Invalid class id format.' });
+		}
+		res.status(500).json({ error: 'Failed to edit class.' });
 	}
 }
 async function getMyClasses(req, res) {
@@ -125,7 +154,7 @@ async function getMyClasses(req, res) {
 		const classes = await db.getClassesByTeacherIdQuery(req.user.id);
 		res.status(200).json(classes);
 	} catch (err) {
-		res.status(500).json({ error: err.message });
+		res.status(500).json({ error: 'Failed to fetch your classes.' });
 	}
 }
 module.exports = {
