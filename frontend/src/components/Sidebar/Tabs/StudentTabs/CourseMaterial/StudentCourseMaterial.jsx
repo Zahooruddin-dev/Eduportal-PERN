@@ -77,8 +77,15 @@ export default function StudentCourseMaterial() {
 				</h1>
 
 				{loadingResources ? (
-					<div className='flex justify-center py-8'>
-						<SpinnerIcon />
+					// skeleton while resources load
+					<div className='space-y-4'>
+						{[1,2,3].map((i) => (
+							<div key={i} className='bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 shadow-sm animate-pulse'>
+								<div className='h-4 bg-[var(--color-border)] rounded w-2/5 mb-3' />
+								<div className='h-3 bg-[var(--color-border)] rounded w-1/4 mb-2' />
+								<div className='h-24 bg-[var(--color-border)] rounded mt-2' />
+							</div>
+						))}
 					</div>
 				) : resources.length === 0 ? (
 					<p className='text-[var(--color-text-muted)] text-center py-8'>

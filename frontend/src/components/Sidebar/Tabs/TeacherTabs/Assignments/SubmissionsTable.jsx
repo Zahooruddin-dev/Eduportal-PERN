@@ -273,7 +273,7 @@ export default function SubmissionsTable({ classId, assignmentId, maxScore }) {
 													{sub.username.charAt(0).toUpperCase()}
 												</div>
 											)}
-											<span className='text-sm'>{sub.username}</span>
+											<span className='text-sm text-[var(--color-text-primary)]'>{sub.username}</span>
 										</div>
 									</td>
 									<td className='px-3 py-2'>
@@ -295,7 +295,7 @@ export default function SubmissionsTable({ classId, assignmentId, maxScore }) {
 													e.target.value,
 												)
 											}
-											className='w-20 rounded border border-[var(--color-border)] bg-[var(--color-input-bg)] px-2 py-1 text-sm'
+											className='w-20 rounded border border-[var(--color-border)] bg-[var(--color-input-bg)] px-2 py-1 text-sm text-[var(--color-text-primary)]'
 											placeholder={maxScore}
 										/>
 									</td>
@@ -309,7 +309,7 @@ export default function SubmissionsTable({ classId, assignmentId, maxScore }) {
 													e.target.value,
 												)
 											}
-											className='w-full rounded border border-[var(--color-border)] bg-[var(--color-input-bg)] px-2 py-1 text-sm'
+											className='w-full rounded border border-[var(--color-border)] bg-[var(--color-input-bg)] px-2 py-1 text-sm text-[var(--color-text-primary)]'
 											rows='1'
 										/>
 									</td>
