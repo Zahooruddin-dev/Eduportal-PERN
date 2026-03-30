@@ -1,9 +1,9 @@
 CREATE TABLE IF NOT EXISTS grades (
   id SERIAL PRIMARY KEY,
-  class_id INTEGER NOT NULL,
-  teacher_id INTEGER,
-  student_id INTEGER,
-  assignment_id INTEGER,
+  class_id TEXT NOT NULL,
+  teacher_id TEXT,
+  student_id TEXT,
+  assignment_id TEXT,
   grade NUMERIC,
   max_grade NUMERIC,
   grade_type TEXT,

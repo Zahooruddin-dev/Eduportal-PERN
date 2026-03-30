@@ -26,7 +26,17 @@ const insertGrades = async (req, res) => {
     const insertText = 'INSERT INTO grades(class_id, teacher_id, student_id, assignment_id, grade, max_grade, grade_type, feedback, released, created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW()) RETURNING *';
     const inserted = [];
     for (const g of grades) {
-      const values = [class_id, teacher_id || null, g.student_id || null, g.assignment_id || null, g.grade || null, g.max_grade || null, g.grade_type || 'manual', g.feedback || '', !!g.released];
+      const values = [
+        class_id != null ? String(class_id) : null,
+        teacher_id != null ? String(teacher_id) : null,
+        g.student_id != null ? String(g.student_id) : null,
+        g.assignment_id != null ? String(g.assignment_id) : null,
+        g.grade != null ? Number(g.grade) : null,
+        g.max_grade != null ? Number(g.max_grade) : null,
+        g.grade_type || 'manual',
+        g.feedback || '',
+        !!g.released,
+      ];
       const r = await client.query(insertText, values);
       inserted.push(r.rows[0]);
     }
@@ -35,7 +45,35 @@ const insertGrades = async (req, res) => {
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('gradebook:insertGrades error:', err && err.message ? err.message : err);
-    return res.status(500).json({ error: 'Failed to insert grades', message: err && err.message ? err.message : '' });
+
+    const msg = err && err.message ? err.message : '';
+    if (!req._gradeRetry && /column .* of relation .* does not exist/i.test(msg)) {
+      req._gradeRetry = true;
+      try {
+        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS class_id text`);
+        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS teacher_id text`);
+        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS student_id text`);
+        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS assignment_id text`);
+        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS grade numeric`);
+        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS max_grade numeric`);
+        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS grade_type text`);
+        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS feedback text`);
+        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS released boolean DEFAULT false`);
+        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now()`);
+      } catch (alterErr) {
+        console.error('gradebook:failed to add missing columns', alterErr && alterErr.message ? alterErr.message : alterErr);
+        return res.status(500).json({ error: 'Failed to ensure grades schema', message: alterErr && alterErr.message ? alterErr.message : '' });
+      }
+      try {
+        const retryRes = await insertGrades(req, res);
+        return retryRes;
+      } catch (retryErr) {
+        console.error('gradebook:retry insert failed', retryErr && retryErr.message ? retryErr.message : retryErr);
+        return res.status(500).json({ error: 'Failed to insert grades after schema fix', message: retryErr && retryErr.message ? retryErr.message : '' });
+      }
+    }
+
+    return res.status(500).json({ error: 'Failed to insert grades', message: msg });
   } finally {
     client.release();
   }
