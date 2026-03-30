@@ -12,6 +12,7 @@ const commentRoutes = require('./routes/comments');
 const assignmentRoutes = require('./routes/assignmentRoutes');
 const gradebookRoutes = require('./routes/gradebookRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 const { validateUuidParam } = require('./middleware/uuidParamMiddleware');
 const { ensureAdminSchema } = require('./db/ensureAdminSchema');
 
@@ -45,6 +46,7 @@ app.use('/api/class/:classId/assignments', assignmentRoutes);
 app.use('/api/enroll', enrollRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/reports', reportRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/gradebook', gradebookRoutes);
 
