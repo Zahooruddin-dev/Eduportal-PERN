@@ -16,6 +16,8 @@ import StudentGradebook from '../Sidebar/Tabs/StudentTabs/Gradebook/StudentGrade
 import AcademicCalender from '../Sidebar/Tabs/StudentTabs/AcademicCalender/AcademicCalender';
 import TeacherCalender from '../Sidebar/Tabs/TeacherTabs/TeacherCalender/TeacherCalender';
 import UserManagement from '../Sidebar/Tabs/AdminTabs/UserManagement/UserManagement';
+import AdminReports from '../Sidebar/Tabs/AdminTabs/Reports/AdminReports';
+import ReportCenter from '../Sidebar/Tabs/Shared/ReportCenter';
 
 export default function Dashboard() {
 	const { user } = useAuth();
@@ -27,6 +29,8 @@ export default function Dashboard() {
 			switch (activeTab) {
 				case 'admin-user-management':
 					return <UserManagement />;
+				case 'admin-reports':
+					return <AdminReports />;
 				case 'profile':
 					return <Profile />;
 				default:
@@ -55,6 +59,8 @@ export default function Dashboard() {
 					return <Profile />;
 				case 'assignments':
 					return <StudentAssignments />;
+				case 'report':
+					return <ReportCenter />;
 				default:
 					return <EnrolledClasses />;
 			}
@@ -75,6 +81,8 @@ export default function Dashboard() {
 					return <TeacherAttendance />;
 				case 'assignments':
 					return <TeacherAssignments />;
+				case 'report':
+					return <ReportCenter />;
 				case 'profile':
 					return <Profile />;
 				default:

@@ -42,10 +42,12 @@ const teacherNavItems = [
   { id: 'assignments', label: 'Assignments', icon: FileText },
   { id: 'student-communication', label: 'Student Communication', icon: MessageSquare },
   { id: 'teacher-attendance', label: 'Student Attendance', icon: UserCheck },
+  { id: 'report', label: 'Report', icon: FileText },
 ];
 
 const adminNavItems = [
   { id: 'admin-user-management', label: 'User Management', icon: Users },
+  { id: 'admin-reports', label: 'Reports', icon: FileText },
 ];
 
 function NavTooltip({ label, visible }) {

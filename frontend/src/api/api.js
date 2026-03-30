@@ -187,3 +187,31 @@ export const releaseGradebookGrades = (payload) => {
 export const getMyGradebookGrades = (params = {}) => {
   return api.get('/api/gradebook/my-grades', { params });
 };
+
+export const getReportMeta = () => {
+  return api.get('/api/reports/meta');
+};
+
+export const getReportTargets = (params = {}) => {
+  return api.get('/api/reports/targets', { params });
+};
+
+export const createReport = (payload) => {
+  return api.post('/api/reports', payload, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+export const getMyReports = () => {
+  return api.get('/api/reports/my');
+};
+
+export const getInstituteReports = (params = {}) => {
+  return api.get('/api/reports/institute', { params });
+};
+
+export const updateInstituteReportStatus = (reportId, payload) => {
+  return api.patch(`/api/reports/${reportId}/status`, payload);
+};
