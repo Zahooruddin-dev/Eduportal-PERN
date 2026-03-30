@@ -1,8 +1,7 @@
-// CourseMaterial.jsx
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../../../../context/AuthContext';
 import { getMyClasses } from '../../../../../api/api';
-import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
+import { SpinnerIcon } from '../../../../Icons/Icon';
 import ResourceManager from './ResourceManager';
 
 export default function CourseMaterial() {
@@ -10,15 +9,28 @@ export default function CourseMaterial() {
 	const [classes, setClasses] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
-	const [selectedClass, setSelectedClass] = useState(null);
+	const [selectedClassId, setSelectedClassId] = useState('');
 
 	const fetchClasses = async () => {
 		setLoading(true);
 		setError('');
 		try {
 			const res = await getMyClasses();
-			setClasses(res.data);
-		} catch (err) {
+			const nextClasses = res.data || [];
+			setClasses(nextClasses);
+
+			if (nextClasses.length > 0) {
+				setSelectedClassId((current) => {
+					if (
+						current &&
+						nextClasses.some((classItem) => classItem.id === current)
+					) {
+						return current;
+					}
+					return nextClasses[0].id;
+				});
+			}
+		} catch {
 			setError('Failed to load classes');
 		} finally {
 			setLoading(false);
@@ -26,56 +38,58 @@ export default function CourseMaterial() {
 	};
 
 	useEffect(() => {
-		fetchClasses();
-	}, []);
+		if (user?.id) fetchClasses();
+	}, [user?.id]);
 
-	// When classes are loaded and we have no selected class, selects the first one
-	useEffect(() => {
-		if (classes.length > 0 && !selectedClass) {
-			setSelectedClass(classes[0]);
-		}
-	}, [classes]);
+	const selectedClass = useMemo(
+		() => classes.find((classItem) => classItem.id === selectedClassId) || null,
+		[classes, selectedClassId],
+	);
 
 	if (loading) {
-		// skeleton grid while classes load
 		return (
-			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-				{[1,2,3].map((i) => (
-					<div key={i} className='animate-pulse bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6'>
-						<div className='h-5 bg-[var(--color-border)] rounded w-3/4 mb-4' />
-						<div className='h-3 bg-[var(--color-border)] rounded w-1/2 mb-3' />
-						<div className='h-24 bg-[var(--color-border)] rounded' />
-					</div>
-				))}
+			<div className='flex h-64 items-center justify-center'>
+				<SpinnerIcon />
 			</div>
 		);
 	}
 
-	// If we have a selected class, shows the resource manager
 	if (selectedClass) {
 		return (
 			<ResourceManager
 				classId={selectedClass.id}
 				className={selectedClass.class_name}
 				classes={classes}
-				onClassChange={(newId, newName) => {
-					setSelectedClass({ id: newId, class_name: newName });
+				onClassChange={(newId) => {
+					setSelectedClassId(newId);
 				}}
 			/>
 		);
 	}
 
 	return (
-		<div className='p-6'>
-			<h1 className='text-2xl font-semibold text-[var(--color-text-primary)] mb-6'>
-				Course Repository
+		<div className='p-4 sm:p-6'>
+			<h1 className='text-2xl font-semibold text-[var(--color-text-primary)] mb-2'>
+				Course Material
 			</h1>
-			{error && <AlertBox message={error} />}
-			{classes.length === 0 && (
-				<p className='text-[var(--color-text-muted)]'>
-					You haven't created any classes yet.
-				</p>
+			<p className='text-sm text-[var(--color-text-muted)] mb-6'>
+				Share files and links for your students by class.
+			</p>
+
+			{error && (
+				<div
+					role='alert'
+					className='mb-4 rounded-xl border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/10 px-3 py-2 text-sm text-[var(--color-danger)]'
+				>
+					{error}
+				</div>
 			)}
+
+			<div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center'>
+				<p className='text-[var(--color-text-muted)]'>
+					You have not created any classes yet.
+				</p>
+			</div>
 		</div>
 	);
 }
