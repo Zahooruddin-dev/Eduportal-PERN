@@ -147,8 +147,8 @@ export const getStudentGradesForClass = (classId) => {
   return api.get(`/api/class/${classId}/assignments/my-grades`);
 };
 
-export const getGradebookGrades = (classId) => {
-  return api.get(`/api/gradebook/grades/${classId}`);
+export const getGradebookGrades = (classId, params = {}) => {
+  return api.get(`/api/gradebook/grades/${classId}`, { params });
 };
 
 export const postGradebookGrades = (payload) => {
@@ -157,4 +157,12 @@ export const postGradebookGrades = (payload) => {
 
 export const uploadGradebookCsv = (payload) => {
   return api.post('/api/gradebook/upload', payload);
+};
+
+export const releaseGradebookGrades = (payload) => {
+  return api.patch('/api/gradebook/release', payload);
+};
+
+export const getMyGradebookGrades = (params = {}) => {
+  return api.get('/api/gradebook/my-grades', { params });
 };

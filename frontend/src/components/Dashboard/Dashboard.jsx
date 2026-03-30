@@ -12,6 +12,7 @@ import TeacherAttendance from '../Sidebar/Tabs/TeacherTabs/TeacherAttendance/Tea
 import TeacherAssignments from '../Sidebar/Tabs/TeacherTabs/Assignments/Assignments';
 import StudentAssignments from '../Sidebar/Tabs/StudentTabs/StudentAssignments/StudentAssignments';
 import Gradebook from '../Sidebar/Tabs/TeacherTabs/Gradebook/Gradebook';
+import StudentGradebook from '../Sidebar/Tabs/StudentTabs/Gradebook/StudentGradebook';
 
 export default function Dashboard() {
 	const { user } = useAuth();
@@ -44,6 +45,8 @@ export default function Dashboard() {
 					return <StudentAnnouncements />;
 				case 'course-material':
 					return <StudentCourseMaterial />;
+				case 'gradebook':
+					return <StudentGradebook />;
 				case 'profile':
 					return <Profile />;
 				case 'assignments':

@@ -1,99 +1,313 @@
 const pool = require('../db/Pool');
+const db = require('../db/queryGrades');
+const dbClass = require('../db/queryClasses');
+const { isUuid } = require('../middleware/uuidParamMiddleware');
 
-const getGradesForClass = async (req, res) => {
-  const { classId } = req.params;
-  try {
-    const result = await pool.query('SELECT * FROM grades WHERE class_id = $1 ORDER BY created_at DESC', [classId]);
-    return res.json(result.rows);
-  } catch (err) {
-    console.error('gradebook:getGradesForClass error:', err && err.message ? err.message : err);
-    try {
-      const fallback = await pool.query('SELECT * FROM grades WHERE class_id::text = $1::text ORDER BY created_at DESC', [classId]);
-      return res.json(fallback.rows);
-    } catch (err2) {
-      console.error('gradebook:getGradesForClass fallback error:', err2 && err2.message ? err2.message : err2);
-      return res.status(500).json({ error: 'Failed to fetch grades', message: err2 && err2.message ? err2.message : '' });
-    }
+const ALLOWED_GRADE_TYPES = new Set([
+  'all',
+  'assignment',
+  'exam',
+  'quiz',
+  'manual',
+  'csv',
+]);
+
+function normalizeGradeType(value, defaultValue = 'all') {
+  if (value === undefined || value === null || value === '') return defaultValue;
+  const normalized = String(value).trim().toLowerCase();
+  if (!ALLOWED_GRADE_TYPES.has(normalized)) return null;
+  return normalized;
+}
+
+function parseNumber(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  return numeric;
+}
+
+async function assertClassOwnership(classId, user) {
+  const targetClass = await dbClass.getClassByIdQuery(classId);
+  if (!targetClass) {
+    return { ok: false, status: 404, error: 'Class not found.' };
   }
-};
 
-const insertGrades = async (req, res) => {
-  const { class_id, teacher_id, grades } = req.body;
-  if (!class_id || !grades || !Array.isArray(grades)) return res.status(400).json({ error: 'Invalid payload' });
+  if (user.role !== 'admin' && targetClass.teacher_id !== user.id) {
+    return { ok: false, status: 403, error: 'Unauthorized to manage this class.' };
+  }
+
+  return { ok: true };
+}
+
+function normalizeGradeEntries(grades) {
+  if (!Array.isArray(grades) || grades.length === 0) {
+    return { ok: false, error: 'Grades must be a non-empty array.' };
+  }
+
+  const normalized = [];
+
+  for (let index = 0; index < grades.length; index += 1) {
+    const item = grades[index] || {};
+    const studentId = String(item.student_id || '').trim();
+    if (!isUuid(studentId)) {
+      return {
+        ok: false,
+        error: `Invalid student_id at row ${index + 1}.`,
+      };
+    }
+
+    const gradeValue = parseNumber(item.grade);
+    if (gradeValue === null || gradeValue < 0) {
+      return {
+        ok: false,
+        error: `Invalid grade at row ${index + 1}.`,
+      };
+    }
+
+    const maxGradeRaw =
+      item.max_grade === undefined || item.max_grade === null || item.max_grade === ''
+        ? 100
+        : item.max_grade;
+    const maxGrade = parseNumber(maxGradeRaw);
+    if (maxGrade === null || maxGrade <= 0) {
+      return {
+        ok: false,
+        error: `Invalid max_grade at row ${index + 1}.`,
+      };
+    }
+
+    const gradeType = normalizeGradeType(item.grade_type, 'exam');
+    if (!gradeType || gradeType === 'all') {
+      return {
+        ok: false,
+        error: `Invalid grade_type at row ${index + 1}.`,
+      };
+    }
+
+    const assignmentId = item.assignment_id ? String(item.assignment_id).trim() : null;
+    if (assignmentId && !isUuid(assignmentId)) {
+      return {
+        ok: false,
+        error: `Invalid assignment_id at row ${index + 1}.`,
+      };
+    }
+
+    normalized.push({
+      student_id: studentId,
+      grade: gradeValue,
+      max_grade: maxGrade,
+      grade_type: gradeType,
+      assignment_id: assignmentId,
+      feedback: item.feedback ? String(item.feedback).trim() : '',
+      released: Boolean(item.released),
+    });
+  }
+
+  return { ok: true, grades: normalized };
+}
+
+async function persistGrades(classId, teacherId, grades) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const insertText = 'INSERT INTO grades(class_id, teacher_id, student_id, assignment_id, grade, max_grade, grade_type, feedback, released, created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW()) RETURNING *';
-    const inserted = [];
-    for (const g of grades) {
-      const values = [
-        class_id != null ? String(class_id) : null,
-        teacher_id != null ? String(teacher_id) : null,
-        g.student_id != null ? String(g.student_id) : null,
-        g.assignment_id != null ? String(g.assignment_id) : null,
-        g.grade != null ? Number(g.grade) : null,
-        g.max_grade != null ? Number(g.max_grade) : null,
-        g.grade_type || 'manual',
-        g.feedback || '',
-        !!g.released,
-      ];
-      const r = await client.query(insertText, values);
-      inserted.push(r.rows[0]);
-    }
+    const inserted = await db.insertGradesQuery(client, classId, teacherId, grades);
     await client.query('COMMIT');
-    return res.json({ inserted });
-  } catch (err) {
+    return inserted;
+  } catch (error) {
     await client.query('ROLLBACK');
-    console.error('gradebook:insertGrades error:', err && err.message ? err.message : err);
-
-    const msg = err && err.message ? err.message : '';
-    if (!req._gradeRetry && /column .* of relation .* does not exist/i.test(msg)) {
-      req._gradeRetry = true;
-      try {
-        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS class_id text`);
-        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS teacher_id text`);
-        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS student_id text`);
-        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS assignment_id text`);
-        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS grade numeric`);
-        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS max_grade numeric`);
-        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS grade_type text`);
-        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS feedback text`);
-        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS released boolean DEFAULT false`);
-        await client.query(`ALTER TABLE grades ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now()`);
-      } catch (alterErr) {
-        console.error('gradebook:failed to add missing columns', alterErr && alterErr.message ? alterErr.message : alterErr);
-        return res.status(500).json({ error: 'Failed to ensure grades schema', message: alterErr && alterErr.message ? alterErr.message : '' });
-      }
-      try {
-        const retryRes = await insertGrades(req, res);
-        return retryRes;
-      } catch (retryErr) {
-        console.error('gradebook:retry insert failed', retryErr && retryErr.message ? retryErr.message : retryErr);
-        return res.status(500).json({ error: 'Failed to insert grades after schema fix', message: retryErr && retryErr.message ? retryErr.message : '' });
-      }
-    }
-
-    return res.status(500).json({ error: 'Failed to insert grades', message: msg });
+    throw error;
   } finally {
     client.release();
   }
-};
+}
 
-const uploadCsv = async (req, res) => {
-  const { csv, class_id, teacher_id } = req.body;
-  if (!csv || !class_id) return res.status(400).json({ error: 'Invalid payload' });
-  const lines = csv.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  const grades = [];
-  for (const line of lines) {
-    const parts = line.split(',').map(p => p.trim());
-    const student_id = parts[0] || null;
-    const grade = parts[1] ? Number(parts[1]) : null;
-    const max_grade = parts[2] ? Number(parts[2]) : null;
-    const feedback = parts[3] || '';
-    grades.push({ student_id, grade, max_grade, feedback, grade_type: 'csv' });
+function parseCsvRows(csvText) {
+  const rows = String(csvText || '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (!rows.length) return [];
+
+  let startIndex = 0;
+  const firstParts = rows[0].split(',').map((part) => part.trim().toLowerCase());
+  if (firstParts[0] === 'student_id' || firstParts[0] === 'studentid') {
+    startIndex = 1;
   }
-  req.body.grades = grades;
-  return insertGrades(req, res);
-};
 
-module.exports = { getGradesForClass, insertGrades, uploadCsv };
+  const parsed = [];
+  for (let index = startIndex; index < rows.length; index += 1) {
+    const parts = rows[index].split(',').map((part) => part.trim());
+    if (!parts[0] || !parts[1]) continue;
+
+    parsed.push({
+      student_id: parts[0],
+      grade: parts[1],
+      max_grade: parts[2] || 100,
+      grade_type: parts[3] || 'exam',
+      feedback: parts.slice(4).join(','),
+    });
+  }
+
+  return parsed;
+}
+
+async function getGradesForClass(req, res) {
+  const { classId } = req.params;
+  const gradeType = normalizeGradeType(req.query.type, 'all');
+  if (!gradeType) {
+    return res.status(400).json({ error: 'Invalid grade type filter.' });
+  }
+
+  const releasedFilter =
+    req.query.released === undefined ? 'all' : String(req.query.released).toLowerCase();
+  if (!['all', 'true', 'false'].includes(releasedFilter)) {
+    return res.status(400).json({ error: 'Invalid released filter.' });
+  }
+
+  try {
+    const access = await assertClassOwnership(classId, req.user);
+    if (!access.ok) {
+      return res.status(access.status).json({ error: access.error });
+    }
+
+    const rows = await db.getGradesForClassQuery(classId, {
+      gradeType,
+      released: releasedFilter,
+    });
+
+    return res.status(200).json(rows);
+  } catch (error) {
+    console.error('getGradesForClass error:', error);
+    return res.status(500).json({ error: 'Failed to fetch grades.' });
+  }
+}
+
+async function insertGrades(req, res) {
+  const { class_id: classId, grades } = req.body;
+  if (!isUuid(String(classId || ''))) {
+    return res.status(400).json({ error: 'Invalid class_id format.' });
+  }
+
+  try {
+    const access = await assertClassOwnership(classId, req.user);
+    if (!access.ok) {
+      return res.status(access.status).json({ error: access.error });
+    }
+
+    const normalized = normalizeGradeEntries(grades);
+    if (!normalized.ok) {
+      return res.status(400).json({ error: normalized.error });
+    }
+
+    const inserted = await persistGrades(classId, req.user.id, normalized.grades);
+    return res.status(201).json({ inserted });
+  } catch (error) {
+    console.error('insertGrades error:', error);
+    return res.status(500).json({ error: 'Failed to insert grades.' });
+  }
+}
+
+async function uploadCsv(req, res) {
+  const { csv, class_id: classId } = req.body;
+  if (!isUuid(String(classId || ''))) {
+    return res.status(400).json({ error: 'Invalid class_id format.' });
+  }
+
+  if (!csv || typeof csv !== 'string') {
+    return res.status(400).json({ error: 'CSV content is required.' });
+  }
+
+  try {
+    const access = await assertClassOwnership(classId, req.user);
+    if (!access.ok) {
+      return res.status(access.status).json({ error: access.error });
+    }
+
+    const rawRows = parseCsvRows(csv);
+    const normalized = normalizeGradeEntries(rawRows);
+    if (!normalized.ok) {
+      return res.status(400).json({ error: normalized.error });
+    }
+
+    const inserted = await persistGrades(classId, req.user.id, normalized.grades);
+    return res.status(201).json({ inserted });
+  } catch (error) {
+    console.error('uploadCsv error:', error);
+    return res.status(500).json({ error: 'Failed to upload grades CSV.' });
+  }
+}
+
+async function releaseClassGrades(req, res) {
+  const { class_id: classId, released = true, grade_type: gradeTypeInput } = req.body;
+  if (!isUuid(String(classId || ''))) {
+    return res.status(400).json({ error: 'Invalid class_id format.' });
+  }
+
+  const gradeType = normalizeGradeType(gradeTypeInput, 'all');
+  if (!gradeType) {
+    return res.status(400).json({ error: 'Invalid grade_type filter.' });
+  }
+
+  try {
+    const access = await assertClassOwnership(classId, req.user);
+    if (!access.ok) {
+      return res.status(access.status).json({ error: access.error });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const updated = await db.setClassReleaseStatusQuery(
+        client,
+        classId,
+        Boolean(released),
+        gradeType,
+      );
+      await client.query('COMMIT');
+      return res.status(200).json({ updated, released: Boolean(released) });
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('releaseClassGrades error:', error);
+    return res.status(500).json({ error: 'Failed to update release status.' });
+  }
+}
+
+async function getMyGrades(req, res) {
+  if (req.user.role !== 'student') {
+    return res.status(403).json({ error: 'Only students can access this endpoint.' });
+  }
+
+  const classId = req.query.classId ? String(req.query.classId) : null;
+  if (classId && !isUuid(classId)) {
+    return res.status(400).json({ error: 'Invalid classId format.' });
+  }
+
+  const gradeType = normalizeGradeType(req.query.type, 'all');
+  if (!gradeType) {
+    return res.status(400).json({ error: 'Invalid grade type filter.' });
+  }
+
+  try {
+    const grades = await db.getStudentReleasedGradesQuery(req.user.id, {
+      classId,
+      gradeType,
+    });
+    return res.status(200).json(grades);
+  } catch (error) {
+    console.error('getMyGrades error:', error);
+    return res.status(500).json({ error: 'Failed to fetch student grades.' });
+  }
+}
+
+module.exports = {
+  getGradesForClass,
+  insertGrades,
+  uploadCsv,
+  releaseClassGrades,
+  getMyGrades,
+};
