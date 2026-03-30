@@ -11,6 +11,7 @@ import StudentCourseMaterial from '../Sidebar/Tabs/StudentTabs/CourseMaterial/St
 import TeacherAttendance from '../Sidebar/Tabs/TeacherTabs/TeacherAttendance/TeacherAttendance';
 import TeacherAssignments from '../Sidebar/Tabs/TeacherTabs/Assignments/Assignments';
 import StudentAssignments from '../Sidebar/Tabs/StudentTabs/StudentAssignments/StudentAssignments';
+import Gradebook from '../Sidebar/Tabs/TeacherTabs/Gradebook/Gradebook';
 
 export default function Dashboard() {
 	const { user } = useAuth();
@@ -57,6 +58,8 @@ export default function Dashboard() {
 			switch (activeTab) {
 				case 'schedule-management':
 					return <ScheduleManagement />;
+				case 'gradebook-teacher':
+					return <Gradebook />;
 				case 'course-material':
 					return <CourseMaterial />;
 				case 'teacher-attendance':

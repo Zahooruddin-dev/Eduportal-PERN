@@ -146,3 +146,15 @@ export const getAssignmentSubmissions = (classId, assignmentId) => {
 export const getStudentGradesForClass = (classId) => {
   return api.get(`/api/class/${classId}/assignments/my-grades`);
 };
+
+export const getGradebookGrades = (classId) => {
+  return api.get(`/api/gradebook/grades/${classId}`);
+};
+
+export const postGradebookGrades = (payload) => {
+  return api.post('/api/gradebook/grades', payload);
+};
+
+export const uploadGradebookCsv = (payload) => {
+  return api.post('/api/gradebook/upload', payload);
+};

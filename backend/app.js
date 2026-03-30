@@ -10,6 +10,7 @@ const attendanceRoutes = require('./routes/attendanceRoutes');
 const resourceRoutes = require('./routes/classResourcesRoutes');
 const commentRoutes = require('./routes/comments');
 const assignmentRoutes = require('./routes/assignmentRoutes');
+const gradebookRoutes = require('./routes/gradebookRoutes');
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/api/class/:classId/assignments', assignmentRoutes);
 app.use('/api/enroll', enrollRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/uploads', express.static('uploads'));
+app.use('/api/gradebook', gradebookRoutes);
 
 const PORT = process.env.PORT || 3000;
 

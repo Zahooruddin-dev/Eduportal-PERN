@@ -43,6 +43,8 @@ const teacherNavItems = [
 		label: 'Class & Schedule Management',
 		icon: Calendar,
 	},
+	{ id: 'gradebook-teacher', label: 'Gradebook', icon: BarChart },
+
 	{ id: 'course-material', label: 'Course Material', icon: BookOpen },
 	{ id: 'assignments', label: 'Assignments', icon: FileText },
 	{
@@ -177,7 +179,7 @@ function SidebarBody({
 					</div>
 				</div>
 
-				{(isMobile || showCloseX) ? (
+				{isMobile || showCloseX ? (
 					<button
 						type='button'
 						onClick={onClose}
@@ -194,7 +196,7 @@ function SidebarBody({
 							aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
 							aria-expanded={!collapsed}
 							className='p-1.5 rounded-lg relative z-10 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 transition-all duration-150 shrink-0'
-							>
+						>
 							<span
 								className={[
 									'block transition-transform duration-300',
@@ -203,7 +205,7 @@ function SidebarBody({
 							>
 								<ChevronLeft size={18} aria-hidden='true' />
 							</span>
-							</button>
+						</button>
 					)
 				)}
 			</div>
@@ -368,8 +370,6 @@ export default function Sidebar({
 			setMobileClosing(false);
 		}, 260);
 	};
-
-
 
 	useEffect(() => {
 		const handleKey = (e) => {
