@@ -34,7 +34,8 @@ const studentNavItems = [
 ];
 
 const teacherNavItems = [
-  { id: 'schedule-management', label: 'Class & Schedule Management', icon: Calendar },
+  { id: 'teacher-class', label: 'Classes', icon: GraduationCap },
+  { id: 'teacher-calendar', label: 'Calendar', icon: Calendar },
   { id: 'gradebook-teacher', label: 'Gradebook', icon: BarChart },
   { id: 'course-material', label: 'Course Material', icon: BookOpen },
   { id: 'assignments', label: 'Assignments', icon: FileText },

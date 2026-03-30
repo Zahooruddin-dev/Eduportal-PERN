@@ -13,6 +13,8 @@ import TeacherAssignments from '../Sidebar/Tabs/TeacherTabs/Assignments/Assignme
 import StudentAssignments from '../Sidebar/Tabs/StudentTabs/StudentAssignments/StudentAssignments';
 import Gradebook from '../Sidebar/Tabs/TeacherTabs/Gradebook/Gradebook';
 import StudentGradebook from '../Sidebar/Tabs/StudentTabs/Gradebook/StudentGradebook';
+import AcademicCalender from '../Sidebar/Tabs/StudentTabs/AcademicCalender/AcademicCalender';
+import TeacherCalender from '../Sidebar/Tabs/TeacherTabs/TeacherCalender/TeacherCalender';
 
 export default function Dashboard() {
 	const { user } = useAuth();
@@ -41,6 +43,8 @@ export default function Dashboard() {
 			switch (activeTab) {
 				case 'enrolled-classes':
 					return <EnrolledClasses />;
+				case 'academic-calendar':
+					return <AcademicCalender />;
 				case 'announcements':
 					return <StudentAnnouncements />;
 				case 'course-material':
@@ -59,8 +63,10 @@ export default function Dashboard() {
 		// Teacher role
 		if (user?.role === 'teacher') {
 			switch (activeTab) {
-				case 'schedule-management':
+				case 'teacher-class':
 					return <ScheduleManagement />;
+				case 'teacher-calendar':
+					return <TeacherCalender />;
 				case 'gradebook-teacher':
 					return <Gradebook />;
 				case 'course-material':

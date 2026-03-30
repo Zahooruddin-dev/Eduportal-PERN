@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../../../../context/AuthContext';
 import {
   getStudentEnrolledShedule,
+  getStudentBannedClasses,
   getClasses,
   postEnrollement,
   unenrollStudent,
@@ -10,6 +11,7 @@ import {
 import { SpinnerIcon } from '../../../../Icons/Icon';
 import Toast from '../../../../Toast';
 import ConfirmModal from '../../../../ConfirmModal';
+import { formatTimeRange, getScheduleBlocksFromClass } from '../../../../../utils/scheduleUtils';
 
 export default function EnrolledClasses() {
   const { user } = useAuth();
@@ -28,40 +30,57 @@ export default function EnrolledClasses() {
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
   const [enrollingId, setEnrollingId] = useState(null);
   const [unenrollingId, setUnenrollingId] = useState(null);
+  const [bannedClassIds, setBannedClassIds] = useState([]);
 
-  const fetchEnrolled = async () => {
+  const fetchEnrolled = useCallback(async () => {
+    if (!user?.id) return;
     setLoadingEnrolled(true);
     try {
       const res = await getStudentEnrolledShedule(user.id);
       setEnrolledClasses(res.data);
-    } catch (err) {
+    } catch {
       setToast({ isOpen: true, type: 'error', message: 'Failed to load enrolled classes' });
     } finally {
       setLoadingEnrolled(false);
     }
-  };
+  }, [user?.id]);
 
-  const fetchAvailable = async () => {
+  const fetchAvailable = useCallback(async () => {
     setLoadingAvailable(true);
     try {
       const res = await getClasses();
       const enrolledIds = enrolledClasses.map((c) => c.class_id ?? c.id);
-      const filtered = res.data.filter((cls) => !enrolledIds.includes(cls.id));
+      const filtered = res.data.filter(
+        (cls) => !enrolledIds.includes(cls.id) && !bannedClassIds.includes(cls.id),
+      );
       setAvailableClasses(filtered);
-    } catch (err) {
+    } catch {
       setToast({ isOpen: true, type: 'error', message: 'Failed to load available classes' });
     } finally {
       setLoadingAvailable(false);
     }
-  };
+  }, [enrolledClasses, bannedClassIds]);
+
+  const fetchBanned = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const res = await getStudentBannedClasses(user.id);
+      setBannedClassIds(res.data?.bannedClassIds || []);
+    } catch {
+      setBannedClassIds([]);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
-    if (user) fetchEnrolled();
-  }, [user]);
+    if (user) {
+      fetchEnrolled();
+      fetchBanned();
+    }
+  }, [user, fetchEnrolled, fetchBanned]);
 
   useEffect(() => {
     if (!loadingEnrolled) fetchAvailable();
-  }, [enrolledClasses, loadingEnrolled]);
+  }, [loadingEnrolled, fetchAvailable]);
 
   const requestEnroll = (classId) => {
     setEnrollTarget(classId);
@@ -116,7 +135,7 @@ export default function EnrolledClasses() {
     try {
       const res = await getClassAnnouncements(id);
       setAnnouncements(res.data);
-    } catch (err) {
+    } catch {
       setToast({ isOpen: true, type: 'error', message: 'Failed to load announcements' });
     } finally {
       setLoadingAnnouncements(false);
@@ -142,6 +161,7 @@ export default function EnrolledClasses() {
     const id = cls.class_id ?? cls.id;
     const isLoadingEnroll = enrollingId === id;
     const isLoadingUnenroll = unenrollingId === id;
+    const scheduleBlocks = getScheduleBlocksFromClass(cls);
 
     return (
       <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-[var(--color-border-hover)]">
@@ -156,12 +176,32 @@ export default function EnrolledClasses() {
           )}
         </div>
         <div className="space-y-1 text-sm text-[var(--color-text-secondary)] mt-2">
-          <p>📅 {cls.schedule_days}</p>
-          <p>⏰ {cls.start_time} – {cls.end_time}</p>
+          {scheduleBlocks.length > 0 ? (
+            scheduleBlocks.slice(0, 2).map((block, index) => (
+              <p key={`${block.day}-${block.start_time}-${index}`}>
+                {block.day}: {formatTimeRange(block.start_time, block.end_time)}
+              </p>
+            ))
+          ) : (
+            <p>Schedule not available</p>
+          )}
+          {scheduleBlocks.length > 2 && (
+            <p className="text-xs text-[var(--color-text-muted)]">+ {scheduleBlocks.length - 2} more blocks</p>
+          )}
           {cls.room_number && <p>🚪 Room {cls.room_number}</p>}
         </div>
         {!enrolled && cls.description && (
           <p className="mt-2 text-sm text-[var(--color-text-muted)] line-clamp-2">{cls.description}</p>
+        )}
+        {cls.meeting_link && (
+          <a
+            href={cls.meeting_link}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-block text-sm text-[var(--color-primary)] hover:underline"
+          >
+            Open class link
+          </a>
         )}
         {enrolled && (
           <p className="text-xs text-[var(--color-text-muted)] mt-3">

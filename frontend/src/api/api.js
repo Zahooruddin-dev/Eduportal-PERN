@@ -28,6 +28,27 @@ export const getClassEnrolledRooster = (id) => {
 export const getStudentEnrolledShedule = (id) => {
 	return api.get(`/api/enroll/student/${id}`);
 };
+
+export const getStudentBannedClasses = (id) => {
+  return api.get(`/api/enroll/student/${id}/banned-classes`);
+};
+
+export const removeStudentFromClass = (classId, studentId, payload) => {
+  return api.post(`/api/enroll/class/${classId}/student/${studentId}/remove`, payload);
+};
+
+export const getRemovedClassMembers = (classId) => {
+  return api.get(`/api/enroll/class/${classId}/removed`);
+};
+
+export const unbanStudentFromClass = (classId, studentId, payload = {}) => {
+  return api.patch(`/api/enroll/class/${classId}/student/${studentId}/unban`, payload);
+};
+
+export const getStudentClassProfile = (classId, studentId) => {
+  return api.get(`/api/enroll/class/${classId}/student/${studentId}/details`);
+};
+
 export const getClassAnnouncements = (classId) => {
   return api.get(`/api/class/${classId}/announcements`);
 };

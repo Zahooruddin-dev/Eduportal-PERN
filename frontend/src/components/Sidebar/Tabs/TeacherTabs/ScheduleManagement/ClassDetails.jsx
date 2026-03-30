@@ -1,279 +1,619 @@
-// src/Dashboard/Sidebar/Tabs/ClassDetails.jsx
-import { useState, useEffect } from 'react';
-import { getClassById, getClassAnnouncements, postAnnouncement, deleteAnnouncement, getClassEnrolledRooster } from '../../../../../api/api';
-import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
-import { useTheme } from '../../../../../hooks/useTheme';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  deleteAnnouncement,
+  getClassAnnouncements,
+  getClassById,
+  getClassEnrolledRooster,
+  getRemovedClassMembers,
+  getStudentClassProfile,
+  postAnnouncement,
+  removeStudentFromClass,
+  unbanStudentFromClass,
+} from '../../../../../api/api';
+import ConfirmModal from '../../../../ConfirmModal';
+import Toast from '../../../../Toast';
+import { SpinnerIcon } from '../../../../Icons/Icon';
+import { formatTimeRange, getScheduleBlocksFromClass } from '../../../../../utils/scheduleUtils';
 
 export default function ClassDetails({ classId, onBack }) {
   const [classInfo, setClassInfo] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
   const [roster, setRoster] = useState([]);
+  const [removedStudents, setRemovedStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingRoster, setLoadingRoster] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [loadingRemoved, setLoadingRemoved] = useState(true);
+  const [submittingAnnouncement, setSubmittingAnnouncement] = useState(false);
   const [newAnnouncement, setNewAnnouncement] = useState({ title: '', content: '', expires_at: '' });
-  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState({ isOpen: false, type: 'info', message: '' });
+  const [pendingAnnouncementDelete, setPendingAnnouncementDelete] = useState(null);
 
-  const fetchData = async () => {
+  const [studentModalOpen, setStudentModalOpen] = useState(false);
+  const [studentProfile, setStudentProfile] = useState(null);
+  const [studentProfileLoading, setStudentProfileLoading] = useState(false);
+  const [removalDraft, setRemovalDraft] = useState({
+    action: 'kick',
+    data_policy: 'keep',
+    note: '',
+  });
+  const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
+  const [removeSubmitting, setRemoveSubmitting] = useState(false);
+
+  const [pendingUnbanStudent, setPendingUnbanStudent] = useState(null);
+  const [unbanSubmitting, setUnbanSubmitting] = useState(false);
+
+  const scheduleBlocks = useMemo(() => getScheduleBlocksFromClass(classInfo), [classInfo]);
+
+  const loadClass = useCallback(async () => {
     setLoading(true);
-    setError('');
     try {
-      const [classRes, announcementsRes] = await Promise.all([
+      const [classResponse, announcementsResponse] = await Promise.all([
         getClassById(classId),
-        getClassAnnouncements(classId)
+        getClassAnnouncements(classId),
       ]);
-      setClassInfo(classRes.data);
-      setAnnouncements(announcementsRes.data);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load class data');
+      setClassInfo(classResponse.data);
+      setAnnouncements(announcementsResponse.data || []);
+    } catch (error) {
+      setToast({
+        isOpen: true,
+        type: 'error',
+        message: error.response?.data?.error || 'Failed to load class details.',
+      });
     } finally {
       setLoading(false);
     }
-  };
+  }, [classId]);
 
-  const fetchRoster = async () => {
+  const loadRoster = useCallback(async () => {
     setLoadingRoster(true);
     try {
-      const res = await getClassEnrolledRooster(classId);
-      setRoster(res.data);
-    } catch (err) {
-      console.error('Failed to load roster:', err);
+      const response = await getClassEnrolledRooster(classId);
+      setRoster(response.data || []);
+    } catch (error) {
+      setToast({
+        isOpen: true,
+        type: 'error',
+        message: error.response?.data?.error || 'Failed to load class roster.',
+      });
     } finally {
       setLoadingRoster(false);
     }
-  };
-
-  useEffect(() => {
-    fetchData();
-    fetchRoster();
   }, [classId]);
 
-  const handleAnnouncementChange = (e) => {
-    const { name, value } = e.target;
-    setNewAnnouncement(prev => ({ ...prev, [name]: value }));
+  const loadRemovedStudents = useCallback(async () => {
+    setLoadingRemoved(true);
+    try {
+      const response = await getRemovedClassMembers(classId);
+      setRemovedStudents(response.data || []);
+    } catch (error) {
+      setToast({
+        isOpen: true,
+        type: 'error',
+        message: error.response?.data?.error || 'Failed to load removed students.',
+      });
+    } finally {
+      setLoadingRemoved(false);
+    }
+  }, [classId]);
+
+  useEffect(() => {
+    loadClass();
+    loadRoster();
+    loadRemovedStudents();
+  }, [loadClass, loadRoster, loadRemovedStudents]);
+
+  const handleAnnouncementChange = (event) => {
+    const { name, value } = event.target;
+    setNewAnnouncement((current) => ({ ...current, [name]: value }));
   };
 
-  const handleSubmitAnnouncement = async (e) => {
-    e.preventDefault();
+  const submitAnnouncement = async (event) => {
+    event.preventDefault();
     if (!newAnnouncement.title.trim() || !newAnnouncement.content.trim()) {
-      setError('Title and content are required');
+      setToast({ isOpen: true, type: 'warning', message: 'Title and content are required.' });
       return;
     }
-    setSubmitting(true);
-    setError('');
-    setSuccess('');
+
+    setSubmittingAnnouncement(true);
     try {
-      const res = await postAnnouncement(classId, newAnnouncement);
-      setAnnouncements(prev => [res.data, ...prev]);
+      const response = await postAnnouncement(classId, newAnnouncement);
+      setAnnouncements((current) => [response.data, ...current]);
       setNewAnnouncement({ title: '', content: '', expires_at: '' });
-      setSuccess('Announcement posted!');
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to post announcement');
+      setToast({ isOpen: true, type: 'success', message: 'Announcement posted successfully.' });
+    } catch (error) {
+      setToast({
+        isOpen: true,
+        type: 'error',
+        message: error.response?.data?.error || 'Failed to post announcement.',
+      });
     } finally {
-      setSubmitting(false);
+      setSubmittingAnnouncement(false);
     }
   };
 
-  const handleDeleteAnnouncement = async (announcementId) => {
-    if (!window.confirm('Delete this announcement?')) return;
+  const performAnnouncementDelete = async () => {
+    if (!pendingAnnouncementDelete) return;
     try {
-      await deleteAnnouncement(classId, announcementId);
-      setAnnouncements(prev => prev.filter(a => a.id !== announcementId));
-      setSuccess('Announcement deleted');
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Delete failed');
+      await deleteAnnouncement(classId, pendingAnnouncementDelete);
+      setAnnouncements((current) => current.filter((item) => item.id !== pendingAnnouncementDelete));
+      setPendingAnnouncementDelete(null);
+      setToast({ isOpen: true, type: 'success', message: 'Announcement deleted.' });
+    } catch (error) {
+      setToast({
+        isOpen: true,
+        type: 'error',
+        message: error.response?.data?.error || 'Failed to delete announcement.',
+      });
+    }
+  };
+
+  const openStudentModal = async (studentId) => {
+    setStudentModalOpen(true);
+    setStudentProfileLoading(true);
+    setStudentProfile(null);
+    setRemovalDraft({ action: 'kick', data_policy: 'keep', note: '' });
+
+    try {
+      const response = await getStudentClassProfile(classId, studentId);
+      setStudentProfile(response.data);
+    } catch (error) {
+      setToast({
+        isOpen: true,
+        type: 'error',
+        message: error.response?.data?.error || 'Failed to load student details.',
+      });
+      setStudentModalOpen(false);
+    } finally {
+      setStudentProfileLoading(false);
+    }
+  };
+
+  const applyStudentAction = async () => {
+    if (!studentProfile?.student?.id) return;
+
+    setRemoveSubmitting(true);
+    try {
+      await removeStudentFromClass(classId, studentProfile.student.id, removalDraft);
+      setToast({
+        isOpen: true,
+        type: 'success',
+        message: removalDraft.action === 'ban' ? 'Student has been banned.' : 'Student has been removed.',
+      });
+      setRemoveConfirmOpen(false);
+      setStudentModalOpen(false);
+      await Promise.all([loadRoster(), loadRemovedStudents()]);
+    } catch (error) {
+      setToast({
+        isOpen: true,
+        type: 'error',
+        message: error.response?.data?.error || 'Failed to apply student action.',
+      });
+    } finally {
+      setRemoveSubmitting(false);
+    }
+  };
+
+  const performUnban = async () => {
+    if (!pendingUnbanStudent?.student_id) return;
+
+    setUnbanSubmitting(true);
+    try {
+      await unbanStudentFromClass(classId, pendingUnbanStudent.student_id, {});
+      setPendingUnbanStudent(null);
+      setToast({ isOpen: true, type: 'success', message: 'Student unbanned successfully.' });
+      await loadRemovedStudents();
+    } catch (error) {
+      setToast({
+        isOpen: true,
+        type: 'error',
+        message: error.response?.data?.error || 'Failed to unban student.',
+      });
+    } finally {
+      setUnbanSubmitting(false);
     }
   };
 
   if (loading) {
-    // skeleton header + details while loading
     return (
-      <div className='p-6'>
-        <div className='animate-pulse space-y-4'>
-          <div className='h-8 w-2/5 bg-[var(--color-border)] rounded' />
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div className='h-24 bg-[var(--color-border)] rounded' />
-            <div className='h-24 bg-[var(--color-border)] rounded' />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && !classInfo) {
-    return (
-      <div className="p-6">
-        <button onClick={onBack} className="mb-4 text-[var(--color-primary)] hover:underline">← Back</button>
-        <AlertBox message={error} />
+      <div className='flex h-64 items-center justify-center'>
+        <SpinnerIcon />
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <button onClick={onBack} className="mb-6 text-[var(--color-primary)] hover:underline flex items-center gap-1">
-        ← Back to Classes
+    <div className='p-4 sm:p-6'>
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        isOpen={toast.isOpen}
+        onClose={() => setToast((current) => ({ ...current, isOpen: false }))}
+      />
+
+      <button
+        onClick={onBack}
+        className='mb-5 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-primary)] hover:bg-[var(--color-border)]/60'
+      >
+        Back to Classes
       </button>
 
-      {/* Class Details */}
-      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 mb-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{classInfo.class_name}</h1>
-        {classInfo.subject && (
-          <p className="text-sm text-[var(--color-primary)] mt-1">{classInfo.subject}</p>
+      <section className='mb-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5'>
+        <h1 className='text-2xl font-semibold text-[var(--color-text-primary)]'>{classInfo?.class_name}</h1>
+        {classInfo?.subject && <p className='mt-1 text-sm text-[var(--color-primary)]'>{classInfo.subject}</p>}
+
+        <div className='mt-4 grid grid-cols-1 gap-3 md:grid-cols-3'>
+          <div>
+            <p className='text-xs uppercase tracking-wide text-[var(--color-text-muted)]'>Room</p>
+            <p className='text-sm text-[var(--color-text-primary)]'>{classInfo?.room_number || '-'}</p>
+          </div>
+          <div>
+            <p className='text-xs uppercase tracking-wide text-[var(--color-text-muted)]'>Grade</p>
+            <p className='text-sm text-[var(--color-text-primary)]'>{classInfo?.grade_level || '-'}</p>
+          </div>
+          <div>
+            <p className='text-xs uppercase tracking-wide text-[var(--color-text-muted)]'>Capacity</p>
+            <p className='text-sm text-[var(--color-text-primary)]'>{classInfo?.max_students || '-'}</p>
+          </div>
+        </div>
+
+        {classInfo?.meeting_link && (
+          <a
+            href={classInfo.meeting_link}
+            target='_blank'
+            rel='noreferrer'
+            className='mt-3 inline-block text-sm text-[var(--color-primary)] hover:underline'
+          >
+            Open class meeting link
+          </a>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm">
-          <div>
-            <p className="text-[var(--color-text-secondary)]">Schedule</p>
-            <p className="font-medium text-[var(--color-text-primary)]">{classInfo.schedule_days}</p>
-          </div>
-          <div>
-            <p className="text-[var(--color-text-secondary)]">Time</p>
-            <p className="font-medium text-[var(--color-text-primary)]">{classInfo.start_time} – {classInfo.end_time}</p>
-          </div>
-          {classInfo.room_number && (
-            <div>
-              <p className="text-[var(--color-text-secondary)]">Room</p>
-              <p className="font-medium text-[var(--color-text-primary)]">{classInfo.room_number}</p>
-            </div>
-          )}
-          {classInfo.grade_level && (
-            <div>
-              <p className="text-[var(--color-text-secondary)]">Grade</p>
-              <p className="font-medium text-[var(--color-text-primary)]">{classInfo.grade_level}</p>
-            </div>
-          )}
-          {classInfo.max_students && (
-            <div>
-              <p className="text-[var(--color-text-secondary)]">Max Students</p>
-              <p className="font-medium text-[var(--color-text-primary)]">{classInfo.max_students}</p>
+
+        <div className='mt-4'>
+          <p className='text-sm font-medium text-[var(--color-text-secondary)] mb-2'>Detailed Schedule</p>
+          {scheduleBlocks.length === 0 ? (
+            <p className='text-sm text-[var(--color-text-muted)]'>No schedule blocks configured.</p>
+          ) : (
+            <div className='grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3'>
+              {scheduleBlocks.map((block, index) => (
+                <div
+                  key={`${block.day}-${block.start_time}-${index}`}
+                  className='rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2'
+                >
+                  <p className='text-sm font-medium text-[var(--color-text-primary)]'>{block.day}</p>
+                  <p className='text-xs text-[var(--color-text-muted)]'>
+                    {formatTimeRange(block.start_time, block.end_time)}
+                  </p>
+                </div>
+              ))}
             </div>
           )}
         </div>
-        {classInfo.description && (
-          <div className="mt-4">
-            <p className="text-[var(--color-text-secondary)]">Description</p>
-            <p className="text-[var(--color-text-primary)] mt-1 whitespace-pre-wrap">{classInfo.description}</p>
+
+        {classInfo?.description && (
+          <div className='mt-4'>
+            <p className='text-sm font-medium text-[var(--color-text-secondary)]'>Description</p>
+            <p className='mt-1 whitespace-pre-wrap text-sm text-[var(--color-text-primary)]'>{classInfo.description}</p>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Roster Section */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-4">
+      <section className='mb-6'>
+        <h2 className='mb-3 text-xl font-semibold text-[var(--color-text-primary)]'>
           Enrolled Students ({roster.length})
         </h2>
         {loadingRoster ? (
-          <div className='space-y-2'>
-            {[1,2,3].map((i) => (
-              <div key={i} className='flex items-center gap-3'>
-                <div className='h-8 w-8 rounded-full bg-[var(--color-border)]' />
-                <div className='h-4 w-1/3 bg-[var(--color-border)] rounded' />
-              </div>
-            ))}
+          <div className='flex items-center gap-2 text-sm text-[var(--color-text-muted)]'>
+            <SpinnerIcon />
+            Loading roster...
           </div>
         ) : roster.length === 0 ? (
-          <p className="text-[var(--color-text-muted)]">No students enrolled yet.</p>
+          <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-sm text-[var(--color-text-muted)]'>
+            No students enrolled in this class.
+          </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'>
             {roster.map((student) => (
-              <div key={student.student_id} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3 flex items-center gap-3">
+              <button
+                key={student.student_id}
+                type='button'
+                onClick={() => openStudentModal(student.student_id)}
+                className='flex items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-left hover:bg-[var(--color-border)]/40'
+              >
                 {student.profile_pic ? (
-                  <img src={student.profile_pic} alt={student.username} className="w-8 h-8 rounded-full object-cover" />
+                  <img src={student.profile_pic} alt={student.username} className='h-10 w-10 rounded-full object-cover' />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-text-primary)] text-sm font-medium">
-                    {student.username?.charAt(0).toUpperCase()}
+                  <div className='flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-primary)]/15 text-sm font-semibold text-[var(--color-primary)]'>
+                    {student.username?.charAt(0)?.toUpperCase()}
                   </div>
                 )}
-                <span className="text-sm text-[var(--color-text-primary)]">{student.username}</span>
+                <div className='min-w-0'>
+                  <p className='truncate text-sm font-medium text-[var(--color-text-primary)]'>{student.username}</p>
+                  <p className='truncate text-xs text-[var(--color-text-muted)]'>{student.email || 'No email'}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className='mb-6'>
+        <h2 className='mb-3 text-xl font-semibold text-[var(--color-text-primary)]'>Removed and Banned Students</h2>
+        {loadingRemoved ? (
+          <div className='flex items-center gap-2 text-sm text-[var(--color-text-muted)]'>
+            <SpinnerIcon />
+            Loading list...
+          </div>
+        ) : removedStudents.length === 0 ? (
+          <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-sm text-[var(--color-text-muted)]'>
+            No removed students yet.
+          </div>
+        ) : (
+          <div className='space-y-2'>
+            {removedStudents.map((student) => (
+              <div
+                key={`${student.student_id}-${student.updated_at}`}
+                className='flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3'
+              >
+                <div>
+                  <p className='text-sm font-medium text-[var(--color-text-primary)]'>
+                    {student.username} ({student.status})
+                  </p>
+                  <p className='text-xs text-[var(--color-text-muted)]'>
+                    Policy: {student.data_policy} {student.note ? `- ${student.note}` : ''}
+                  </p>
+                </div>
+                <div className='flex gap-2'>
+                  <button
+                    type='button'
+                    onClick={() => openStudentModal(student.student_id)}
+                    className='rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-primary)] hover:bg-[var(--color-border)]/60'
+                  >
+                    View Profile
+                  </button>
+                  <button
+                    type='button'
+                    onClick={() => setPendingUnbanStudent(student)}
+                    className='rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-success)] hover:bg-[var(--color-success)]/10'
+                  >
+                    Allow Re-enroll
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Announcements Section */}
-      <div>
-        <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-4">Announcements</h2>
-
-        {/* Create Announcement Form */}
-        <form onSubmit={handleSubmitAnnouncement} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 mb-6">
-          <div className="mb-3">
+      <section>
+        <h2 className='mb-3 text-xl font-semibold text-[var(--color-text-primary)]'>Announcements</h2>
+        <form
+          onSubmit={submitAnnouncement}
+          className='mb-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4'
+        >
+          <div className='mb-2'>
             <input
-              type="text"
-              name="title"
+              type='text'
+              name='title'
               value={newAnnouncement.title}
               onChange={handleAnnouncementChange}
-              placeholder="Title"
-              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-              required
+              placeholder='Title'
+              className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)]'
             />
           </div>
-          <div className="mb-3">
+          <div className='mb-2'>
             <textarea
-              name="content"
-              rows="3"
+              name='content'
+              rows='3'
               value={newAnnouncement.content}
               onChange={handleAnnouncementChange}
-              placeholder="Announcement content"
-              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-              required
+              placeholder='Announcement content'
+              className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)]'
             />
           </div>
-          <div className="flex gap-4 items-start">
-            <div className="flex-1">
-              <label className="block text-xs text-[var(--color-text-muted)] mb-1">Expires (optional)</label>
+          <div className='flex flex-wrap items-end gap-3'>
+            <div>
+              <label className='mb-1 block text-xs text-[var(--color-text-muted)]'>Expires</label>
               <input
-                type="datetime-local"
-                name="expires_at"
+                type='datetime-local'
+                name='expires_at'
                 value={newAnnouncement.expires_at}
                 onChange={handleAnnouncementChange}
-                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                className='rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)]'
               />
             </div>
             <button
-              type="submit"
-              disabled={submitting}
-              className="mt-6 px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-50"
+              type='submit'
+              disabled={submittingAnnouncement}
+              className='rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60 hover:bg-[var(--color-primary-hover)]'
             >
-              {submitting ? <SpinnerIcon /> : 'Post'}
+              {submittingAnnouncement ? 'Posting...' : 'Post Announcement'}
             </button>
           </div>
-          {error && <AlertBox message={error} />}
-          {success && <p className="text-[var(--color-success)] text-sm mt-2">{success}</p>}
         </form>
 
-        {/* Announcements List */}
-        <div className="space-y-4">
-          {announcements.length === 0 ? (
-            <p className="text-[var(--color-text-muted)] text-center py-8">No announcements yet.</p>
-          ) : (
-            announcements.map((ann) => (
-              <div key={ann.id} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 shadow-sm">
-                <div className="flex justify-between items-start">
+        {announcements.length === 0 ? (
+          <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-sm text-[var(--color-text-muted)]'>
+            No announcements posted yet.
+          </div>
+        ) : (
+          <div className='space-y-3'>
+            {announcements.map((announcement) => (
+              <article
+                key={announcement.id}
+                className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4'
+              >
+                <div className='mb-2 flex flex-wrap items-start justify-between gap-2'>
                   <div>
-                    <h3 className="font-semibold text-[var(--color-text-primary)]">{ann.title}</h3>
-                    <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                      Posted on {new Date(ann.created_at).toLocaleString()}
-                      {ann.expires_at && ` • Expires ${new Date(ann.expires_at).toLocaleString()}`}
+                    <h3 className='text-sm font-semibold text-[var(--color-text-primary)]'>{announcement.title}</h3>
+                    <p className='text-xs text-[var(--color-text-muted)]'>
+                      Posted {new Date(announcement.created_at).toLocaleString()}
+                      {announcement.expires_at && ` • Expires ${new Date(announcement.expires_at).toLocaleString()}`}
                     </p>
                   </div>
                   <button
-                    onClick={() => handleDeleteAnnouncement(ann.id)}
-                    className="text-[var(--color-danger)] hover:text-[var(--color-danger-hover)] text-sm"
-                    aria-label="Delete"
+                    type='button'
+                    onClick={() => setPendingAnnouncementDelete(announcement.id)}
+                    className='rounded-lg border border-[var(--color-border)] px-3 py-1 text-xs text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10'
                   >
                     Delete
                   </button>
                 </div>
-                <p className="mt-2 text-[var(--color-text-secondary)] whitespace-pre-wrap">{ann.content}</p>
+                <p className='whitespace-pre-wrap text-sm text-[var(--color-text-secondary)]'>{announcement.content}</p>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {studentModalOpen && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'>
+          <div className='w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5'>
+            <div className='mb-4 flex items-start justify-between gap-4'>
+              <h3 className='text-xl font-semibold text-[var(--color-text-primary)]'>Student Details</h3>
+              <button
+                type='button'
+                onClick={() => setStudentModalOpen(false)}
+                className='rounded-lg border border-[var(--color-border)] px-3 py-1 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/60'
+              >
+                Close
+              </button>
+            </div>
+
+            {studentProfileLoading ? (
+              <div className='flex items-center gap-2 text-sm text-[var(--color-text-muted)]'>
+                <SpinnerIcon />
+                Loading student profile...
               </div>
-            ))
-          )}
+            ) : studentProfile?.student ? (
+              <div className='space-y-4'>
+                <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-3'>
+                  <p className='text-sm font-medium text-[var(--color-text-primary)]'>
+                    {studentProfile.student.username}
+                  </p>
+                  <p className='text-xs text-[var(--color-text-muted)]'>{studentProfile.student.email}</p>
+                  <p className='mt-1 text-xs text-[var(--color-text-muted)]'>
+                    Status in this class: {studentProfile.classStatus?.status || 'active'}
+                  </p>
+                </div>
+
+                <div>
+                  <p className='mb-2 text-sm font-medium text-[var(--color-text-secondary)]'>
+                    Current Enrolled Classes
+                  </p>
+                  {studentProfile.enrolledClasses?.length ? (
+                    <div className='space-y-2'>
+                      {studentProfile.enrolledClasses.map((classItem) => (
+                        <div
+                          key={classItem.id}
+                          className='rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-2'
+                        >
+                          <p className='text-sm font-medium text-[var(--color-text-primary)]'>
+                            {classItem.class_name}
+                          </p>
+                          <p className='text-xs text-[var(--color-text-muted)]'>
+                            {classItem.subject || '-'}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className='text-sm text-[var(--color-text-muted)]'>No active enrollments.</p>
+                  )}
+                </div>
+
+                <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-3'>
+                  <p className='mb-2 text-sm font-medium text-[var(--color-text-secondary)]'>Class Membership Action</p>
+                  <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
+                    <div>
+                      <label className='mb-1 block text-xs text-[var(--color-text-muted)]'>Action</label>
+                      <select
+                        value={removalDraft.action}
+                        onChange={(event) =>
+                          setRemovalDraft((current) => ({ ...current, action: event.target.value }))
+                        }
+                        className='w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)]'
+                      >
+                        <option value='kick'>Kick</option>
+                        <option value='ban'>Ban</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className='mb-1 block text-xs text-[var(--color-text-muted)]'>Data Handling</label>
+                      <select
+                        value={removalDraft.data_policy}
+                        onChange={(event) =>
+                          setRemovalDraft((current) => ({ ...current, data_policy: event.target.value }))
+                        }
+                        className='w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)]'
+                      >
+                        <option value='keep'>Keep all data</option>
+                        <option value='delete_grades'>Delete grades only</option>
+                        <option value='delete_all'>Delete all class data</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className='mt-2'>
+                    <label className='mb-1 block text-xs text-[var(--color-text-muted)]'>Note</label>
+                    <textarea
+                      rows='2'
+                      value={removalDraft.note}
+                      onChange={(event) =>
+                        setRemovalDraft((current) => ({ ...current, note: event.target.value }))
+                      }
+                      className='w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)]'
+                    />
+                  </div>
+
+                  <button
+                    type='button'
+                    disabled={removeSubmitting}
+                    onClick={() => setRemoveConfirmOpen(true)}
+                    className='mt-3 rounded-lg bg-[var(--color-danger)] px-4 py-2 text-sm text-white hover:bg-[var(--color-danger-hover)] disabled:opacity-60'
+                  >
+                    {removeSubmitting ? 'Applying...' : 'Apply Action'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className='text-sm text-[var(--color-text-muted)]'>Unable to load student profile.</p>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      <ConfirmModal
+        isOpen={Boolean(pendingAnnouncementDelete)}
+        onClose={() => setPendingAnnouncementDelete(null)}
+        onConfirm={performAnnouncementDelete}
+        title='Delete Announcement'
+        message='Are you sure you want to delete this announcement?'
+        confirmText='Delete'
+        cancelText='Cancel'
+        type='danger'
+      />
+
+      <ConfirmModal
+        isOpen={removeConfirmOpen}
+        onClose={() => setRemoveConfirmOpen(false)}
+        onConfirm={applyStudentAction}
+        title={removalDraft.action === 'ban' ? 'Ban Student' : 'Kick Student'}
+        message={`This will ${removalDraft.action} the student from the class.`}
+        confirmText='Confirm'
+        cancelText='Cancel'
+        type='warning'
+      />
+
+      <ConfirmModal
+        isOpen={Boolean(pendingUnbanStudent)}
+        onClose={() => setPendingUnbanStudent(null)}
+        onConfirm={performUnban}
+        title='Allow Re-enrollment'
+        message='Allow this student to enroll in this class again?'
+        confirmText={unbanSubmitting ? 'Please wait...' : 'Allow'}
+        cancelText='Cancel'
+        type='success'
+      />
     </div>
   );
 }

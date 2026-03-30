@@ -134,9 +134,6 @@ async function getStudentReleasedGradesQuery(studentId, options = {}) {
 			COALESCE(c.class_name, g.class_id) AS class_name,
 			COALESCE(t.username, '') AS teacher_name
 		 FROM grades g
-		 JOIN enrollments e
-			ON e.class_id::text = g.class_id
-			AND e.student_id::text = g.student_id
 		 LEFT JOIN classes c ON c.id::text = g.class_id
 		 LEFT JOIN users t ON t.id::text = g.teacher_id
 		 ${where}

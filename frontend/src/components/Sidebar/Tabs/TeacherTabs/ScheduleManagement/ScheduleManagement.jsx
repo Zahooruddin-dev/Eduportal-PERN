@@ -1,60 +1,66 @@
-// src/Dashboard/Sidebar/Tabs/ScheduleManagement.jsx
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  getMyClasses,
   createClass,
   deleteMyClass,
-  updateClass,
   getClassEnrolledRooster,
+  getMyClasses,
+  updateClass,
 } from '../../../../../api/api';
 import { SpinnerIcon } from '../../../../Icons/Icon';
-import ClassDetails from './ClassDetails';
-import Toast from '../../../../Toast';
 import ConfirmModal from '../../../../ConfirmModal';
+import Toast from '../../../../Toast';
+import { formatTimeRange, getScheduleBlocksFromClass } from '../../../../../utils/scheduleUtils';
+import ClassDetails from './ClassDetails';
+import ClassEditorModal from './ClassEditorModal';
+
+function scheduleSummary(classItem) {
+  const blocks = getScheduleBlocksFromClass(classItem);
+  if (!blocks.length) return 'No schedule configured';
+  const first = blocks[0];
+  const text = `${first.day} ${formatTimeRange(first.start_time, first.end_time)}`;
+  if (blocks.length === 1) return text;
+  return `${text} + ${blocks.length - 1} more`;
+}
 
 export default function ScheduleManagement() {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
-  const [showModal, setShowModal] = useState(false);
-  const [editingClass, setEditingClass] = useState(null);
   const [selectedClass, setSelectedClass] = useState(null);
+  const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorMode, setEditorMode] = useState('create');
+  const [editingClass, setEditingClass] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [classToDelete, setClassToDelete] = useState(null);
-  const [formData, setFormData] = useState({
-    class_name: '',
-    schedule_days: '',
-    start_time: '',
-    end_time: '',
-    room_number: '',
-    grade_level: '',
-    subject: '',
-    description: '',
-    max_students: 30,
-  });
+
+  const sortedClasses = useMemo(
+    () => [...classes].sort((a, b) => String(a.class_name || '').localeCompare(String(b.class_name || ''))),
+    [classes],
+  );
 
   const fetchClasses = async () => {
     setLoading(true);
-    setError('');
     try {
-      const res = await getMyClasses();
-      const classesData = res.data;
-      // Fetch enrolled count for each class in parallel
-      const classesWithCount = await Promise.all(
-        classesData.map(async (cls) => {
+      const response = await getMyClasses();
+      const classList = response.data || [];
+      const withCounts = await Promise.all(
+        classList.map(async (classItem) => {
           try {
-            const rosterRes = await getClassEnrolledRooster(cls.id);
-            return { ...cls, enrolledCount: rosterRes.data.length };
+            const rosterResponse = await getClassEnrolledRooster(classItem.id);
+            return { ...classItem, enrolledCount: rosterResponse.data?.length || 0 };
           } catch {
-            return { ...cls, enrolledCount: 0 };
+            return { ...classItem, enrolledCount: 0 };
           }
-        })
+        }),
       );
-      setClasses(classesWithCount);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load classes');
+      setClasses(withCounts);
+    } catch (error) {
+      setToast({
+        isOpen: true,
+        type: 'error',
+        message: error.response?.data?.error || 'Failed to load your classes.',
+      });
     } finally {
       setLoading(false);
     }
@@ -64,69 +70,44 @@ export default function ScheduleManagement() {
     fetchClasses();
   }, []);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      class_name: '',
-      schedule_days: '',
-      start_time: '',
-      end_time: '',
-      room_number: '',
-      grade_level: '',
-      subject: '',
-      description: '',
-      max_students: 30,
-    });
+  const openCreateModal = () => {
+    setEditorMode('create');
     setEditingClass(null);
-    setError('');
+    setEditorOpen(true);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
+  const openEditModal = (classItem) => {
+    setEditorMode('edit');
+    setEditingClass(classItem);
+    setEditorOpen(true);
+  };
+
+  const handleSaveClass = async (payload) => {
+    setSubmitting(true);
     try {
-      if (editingClass) {
-        await updateClass(editingClass.id, formData);
-        setSuccess('Class updated successfully');
-        setToast({ isOpen: true, type: 'success', message: 'Class updated successfully' });
+      if (editorMode === 'edit' && editingClass) {
+        await updateClass(editingClass.id, payload);
+        setToast({ isOpen: true, type: 'success', message: 'Class updated successfully.' });
       } else {
-        await createClass(formData);
-        setSuccess('Class created successfully');
-        setToast({ isOpen: true, type: 'success', message: 'Class created successfully' });
+        await createClass(payload);
+        setToast({ isOpen: true, type: 'success', message: 'Class created successfully.' });
       }
-      resetForm();
-      setShowModal(false);
-      fetchClasses(); // refresh list
-    } catch (err) {
-      const msg = err.response?.data?.error || 'Operation failed';
-      setError(msg);
-      setToast({ isOpen: true, type: 'error', message: msg });
+      setEditorOpen(false);
+      setEditingClass(null);
+      await fetchClasses();
+    } catch (error) {
+      setToast({
+        isOpen: true,
+        type: 'error',
+        message: error.response?.data?.error || 'Unable to save class.',
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleEdit = (cls) => {
-    setEditingClass(cls);
-    setFormData({
-      class_name: cls.class_name,
-      schedule_days: cls.schedule_days,
-      start_time: cls.start_time,
-      end_time: cls.end_time,
-      room_number: cls.room_number || '',
-      grade_level: cls.grade_level || '',
-      subject: cls.subject || '',
-      description: cls.description || '',
-      max_students: cls.max_students || 30,
-    });
-    setShowModal(true);
-  };
-
-  const requestDelete = (cls) => {
-    setClassToDelete(cls);
+  const requestDelete = (classItem) => {
+    setClassToDelete(classItem);
     setConfirmOpen(true);
   };
 
@@ -134,301 +115,156 @@ export default function ScheduleManagement() {
     if (!classToDelete) return;
     try {
       await deleteMyClass(classToDelete.id);
-      setToast({ isOpen: true, type: 'success', message: 'Class deleted' });
+      setToast({ isOpen: true, type: 'success', message: 'Class deleted successfully.' });
       setClassToDelete(null);
-      fetchClasses();
-    } catch (err) {
-      const msg = err.response?.data?.error || 'Deletion failed';
-      setToast({ isOpen: true, type: 'error', message: msg });
-      setError(msg);
+      setConfirmOpen(false);
+      await fetchClasses();
+    } catch (error) {
+      setToast({
+        isOpen: true,
+        type: 'error',
+        message: error.response?.data?.error || 'Failed to delete class.',
+      });
     }
   };
 
   if (selectedClass) {
-    return (
-      <ClassDetails
-        classId={selectedClass.id}
-        onBack={() => setSelectedClass(null)}
-      />
-    );
+    return <ClassDetails classId={selectedClass.id} onBack={() => setSelectedClass(null)} />;
   }
 
   if (loading) {
     return (
-      <div className='flex justify-center items-center h-64'>
+      <div className='flex h-64 items-center justify-center'>
         <SpinnerIcon />
       </div>
     );
   }
 
-	return (
-		  <div className='p-6'>
-      <div className='flex justify-between items-center mb-6'>
-        <h1 className='text-2xl font-semibold text-[var(--color-text-primary)]'>
-          My Classes
-        </h1>
+  return (
+    <div className='p-4 sm:p-6'>
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        isOpen={toast.isOpen}
+        onClose={() => setToast((current) => ({ ...current, isOpen: false }))}
+      />
+
+      <div className='mb-6 flex flex-wrap items-center justify-between gap-3'>
+        <div>
+          <h1 className='text-2xl font-semibold text-[var(--color-text-primary)]'>My Classes</h1>
+          <p className='text-sm text-[var(--color-text-muted)]'>
+            Create classes with detailed day-by-day schedules and meeting links.
+          </p>
+        </div>
         <button
-          onClick={() => {
-            resetForm();
-            setShowModal(true);
-          }}
-          className='px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)] transition-colors'
+          onClick={openCreateModal}
+          className='rounded-xl bg-[var(--color-primary)] px-4 py-2 text-white hover:bg-[var(--color-primary-hover)]'
         >
           + New Class
         </button>
       </div>
 
-      {/* Notifications */}
-      <Toast
-        type={toast.type}
-        message={toast.message}
-        isOpen={toast.isOpen}
-        onClose={() => setToast((t) => ({ ...t, isOpen: false }))}
-      />
-
-      {classes.length === 0 ? (
-        <p className='text-[var(--color-text-muted)]'>
-          No classes yet. Create your first class!
-        </p>
+      {sortedClasses.length === 0 ? (
+        <div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center'>
+          <p className='text-[var(--color-text-muted)]'>No classes found. Create one to get started.</p>
+        </div>
       ) : (
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-          {classes.map((cls) => (
-            <div
-              key={cls.id}
-              className='bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow'
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'>
+          {sortedClasses.map((classItem) => (
+            <article
+              key={classItem.id}
+              className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm transition hover:shadow-md'
             >
-              <div className='flex justify-between items-start'>
-                <h3 className='text-lg font-semibold text-[var(--color-text-primary)] mb-2'>
-                  {cls.class_name}
-                </h3>
-                <span className='text-xs bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-2 py-1 rounded-full'>
-                  {cls.grade_level || 'N/A'}
+              <div className='mb-2 flex items-start justify-between gap-2'>
+                <h2 className='text-lg font-semibold text-[var(--color-text-primary)] line-clamp-2'>
+                  {classItem.class_name}
+                </h2>
+                <span className='rounded-full bg-[var(--color-primary)]/10 px-2 py-0.5 text-xs text-[var(--color-primary)]'>
+                  {classItem.grade_level || 'General'}
                 </span>
               </div>
-              {cls.subject && (
-                <p className='text-sm text-[var(--color-text-secondary)] mb-2'>
-                  📚 {cls.subject}
-                </p>
-              )}
-              <div className='space-y-1 text-sm text-[var(--color-text-secondary)]'>
-                <p>📅 {cls.schedule_days}</p>
-                <p>⏰ {cls.start_time} – {cls.end_time}</p>
-                {cls.room_number && <p>🚪 Room {cls.room_number}</p>}
-                {cls.max_students && <p>👥 Max {cls.max_students} students</p>}
-                {cls.enrolledCount !== undefined && (
-                  <p className='text-xs text-[var(--color-primary)] mt-1'>
-                    👥 Enrolled: {cls.enrolledCount}
-                  </p>
-                )}
 
-                  {/* Confirm delete modal */}
-                  <ConfirmModal
-                    isOpen={confirmOpen}
-                    onClose={() => {
-                      setConfirmOpen(false);
-                      setClassToDelete(null);
-                    }}
-                    onConfirm={performDelete}
-                    title='Delete Class'
-                    message='Are you sure you want to delete this class? This action cannot be undone.'
-                    confirmText='Delete'
-                    cancelText='Cancel'
-                    type='danger'
-                  />
-            	</div>
-              {cls.description && (
-                <p className='mt-2 text-sm text-[var(--color-text-muted)] line-clamp-2'>
-                  {cls.description}
+              {classItem.subject && (
+                <p className='mb-1 text-sm text-[var(--color-text-secondary)]'>{classItem.subject}</p>
+              )}
+
+              <p className='text-sm text-[var(--color-text-secondary)]'>{scheduleSummary(classItem)}</p>
+
+              <div className='mt-2 space-y-1 text-xs text-[var(--color-text-muted)]'>
+                <p>Enrolled: {classItem.enrolledCount || 0}</p>
+                {classItem.room_number && <p>Room: {classItem.room_number}</p>}
+                {classItem.max_students && <p>Capacity: {classItem.max_students}</p>}
+              </div>
+
+              {classItem.meeting_link && (
+                <a
+                  href={classItem.meeting_link}
+                  target='_blank'
+                  rel='noreferrer'
+                  className='mt-3 inline-block text-sm text-[var(--color-primary)] hover:underline'
+                >
+                  Open meeting link
+                </a>
+              )}
+
+              {classItem.description && (
+                <p className='mt-3 text-sm text-[var(--color-text-muted)] line-clamp-3'>
+                  {classItem.description}
                 </p>
               )}
-              <div className='flex gap-2 mt-4'>
+
+              <div className='mt-4 flex flex-wrap gap-2'>
                 <button
-                  onClick={() => setSelectedClass(cls)}
-                  className='px-3 py-1 text-sm text-[var(--color-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border)]/50 transition-colors'
+                  onClick={() => setSelectedClass(classItem)}
+                  className='rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-primary)] hover:bg-[var(--color-border)]/50'
                 >
                   View Details
                 </button>
                 <button
-                  onClick={() => handleEdit(cls)}
-                  className='px-3 py-1 text-sm text-[var(--color-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border)]/50 transition-colors'
+                  onClick={() => openEditModal(classItem)}
+                  className='rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/50'
                 >
                   Edit
                 </button>
                 <button
-                  onClick={() => requestDelete(cls)}
-                  className='px-3 py-1 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors'
+                  onClick={() => requestDelete(classItem)}
+                  className='rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10'
                 >
                   Delete
                 </button>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       )}
 
-			{/* Modal for Create/Edit */}
-			{showModal && (
-				<div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
-					<div className='bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6'>
-						<h2 className='text-xl font-semibold text-[var(--color-text-primary)] mb-4'>
-							{editingClass ? 'Edit Class' : 'Create New Class'}
-						</h2>
-						{showModal && (
-							<form onSubmit={handleSubmit} className='space-y-4'>
-								{/* Basic Info */}
-								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-									<div>
-										<label className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1'>
-											Class Name *
-										</label>
-										<input
-											type='text'
-											name='class_name'
-											value={formData.class_name}
-											onChange={handleInputChange}
-											required
-											className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
-										/>
-									</div>
-									<div>
-										<label className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1'>
-											Schedule Days *
-										</label>
-										<input
-											type='text'
-											name='schedule_days'
-											value={formData.schedule_days}
-											onChange={handleInputChange}
-											required
-											placeholder='e.g., Mon,Wed,Fri'
-											className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
-										/>
-									</div>
-								</div>
+      <ClassEditorModal
+        key={`${editorMode}-${editingClass?.id || 'new'}-${editorOpen ? 'open' : 'closed'}`}
+        isOpen={editorOpen}
+        mode={editorMode}
+        initialData={editingClass}
+        onClose={() => {
+          if (submitting) return;
+          setEditorOpen(false);
+          setEditingClass(null);
+        }}
+        onSubmit={handleSaveClass}
+        submitting={submitting}
+      />
 
-								<div className='grid grid-cols-2 gap-4'>
-									<div>
-										<label className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1'>
-											Start Time *
-										</label>
-										<input
-											type='time'
-											name='start_time'
-											value={formData.start_time}
-											onChange={handleInputChange}
-											required
-											className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
-										/>
-									</div>
-									<div>
-										<label className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1'>
-											End Time *
-										</label>
-										<input
-											type='time'
-											name='end_time'
-											value={formData.end_time}
-											onChange={handleInputChange}
-											required
-											className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
-										/>
-									</div>
-								</div>
-
-								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-									<div>
-										<label className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1'>
-											Room Number
-										</label>
-										<input
-											type='text'
-											name='room_number'
-											value={formData.room_number}
-											onChange={handleInputChange}
-											className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
-										/>
-									</div>
-									<div>
-										<label className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1'>
-											Grade Level
-										</label>
-										<input
-											type='text'
-											name='grade_level'
-											value={formData.grade_level}
-											onChange={handleInputChange}
-											placeholder='e.g., Grade 10'
-											className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
-										/>
-									</div>
-								</div>
-
-								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-									<div>
-										<label className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1'>
-											Subject
-										</label>
-										<input
-											type='text'
-											name='subject'
-											value={formData.subject}
-											onChange={handleInputChange}
-											placeholder='e.g., Mathematics'
-											className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
-										/>
-									</div>
-									<div>
-										<label className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1'>
-											Max Students
-										</label>
-										<input
-											type='number'
-											name='max_students'
-											value={formData.max_students}
-											onChange={handleInputChange}
-											min='1'
-											className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
-										/>
-									</div>
-								</div>
-
-								<div>
-									<label className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1'>
-										Description
-									</label>
-									<textarea
-										name='description'
-										rows='3'
-										value={formData.description}
-										onChange={handleInputChange}
-										placeholder='Course description, objectives, etc.'
-										className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
-									/>
-								</div>
-
-								<div className='flex gap-3 justify-end mt-6'>
-									<button
-										type='button'
-										onClick={() => {
-											setShowModal(false);
-											resetForm();
-										}}
-										className='px-4 py-2 text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-border)]/50 transition-colors'
-									>
-										Cancel
-									</button>
-									<button
-										type='submit'
-										className='px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)] transition-colors'
-									>
-										{editingClass ? 'Update' : 'Create'}
-									</button>
-								</div>
-							</form>
-						)}
-					</div>
-				</div>
-			)}
-		</div>
-	);
+      <ConfirmModal
+        isOpen={confirmOpen}
+        onClose={() => {
+          setConfirmOpen(false);
+          setClassToDelete(null);
+        }}
+        onConfirm={performDelete}
+        title='Delete Class'
+        message='Are you sure you want to delete this class? This cannot be undone.'
+        confirmText='Delete'
+        cancelText='Cancel'
+        type='danger'
+      />
+    </div>
+  );
 }
