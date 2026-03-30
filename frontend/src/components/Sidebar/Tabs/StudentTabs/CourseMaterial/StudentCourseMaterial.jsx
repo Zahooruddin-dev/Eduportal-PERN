@@ -17,6 +17,12 @@ function formatDate(value) {
   return date.toLocaleString();
 }
 
+function toTimestamp(value, fallback = 0) {
+  if (!value) return fallback;
+  const timestamp = new Date(value).getTime();
+  return Number.isNaN(timestamp) ? fallback : timestamp;
+}
+
 export default function StudentCourseMaterial() {
   const { user } = useAuth();
   const [classes, setClasses] = useState([]);
@@ -27,11 +33,74 @@ export default function StudentCourseMaterial() {
   const [error, setError] = useState('');
   const [viewingFile, setViewingFile] = useState(null);
   const [showCommentsFor, setShowCommentsFor] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTag, setSelectedTag] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
 
   const selectedClass = useMemo(
     () => classes.find((classItem) => classItem.id === selectedClassId) || null,
     [classes, selectedClassId],
   );
+
+  const availableTags = useMemo(() => {
+    const tags = new Set();
+    resources.forEach((resource) => {
+      (resource.tags || []).forEach((tag) => {
+        const normalized = String(tag || '').trim();
+        if (normalized) tags.add(normalized);
+      });
+    });
+    return [...tags].sort((a, b) => a.localeCompare(b));
+  }, [resources]);
+
+  const filteredResources = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    let next = [...resources];
+
+    if (query) {
+      next = next.filter((resource) => {
+        const haystack = [
+          resource.title,
+          resource.description,
+          resource.content,
+          ...(resource.tags || []),
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(query);
+      });
+    }
+
+    if (selectedTag !== 'all') {
+      next = next.filter((resource) =>
+        (resource.tags || []).some(
+          (tag) => String(tag).toLowerCase() === selectedTag.toLowerCase(),
+        ),
+      );
+    }
+
+    next.sort((a, b) => {
+      if (sortBy === 'oldest') {
+        return toTimestamp(a.created_at) - toTimestamp(b.created_at);
+      }
+      if (sortBy === 'expiring') {
+        const aExpiry = toTimestamp(a.expires_at, Number.POSITIVE_INFINITY);
+        const bExpiry = toTimestamp(b.expires_at, Number.POSITIVE_INFINITY);
+        if (aExpiry !== bExpiry) return aExpiry - bExpiry;
+        return toTimestamp(b.created_at) - toTimestamp(a.created_at);
+      }
+      return toTimestamp(b.created_at) - toTimestamp(a.created_at);
+    });
+
+    return next;
+  }, [resources, searchQuery, selectedTag, sortBy]);
+
+  useEffect(() => {
+    if (selectedTag !== 'all' && !availableTags.includes(selectedTag)) {
+      setSelectedTag('all');
+    }
+  }, [availableTags, selectedTag]);
 
   const fetchResourcesForClass = async (classId) => {
     if (!classId) {
@@ -163,6 +232,63 @@ export default function StudentCourseMaterial() {
             </div>
           </section>
 
+          <section className='mb-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4'>
+            <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
+              <div>
+                <label htmlFor='student-resource-search' className='mb-1 block text-xs uppercase tracking-wide text-[var(--color-text-muted)]'>
+                  Search
+                </label>
+                <input
+                  id='student-resource-search'
+                  type='text'
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder='Search title, description, link, tags'
+                  className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
+                />
+              </div>
+
+              <div>
+                <label htmlFor='student-resource-tag-filter' className='mb-1 block text-xs uppercase tracking-wide text-[var(--color-text-muted)]'>
+                  Tag
+                </label>
+                <select
+                  id='student-resource-tag-filter'
+                  value={selectedTag}
+                  onChange={(event) => setSelectedTag(event.target.value)}
+                  className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
+                >
+                  <option value='all'>All tags</option>
+                  {availableTags.map((tag) => (
+                    <option key={tag} value={tag}>
+                      {tag}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor='student-resource-sort' className='mb-1 block text-xs uppercase tracking-wide text-[var(--color-text-muted)]'>
+                  Sort
+                </label>
+                <select
+                  id='student-resource-sort'
+                  value={sortBy}
+                  onChange={(event) => setSortBy(event.target.value)}
+                  className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
+                >
+                  <option value='newest'>Newest first</option>
+                  <option value='oldest'>Oldest first</option>
+                  <option value='expiring'>Expiring soon</option>
+                </select>
+              </div>
+            </div>
+
+            <p className='mt-2 text-xs text-[var(--color-text-muted)]'>
+              Showing {filteredResources.length} of {resources.length} resources
+            </p>
+          </section>
+
           {loadingResources ? (
             <div className='flex h-40 items-center justify-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]'>
               <SpinnerIcon />
@@ -171,9 +297,13 @@ export default function StudentCourseMaterial() {
             <div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center'>
               <p className='text-[var(--color-text-muted)]'>No materials available for this class yet.</p>
             </div>
+          ) : filteredResources.length === 0 ? (
+            <div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center'>
+              <p className='text-[var(--color-text-muted)]'>No materials match your current filters.</p>
+            </div>
           ) : (
             <div className='space-y-3'>
-              {resources.map((resource) => (
+              {filteredResources.map((resource) => (
                 <article
                   key={resource.id}
                   className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm'
