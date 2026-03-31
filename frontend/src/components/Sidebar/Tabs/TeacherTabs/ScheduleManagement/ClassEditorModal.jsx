@@ -1,3 +1,4 @@
+// ClassEditorModal.tsx
 import { useMemo, useState } from 'react';
 import ScheduleBlocksEditor from '../../Shared/ScheduleBlocksEditor';
 import { getScheduleBlocksFromClass } from '../../../../../utils/scheduleUtils';
@@ -86,105 +87,105 @@ export default function ClassEditorModal({
   };
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'>
-      <div className='w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6'>
-        <div className='flex items-center justify-between gap-4 mb-4'>
-          <h2 className='text-xl font-semibold text-[var(--color-text-primary)]'>{title}</h2>
+    <div className="overlay-fade fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
+      <div className="fade-scale-in w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-2xl sm:p-6">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">{title}</h2>
           <button
-            type='button'
+            type="button"
             onClick={onClose}
-            className='rounded-lg border border-[var(--color-border)] px-3 py-1 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/60'
+            className="rounded-lg border border-[var(--color-border)] px-3 py-1 text-sm text-[var(--color-text-secondary)] transition hover:bg-[var(--color-border)]/40"
           >
             Close
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className='space-y-4'>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className='block text-sm text-[var(--color-text-secondary)] mb-1'>Class Name</label>
+              <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Class Name</label>
               <input
-                type='text'
-                name='class_name'
+                type="text"
+                name="class_name"
                 value={formData.class_name}
                 onChange={handleChange}
-                className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)]'
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
               />
             </div>
             <div>
-              <label className='block text-sm text-[var(--color-text-secondary)] mb-1'>Subject</label>
+              <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Subject</label>
               <input
-                type='text'
-                name='subject'
+                type="text"
+                name="subject"
                 value={formData.subject}
                 onChange={handleChange}
-                className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)]'
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
               />
             </div>
           </div>
 
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className='block text-sm text-[var(--color-text-secondary)] mb-1'>Grade Level</label>
+              <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Grade Level</label>
               <input
-                type='text'
-                name='grade_level'
+                type="text"
+                name="grade_level"
                 value={formData.grade_level}
                 onChange={handleChange}
-                className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)]'
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
               />
             </div>
             <div>
-              <label className='block text-sm text-[var(--color-text-secondary)] mb-1'>Room Number</label>
+              <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Room Number</label>
               <input
-                type='text'
-                name='room_number'
+                type="text"
+                name="room_number"
                 value={formData.room_number}
                 onChange={handleChange}
-                className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)]'
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
               />
             </div>
           </div>
 
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className='block text-sm text-[var(--color-text-secondary)] mb-1'>Max Students</label>
+              <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Max Students</label>
               <input
-                type='number'
-                name='max_students'
-                min='1'
+                type="number"
+                name="max_students"
+                min="1"
                 value={formData.max_students}
                 onChange={handleChange}
-                className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)]'
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
               />
             </div>
             <div>
-              <label className='block text-sm text-[var(--color-text-secondary)] mb-1'>Time Zone</label>
+              <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Time Zone</label>
               <input
-                type='text'
-                name='schedule_timezone'
+                type="text"
+                name="schedule_timezone"
                 value={formData.schedule_timezone}
                 onChange={handleChange}
-                placeholder='UTC'
-                className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)]'
+                placeholder="UTC"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
               />
             </div>
           </div>
 
           <div>
-            <label className='block text-sm text-[var(--color-text-secondary)] mb-1'>Meeting Link</label>
+            <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Meeting Link</label>
             <input
-              type='url'
-              name='meeting_link'
+              type="url"
+              name="meeting_link"
               value={formData.meeting_link}
               onChange={handleChange}
-              placeholder='https://...'
-              className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)]'
+              placeholder="https://..."
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
             />
           </div>
 
           <div>
-            <label className='block text-sm text-[var(--color-text-secondary)] mb-2'>Detailed Schedule</label>
+            <label className="block text-sm text-[var(--color-text-secondary)] mb-2">Detailed Schedule</label>
             <ScheduleBlocksEditor
               value={formData.schedule_blocks}
               onChange={(nextValue) =>
@@ -194,30 +195,30 @@ export default function ClassEditorModal({
           </div>
 
           <div>
-            <label className='block text-sm text-[var(--color-text-secondary)] mb-1'>Description</label>
+            <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Description</label>
             <textarea
-              name='description'
-              rows='3'
+              name="description"
+              rows="3"
               value={formData.description}
               onChange={handleChange}
-              className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)]'
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
             />
           </div>
 
-          {error && <p className='text-sm text-[var(--color-danger)]'>{error}</p>}
+          {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
 
-          <div className='flex flex-wrap justify-end gap-2'>
+          <div className="flex flex-wrap justify-end gap-2 pt-2">
             <button
-              type='button'
+              type="button"
               onClick={onClose}
-              className='rounded-xl border border-[var(--color-border)] px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/50'
+              className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm text-[var(--color-text-secondary)] transition hover:bg-[var(--color-border)]/40"
             >
               Cancel
             </button>
             <button
-              type='submit'
+              type="submit"
               disabled={submitting}
-              className='rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm text-white disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[var(--color-primary-hover)]'
+              className="rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm text-white transition hover:bg-[var(--color-primary-hover)] disabled:opacity-60"
             >
               {submitting ? 'Saving...' : mode === 'edit' ? 'Update Class' : 'Create Class'}
             </button>
