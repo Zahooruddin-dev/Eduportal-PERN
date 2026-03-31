@@ -42,7 +42,14 @@ async function getInstituteByUserIdQuery(userId) {
 	return rows[0] || null;
 }
 
-async function listInstituteUsersQuery({ instituteId, role, search }) {
+async function listInstituteUsersQuery({
+	instituteId,
+	role,
+	search,
+	limit = 25,
+	offset = 0,
+	compact = false,
+}) {
 	const clauses = ['u.institute_id = $1'];
 	const values = [instituteId];
 	let paramIndex = 2;
@@ -54,40 +61,105 @@ async function listInstituteUsersQuery({ instituteId, role, search }) {
 	}
 
 	if (search) {
-		clauses.push(`(
-			u.username ILIKE $${paramIndex}
-			OR u.email ILIKE $${paramIndex}
-			OR COALESCE(pp.child_full_name, '') ILIKE $${paramIndex}
-		)`);
+		clauses.push(compact
+			? `(
+				u.username ILIKE $${paramIndex}
+				OR u.email ILIKE $${paramIndex}
+			)`
+			: `(
+				u.username ILIKE $${paramIndex}
+				OR u.email ILIKE $${paramIndex}
+				OR COALESCE(pp.child_full_name, '') ILIKE $${paramIndex}
+			)`);
 		values.push(`%${search}%`);
+		paramIndex += 1;
 	}
+
+	const fromClause = compact
+		? 'FROM users u'
+		: `FROM users u
+		   LEFT JOIN parent_profiles pp ON pp.user_id = u.id
+		   LEFT JOIN users linked ON linked.id = pp.child_student_id`;
+
+	const whereClause = clauses.join(' AND ');
+
+	const countResult = await pool.query(
+		`SELECT COUNT(*)::int AS total
+		 ${fromClause}
+		 WHERE ${whereClause}`,
+		values,
+	);
+
+	const selectColumns = compact
+		? `u.id,
+		   u.username,
+		   u.email,
+		   u.role,
+		   u.created_at`
+		: `u.id,
+		   u.username,
+		   u.email,
+		   u.role,
+		   u.profile_pic,
+		   u.created_at,
+		   pp.child_full_name,
+		   pp.child_grade,
+		   pp.relationship_to_child,
+		   pp.child_student_id,
+		   pp.parent_phone,
+		   pp.alternate_phone,
+		   pp.address,
+		   pp.notes,
+		   linked.username AS linked_student_username,
+		   linked.email AS linked_student_email`;
+
+	const dataValues = [...values, limit, offset];
 
 	const { rows } = await pool.query(
 		`SELECT
-			u.id,
-			u.username,
-			u.email,
-			u.role,
-			u.profile_pic,
-			u.created_at,
-			pp.child_full_name,
-			pp.child_grade,
-			pp.relationship_to_child,
-			pp.child_student_id,
-			pp.parent_phone,
-			pp.alternate_phone,
-			pp.address,
-			pp.notes,
-			linked.username AS linked_student_username,
-			linked.email AS linked_student_email
-		 FROM users u
-		 LEFT JOIN parent_profiles pp ON pp.user_id = u.id
-		 LEFT JOIN users linked ON linked.id = pp.child_student_id
-		 WHERE ${clauses.join(' AND ')}
-		 ORDER BY u.created_at DESC`,
-		values,
+			${selectColumns}
+		 ${fromClause}
+		 WHERE ${whereClause}
+		 ORDER BY u.created_at DESC
+		 LIMIT $${paramIndex}
+		 OFFSET $${paramIndex + 1}`,
+		dataValues,
 	);
-	return rows;
+
+	return {
+		items: rows,
+		total: Number(countResult.rows[0]?.total || 0),
+	};
+}
+
+async function getInstituteUserRoleCountsQuery(instituteId) {
+	const { rows } = await pool.query(
+		`SELECT role, COUNT(*)::int AS count
+		 FROM users
+		 WHERE institute_id = $1
+		 GROUP BY role`,
+		[instituteId],
+	);
+
+	const summary = {
+		total: 0,
+		admin: 0,
+		teacher: 0,
+		student: 0,
+		parent: 0,
+	};
+
+	for (const row of rows) {
+		const role = String(row.role || '').toLowerCase();
+		const count = Number(row.count || 0);
+		if (!Number.isFinite(count)) continue;
+		summary.total += count;
+		if (summary[role] !== undefined) {
+			summary[role] = count;
+		}
+	}
+
+	return summary;
 }
 
 async function updateParentLinkedStudentQuery({ parentUserId, instituteId, studentId = null }) {
@@ -301,6 +373,7 @@ module.exports = {
 	createUserInInstituteQuery,
 	getInstituteByUserIdQuery,
 	listInstituteUsersQuery,
+	getInstituteUserRoleCountsQuery,
 	listInstituteClassesQuery,
 	createAdminInviteQuery,
 	getPendingInviteByTokenHashQuery,

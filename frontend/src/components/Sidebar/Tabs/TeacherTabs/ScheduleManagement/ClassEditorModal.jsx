@@ -101,111 +101,128 @@ export default function ClassEditorModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Class Name</label>
-              <input
-                type="text"
-                name="class_name"
-                value={formData.class_name}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Subject</label>
-              <input
-                type="text"
-                name="subject"
-                value={formData.subject}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-              />
-            </div>
-          </div>
+          <p className="rounded-lg border border-[var(--color-info)]/25 bg-[var(--color-info-soft)] px-3 py-2 text-xs text-[var(--color-text-secondary)]">
+            Fill in the basics first, then add one or more schedule blocks.
+          </p>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Grade Level</label>
-              <input
-                type="text"
-                name="grade_level"
-                value={formData.grade_level}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-              />
+          <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4">
+            <h3 className="mb-3 text-sm font-semibold text-[var(--color-text-primary)]">Class Basics</h3>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Class Name</label>
+                <input
+                  type="text"
+                  name="class_name"
+                  value={formData.class_name}
+                  onChange={handleChange}
+                  required
+                  placeholder="e.g. Algebra 8-A"
+                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Subject</label>
+                <input
+                  type="text"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  placeholder="e.g. Mathematics"
+                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Room Number</label>
-              <input
-                type="text"
-                name="room_number"
-                value={formData.room_number}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-              />
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Max Students</label>
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Grade Level</label>
+                <input
+                  type="text"
+                  name="grade_level"
+                  value={formData.grade_level}
+                  onChange={handleChange}
+                  placeholder="e.g. Grade 8"
+                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Room Number</label>
+                <input
+                  type="text"
+                  name="room_number"
+                  value={formData.room_number}
+                  onChange={handleChange}
+                  placeholder="e.g. B-204"
+                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Max Students</label>
+                <input
+                  type="number"
+                  name="max_students"
+                  min="1"
+                  value={formData.max_students}
+                  onChange={handleChange}
+                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Time Zone</label>
+                <input
+                  type="text"
+                  name="schedule_timezone"
+                  value={formData.schedule_timezone}
+                  onChange={handleChange}
+                  placeholder="UTC"
+                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Meeting Link</label>
               <input
-                type="number"
-                name="max_students"
-                min="1"
-                value={formData.max_students}
+                type="url"
+                name="meeting_link"
+                value={formData.meeting_link}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                placeholder="https://..."
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
               />
             </div>
-            <div>
-              <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Time Zone</label>
-              <input
-                type="text"
-                name="schedule_timezone"
-                value={formData.schedule_timezone}
-                onChange={handleChange}
-                placeholder="UTC"
-                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-              />
-            </div>
-          </div>
+          </section>
 
-          <div>
-            <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Meeting Link</label>
-            <input
-              type="url"
-              name="meeting_link"
-              value={formData.meeting_link}
-              onChange={handleChange}
-              placeholder="https://..."
-              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-[var(--color-text-secondary)] mb-2">Detailed Schedule</label>
+          <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4">
+            <h3 className="mb-3 text-sm font-semibold text-[var(--color-text-primary)]">Detailed Schedule</h3>
             <ScheduleBlocksEditor
               value={formData.schedule_blocks}
               onChange={(nextValue) =>
                 setFormData((current) => ({ ...current, schedule_blocks: nextValue }))
               }
             />
-          </div>
+          </section>
 
-          <div>
-            <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Description</label>
+          <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4">
+            <h3 className="mb-2 text-sm font-semibold text-[var(--color-text-primary)]">Description</h3>
             <textarea
               name="description"
               rows="3"
               value={formData.description}
               onChange={handleChange}
-              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+              placeholder="Optional notes for this class"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
             />
-          </div>
+          </section>
 
-          {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
+          {error && (
+            <p className="rounded-lg border border-[var(--color-danger)]/25 bg-[var(--color-danger-soft)] px-3 py-2 text-sm text-[var(--color-danger)]">
+              {error}
+            </p>
+          )}
 
           <div className="flex flex-wrap justify-end gap-2 pt-2">
             <button

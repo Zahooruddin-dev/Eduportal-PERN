@@ -22,10 +22,10 @@ export default function AdminRiskOverview() {
 		setToast({ isOpen: true, type, message });
 	}, []);
 
-	const loadOverview = useCallback(async () => {
+	const loadOverview = useCallback(async ({ refresh = false } = {}) => {
 		setLoading(true);
 		try {
-			const response = await getAdminRiskOverview();
+			const response = await getAdminRiskOverview({ refresh });
 			setOverview(response.data || null);
 		} catch (error) {
 			openToast('error', error?.response?.data?.message || 'Failed to load risk overview.');
@@ -71,7 +71,7 @@ export default function AdminRiskOverview() {
 						</div>
 						<button
 							type='button'
-							onClick={loadOverview}
+							onClick={() => loadOverview({ refresh: true })}
 							className='rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/40'
 						>
 							Refresh

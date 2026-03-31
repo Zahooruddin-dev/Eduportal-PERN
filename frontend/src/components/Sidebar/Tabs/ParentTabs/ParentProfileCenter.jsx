@@ -87,12 +87,12 @@ export default function ParentProfileCenter() {
 		setToast({ isOpen: true, type, message });
 	}, []);
 
-	const loadOverview = useCallback(async ({ silent = false } = {}) => {
+	const loadOverview = useCallback(async ({ silent = false, refresh = false } = {}) => {
 		if (!silent) {
 			setLoading(true);
 		}
 		try {
-			const response = await getParentLinkedStudentOverview();
+			const response = await getParentLinkedStudentOverview({ refresh });
 			const payload = response.data || null;
 			setOverview(payload);
 			setForm(toFormValues(payload?.parentProfile));
@@ -153,7 +153,7 @@ export default function ParentProfileCenter() {
 			}
 			openToast('success', 'Parent profile updated successfully.');
 			setRefreshing(true);
-			await loadOverview({ silent: true });
+			await loadOverview({ silent: true, refresh: true });
 		} catch (error) {
 			openToast('error', error?.response?.data?.message || 'Failed to update parent profile.');
 		} finally {

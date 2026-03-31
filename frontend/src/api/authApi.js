@@ -37,6 +37,8 @@ export const updateParentProfile = (data) => {
 	return api.put('/api/auth/parent-profile', data);
 };
 
-export const getParentLinkedStudentOverview = () => {
-	return api.get('/api/parent/linked-student');
+export const getParentLinkedStudentOverview = ({ refresh = false } = {}) => {
+	return api.get('/api/parent/linked-student', {
+		params: refresh ? { refresh: 1 } : undefined,
+	});
 };

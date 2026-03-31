@@ -2,8 +2,10 @@ const db = require('../db/queryAttendence');
 const dbClass = require('../db/queryClasses');
 const dbEnroll = require('../db/queryEnrollment');
 const { isUuid } = require('../middleware/uuidParamMiddleware');
+const { getCacheValue, setCacheValue, deleteCacheByPrefix } = require('../utility/ttlCache');
 
 const ATTENDANCE_STATUSES = new Set(['present', 'absent', 'late', 'excused']);
+const ATTENDANCE_SUMMARY_CACHE_MS = Number(process.env.ATTENDANCE_SUMMARY_CACHE_MS || 30 * 1000);
 
 function toDateString(dateObj) {
 	const year = dateObj.getUTCFullYear();
@@ -40,6 +42,23 @@ function parseDateInput(value) {
 function getCurrentMonthValue() {
 	const now = new Date();
 	return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+function toBooleanFlag(value) {
+	const text = String(value || '').trim().toLowerCase();
+	return text === '1' || text === 'true' || text === 'yes' || text === 'y';
+}
+
+function shouldBypassCache(req) {
+	const refreshFlag = req.query?.refresh;
+	const cacheFlag = req.query?.cache;
+	const refreshText = String(refreshFlag || '').trim().toLowerCase();
+	const cacheText = String(cacheFlag || '').trim().toLowerCase();
+
+	if (toBooleanFlag(refreshFlag)) return true;
+	if (cacheText === 'skip' || cacheText === 'bypass' || cacheText === 'off') return true;
+	if (refreshText === 'force') return true;
+	return false;
 }
 
 function parseMonthBounds(value) {
@@ -164,6 +183,12 @@ async function markBulkAttendance(req, res) {
 		);
 		await Promise.all(queries);
 
+		deleteCacheByPrefix(`attendance-summary:${classId}:`);
+		deleteCacheByPrefix('parent-overview:');
+		if (targetClass.institute_id) {
+			deleteCacheByPrefix(`admin-risk:${targetClass.institute_id}`);
+		}
+
 		res.json({
 			message: 'Attendance saved successfully',
 			date: selectedDate,
@@ -182,6 +207,14 @@ async function getClassAttendanceSummary(req, res) {
 
 	if (!monthBounds) {
 		return res.status(400).json({ error: 'Invalid month format. Use YYYY-MM.' });
+	}
+
+	const cacheKey = `attendance-summary:${classId}:${monthBounds.month}`;
+	if (!shouldBypassCache(req)) {
+		const cached = getCacheValue(cacheKey);
+		if (cached) {
+			return res.status(200).json(cached);
+		}
 	}
 
 	try {
@@ -236,14 +269,17 @@ async function getClassAttendanceSummary(req, res) {
 			noData: summary.filter((item) => item.riskLevel === 'no_data').length,
 		};
 
-		return res.status(200).json({
+		const payload = {
 			classId,
 			month: monthBounds.month,
 			startDate: monthBounds.startDate,
 			endDate: monthBounds.endDate,
 			stats,
 			summary,
-		});
+		};
+
+		setCacheValue(cacheKey, payload, ATTENDANCE_SUMMARY_CACHE_MS);
+		return res.status(200).json(payload);
 	} catch (err) {
 		console.error(err);
 		return res.status(500).json({ error: err.message });

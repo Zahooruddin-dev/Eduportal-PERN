@@ -82,8 +82,50 @@ function generateTempPassword(length = 12) {
 	return password;
 }
 
+const USER_PAGE_SIZE = 25;
+const STUDENT_OPTIONS_LIMIT = 300;
+
+function toUserSummary(summary) {
+	return {
+		total: Number(summary?.total || 0),
+		admin: Number(summary?.admin || 0),
+		teacher: Number(summary?.teacher || 0),
+		student: Number(summary?.student || 0),
+		parent: Number(summary?.parent || 0),
+	};
+}
+
+function summarizeUsersByRole(users) {
+	const byRole = { admin: 0, teacher: 0, student: 0, parent: 0 };
+	users.forEach((user) => {
+		if (byRole[user.role] !== undefined) {
+			byRole[user.role] += 1;
+		}
+	});
+	return {
+		total: users.length,
+		...byRole,
+	};
+}
+
 export default function UserManagement() {
 	const [users, setUsers] = useState([]);
+	const [userPage, setUserPage] = useState(1);
+	const [userSummary, setUserSummary] = useState({
+		total: 0,
+		admin: 0,
+		teacher: 0,
+		student: 0,
+		parent: 0,
+	});
+	const [userPagination, setUserPagination] = useState({
+		total: 0,
+		page: 1,
+		limit: USER_PAGE_SIZE,
+		totalPages: 1,
+		hasNext: false,
+		hasPrevious: false,
+	});
 	const [classes, setClasses] = useState([]);
 	const [selectedClassIds, setSelectedClassIds] = useState([]);
 	const [teacherForm, setTeacherForm] = useState({ username: '', email: '', password: '' });
@@ -130,8 +172,16 @@ export default function UserManagement() {
 	const loadStudentOptions = useCallback(async () => {
 		setLoadingStudents(true);
 		try {
-			const response = await listInstituteUsers({ role: 'student', search: '' });
-			setStudentOptions(response.data || []);
+			const response = await listInstituteUsers({
+				role: 'student',
+				search: '',
+				page: 1,
+				limit: STUDENT_OPTIONS_LIMIT,
+				compact: true,
+			});
+			const payload = response.data;
+			const options = Array.isArray(payload) ? payload : (payload?.items || []);
+			setStudentOptions(options);
 		} catch (error) {
 			openToast('error', error?.response?.data?.message || 'Failed to load students for parent linking.');
 		} finally {
@@ -149,41 +199,71 @@ export default function UserManagement() {
 		setParentStudentSelection(nextSelection);
 	}, []);
 
-	const loadUsers = useCallback(async (query = filters) => {
+	const loadUsers = useCallback(async (query = null, pageNumber = 1) => {
+		const effectiveQuery = query || { role: 'all', search: '' };
+		const requestedPage = Number.isFinite(Number(pageNumber)) ? Number(pageNumber) : 1;
 		setLoadingUsers(true);
 		try {
 			const response = await listInstituteUsers({
-				role: query.role,
-				search: query.search,
+				role: effectiveQuery.role,
+				search: effectiveQuery.search,
+				page: requestedPage,
+				limit: USER_PAGE_SIZE,
 			});
-			const fetchedUsers = response.data || [];
+			const payload = response.data;
+			const fetchedUsers = Array.isArray(payload) ? payload : (payload?.items || []);
+			const pagination = Array.isArray(payload)
+				? {
+					total: fetchedUsers.length,
+					page: requestedPage,
+					limit: USER_PAGE_SIZE,
+					totalPages: 1,
+					hasNext: false,
+					hasPrevious: requestedPage > 1,
+				}
+				: {
+					total: Number(payload?.pagination?.total || 0),
+					page: Number(payload?.pagination?.page || requestedPage),
+					limit: Number(payload?.pagination?.limit || USER_PAGE_SIZE),
+					totalPages: Math.max(1, Number(payload?.pagination?.totalPages || 1)),
+					hasNext: Boolean(payload?.pagination?.hasNext),
+					hasPrevious: Boolean(payload?.pagination?.hasPrevious),
+				};
+
 			setUsers(fetchedUsers);
+			setUserPagination(pagination);
+			setUserPage(pagination.page);
+			setUserSummary(
+				Array.isArray(payload)
+					? summarizeUsersByRole(fetchedUsers)
+					: toUserSummary(payload?.summary || summarizeUsersByRole(fetchedUsers)),
+			);
 			syncParentSelections(fetchedUsers);
 		} catch (error) {
 			openToast('error', error?.response?.data?.message || 'Failed to load users.');
 		} finally {
 			setLoadingUsers(false);
 		}
-	}, [filters, openToast, syncParentSelections]);
+	}, [openToast, syncParentSelections]);
 
 	useEffect(() => {
 		loadClasses();
 		loadStudentOptions();
-		loadUsers({ role: 'all', search: '' });
+		loadUsers({ role: 'all', search: '' }, 1);
 	}, [loadClasses, loadStudentOptions, loadUsers]);
 
 	const summary = useMemo(() => {
-		const byRole = { admin: 0, teacher: 0, student: 0, parent: 0 };
-		users.forEach((user) => {
-			if (byRole[user.role] !== undefined) {
-				byRole[user.role] += 1;
-			}
-		});
-		return {
-			total: users.length,
-			...byRole,
-		};
-	}, [users]);
+		return toUserSummary(userSummary);
+	}, [userSummary]);
+
+	const visibleRange = useMemo(() => {
+		if (!users.length) {
+			return { start: 0, end: 0 };
+		}
+		const start = (userPagination.page - 1) * userPagination.limit + 1;
+		const end = start + users.length - 1;
+		return { start, end };
+	}, [users, userPagination.limit, userPagination.page]);
 
 	const toggleClassSelection = (classId) => {
 		setSelectedClassIds((previous) =>
@@ -200,7 +280,7 @@ export default function UserManagement() {
 			await createTeacherAccount(teacherForm);
 			setTeacherForm({ username: '', email: '', password: '' });
 			openToast('success', 'Teacher account created.');
-			loadUsers();
+			await loadUsers(filters, 1);
 		} catch (error) {
 			openToast('error', error?.response?.data?.message || 'Failed to create teacher account.');
 		} finally {
@@ -251,7 +331,7 @@ export default function UserManagement() {
 			setBulkRows([]);
 			setBulkFileName('');
 			openToast('success', `Bulk creation completed. Created: ${createdCount}, Skipped: ${skippedCount}.`);
-			await Promise.all([loadUsers(), loadStudentOptions()]);
+			await Promise.all([loadUsers(filters, 1), loadStudentOptions()]);
 		} catch (error) {
 			openToast('error', error?.response?.data?.message || 'Bulk student creation failed.');
 		} finally {
@@ -284,7 +364,7 @@ export default function UserManagement() {
 					openToast('success', selectedStudentId
 						? 'Student linked to parent account successfully.'
 						: 'Parent account unlinked from student successfully.');
-					await Promise.all([loadUsers(filters), loadStudentOptions()]);
+					await Promise.all([loadUsers(filters, userPage), loadStudentOptions()]);
 				} catch (error) {
 					openToast('error', error?.response?.data?.message || 'Failed to update parent-student mapping.');
 				} finally {
@@ -498,7 +578,10 @@ export default function UserManagement() {
 					<div className='flex flex-col gap-2 sm:flex-row'>
 						<select
 							value={filters.role}
-							onChange={(event) => setFilters((previous) => ({ ...previous, role: event.target.value }))}
+							onChange={(event) => {
+								setFilters((previous) => ({ ...previous, role: event.target.value }));
+								setUserPage(1);
+							}}
 							className='rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)]'
 						>
 							<option value='all'>All roles</option>
@@ -509,13 +592,16 @@ export default function UserManagement() {
 						</select>
 						<input
 							value={filters.search}
-							onChange={(event) => setFilters((previous) => ({ ...previous, search: event.target.value }))}
+							onChange={(event) => {
+								setFilters((previous) => ({ ...previous, search: event.target.value }));
+								setUserPage(1);
+							}}
 							placeholder='Search username or email'
 							className='rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)]'
 						/>
 						<button
 							type='button'
-							onClick={() => loadUsers(filters)}
+							onClick={() => loadUsers(filters, 1)}
 							className='rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/40'
 						>
 							Refresh
@@ -623,6 +709,31 @@ export default function UserManagement() {
 						{!users.length && (
 							<div className='rounded-xl border border-[var(--color-border)] p-4 text-sm text-[var(--color-text-muted)]'>No users found.</div>
 						)}
+
+						<div className='flex flex-col gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-xs text-[var(--color-text-muted)] sm:flex-row sm:items-center sm:justify-between'>
+							<p>
+								Showing {visibleRange.start} - {visibleRange.end} of {userPagination.total} users
+							</p>
+							<div className='flex items-center gap-2'>
+								<button
+									type='button'
+									onClick={() => loadUsers(filters, userPagination.page - 1)}
+									disabled={!userPagination.hasPrevious}
+									className='rounded-lg border border-[var(--color-border)] px-2 py-1 text-xs text-[var(--color-text-secondary)] disabled:opacity-50'
+								>
+									Previous
+								</button>
+								<span className='text-[var(--color-text-secondary)]'>Page {userPagination.page} / {userPagination.totalPages}</span>
+								<button
+									type='button'
+									onClick={() => loadUsers(filters, userPagination.page + 1)}
+									disabled={!userPagination.hasNext}
+									className='rounded-lg border border-[var(--color-border)] px-2 py-1 text-xs text-[var(--color-text-secondary)] disabled:opacity-50'
+								>
+									Next
+								</button>
+							</div>
+						</div>
 					</div>
 				)}
 			</div>

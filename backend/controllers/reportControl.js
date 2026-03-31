@@ -1,5 +1,6 @@
 const db = require('../db/queryReports');
 const { isUuid } = require('../middleware/uuidParamMiddleware');
+const { deleteCacheByPrefix } = require('../utility/ttlCache');
 
 const REPORT_KINDS = ['report', 'complaint', 'suggestion'];
 const REPORT_TYPES = [
@@ -181,6 +182,7 @@ async function createReport(req, res) {
 			targetUserId: target?.id || null,
 			attachmentUrl,
 		});
+		deleteCacheByPrefix(`admin-risk:${scope.institute_id}`);
 		return res.status(201).json(report);
 	} catch (error) {
 		return res.status(500).json({ message: error.message });
@@ -284,6 +286,8 @@ async function updateReportStatus(req, res) {
 			adminFeedback: adminFeedback || null,
 			adminId: scope.id,
 		});
+
+		deleteCacheByPrefix(`admin-risk:${scope.institute_id}`);
 
 		return res.status(200).json(updated);
 	} catch (error) {

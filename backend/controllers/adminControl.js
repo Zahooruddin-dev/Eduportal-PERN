@@ -6,6 +6,12 @@ const adminDb = require('../db/queryAdmin');
 const authDb = require('../db/queryAuth');
 const { sendResetEmail } = require('../utility/emailSender');
 const { isUuid } = require('../middleware/uuidParamMiddleware');
+const { getCacheValue, setCacheValue, deleteCacheByPrefix } = require('../utility/ttlCache');
+
+const MAX_USER_SEARCH_LENGTH = 120;
+const DEFAULT_USER_LIST_LIMIT = 25;
+const MAX_USER_LIST_LIMIT = 100;
+const RISK_OVERVIEW_CACHE_MS = Number(process.env.RISK_OVERVIEW_CACHE_MS || 45 * 1000);
 
 function normalizeEmail(value) {
 	return String(value || '').trim().toLowerCase();
@@ -52,6 +58,32 @@ function generateTempPassword(length = 12) {
 function toNumber(value, fallback = 0) {
 	const numeric = Number(value);
 	return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+function parsePositiveInt(value, fallback, min, max) {
+	const numeric = Number(value);
+	if (!Number.isFinite(numeric)) return fallback;
+	const integer = Math.trunc(numeric);
+	if (integer < min) return min;
+	if (integer > max) return max;
+	return integer;
+}
+
+function toBooleanFlag(value) {
+	const text = String(value || '').trim().toLowerCase();
+	return text === '1' || text === 'true' || text === 'yes' || text === 'y';
+}
+
+function shouldBypassCache(req) {
+	const refreshFlag = req.query?.refresh;
+	const cacheFlag = req.query?.cache;
+	const refreshText = String(refreshFlag || '').trim().toLowerCase();
+	const cacheText = String(cacheFlag || '').trim().toLowerCase();
+
+	if (toBooleanFlag(refreshFlag)) return true;
+	if (cacheText === 'skip' || cacheText === 'bypass' || cacheText === 'off') return true;
+	if (refreshText === 'force') return true;
+	return false;
 }
 
 async function getAdminInstituteOr404(userId, res) {
@@ -424,18 +456,54 @@ async function listInstituteUsers(req, res) {
 
 	const role = String(req.query?.role || 'all').trim().toLowerCase();
 	const search = String(req.query?.search || '').trim();
+	const compact = toBooleanFlag(req.query?.compact);
+	const limit = parsePositiveInt(
+		req.query?.limit,
+		compact ? 200 : DEFAULT_USER_LIST_LIMIT,
+		1,
+		compact ? 500 : MAX_USER_LIST_LIMIT,
+	);
+	const page = parsePositiveInt(req.query?.page, 1, 1, 5000);
+	const offset = (page - 1) * limit;
 
 	if (!['all', 'admin', 'teacher', 'student', 'parent'].includes(role)) {
 		return res.status(400).json({ message: 'Invalid role filter.' });
 	}
 
+	if (search.length > MAX_USER_SEARCH_LENGTH) {
+		return res.status(400).json({ message: `Search cannot exceed ${MAX_USER_SEARCH_LENGTH} characters.` });
+	}
+
 	try {
-		const users = await adminDb.listInstituteUsersQuery({
-			instituteId: institute.id,
-			role,
-			search,
+		const [result, roleSummary] = await Promise.all([
+			adminDb.listInstituteUsersQuery({
+				instituteId: institute.id,
+				role,
+				search,
+				limit,
+				offset,
+				compact,
+			}),
+			compact
+				? Promise.resolve(null)
+				: adminDb.getInstituteUserRoleCountsQuery(institute.id),
+		]);
+
+		const total = toNumber(result.total, 0);
+		const totalPages = Math.max(1, Math.ceil(total / limit));
+
+		return res.status(200).json({
+			items: result.items,
+			summary: roleSummary,
+			pagination: {
+				total,
+				page,
+				limit,
+				totalPages,
+				hasNext: page < totalPages,
+				hasPrevious: page > 1,
+			},
 		});
-		return res.status(200).json(users);
 	} catch (error) {
 		return res.status(500).json({ message: error.message });
 	}
@@ -444,6 +512,14 @@ async function listInstituteUsers(req, res) {
 async function getRiskOverview(req, res) {
 	const institute = await getAdminInstituteOr404(req.user.id, res);
 	if (!institute) return;
+	const cacheKey = `admin-risk:${institute.id}`;
+
+	if (!shouldBypassCache(req)) {
+		const cached = getCacheValue(cacheKey);
+		if (cached) {
+			return res.status(200).json(cached);
+		}
+	}
 
 	try {
 		const overview = await adminDb.getInstituteRiskOverviewQuery(institute.id);
@@ -492,7 +568,7 @@ async function getRiskOverview(req, res) {
 			attendanceRate: toNumber(row.attendance_rate, 0),
 		}));
 
-		return res.status(200).json({
+		const payload = {
 			institute: {
 				id: institute.id,
 				name: institute.name,
@@ -505,7 +581,10 @@ async function getRiskOverview(req, res) {
 			unresolvedReportsByStatus: unresolved,
 			atRiskStudents,
 			lowAttendanceClasses,
-		});
+		};
+
+		setCacheValue(cacheKey, payload, RISK_OVERVIEW_CACHE_MS);
+		return res.status(200).json(payload);
 	} catch (error) {
 		return res.status(500).json({ message: error.message });
 	}
@@ -613,6 +692,8 @@ async function linkParentStudent(req, res) {
 			parentUserId,
 			instituteId: institute.id,
 		});
+
+		deleteCacheByPrefix('parent-overview:');
 
 		return res.status(200).json({
 			message: studentId

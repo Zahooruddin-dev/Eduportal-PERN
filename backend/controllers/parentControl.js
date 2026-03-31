@@ -1,5 +1,8 @@
 const pool = require('../db/Pool');
 const authDb = require('../db/queryAuth');
+const { getCacheValue, setCacheValue } = require('../utility/ttlCache');
+
+const PARENT_OVERVIEW_CACHE_MS = Number(process.env.PARENT_OVERVIEW_CACHE_MS || 45 * 1000);
 
 function withSafeLinkedStudent(parentProfile, linkedStudent) {
 	return {
@@ -16,6 +19,28 @@ function toDateOnly(value) {
 	const date = value instanceof Date ? value : new Date(value);
 	if (Number.isNaN(date.getTime())) return null;
 	return date.toISOString().slice(0, 10);
+}
+
+function toBooleanFlag(value) {
+	const text = String(value || '').trim().toLowerCase();
+	return text === '1' || text === 'true' || text === 'yes' || text === 'y';
+}
+
+function shouldBypassCache(req) {
+	const refreshFlag = req.query?.refresh;
+	const cacheFlag = req.query?.cache;
+	const refreshText = String(refreshFlag || '').trim().toLowerCase();
+	const cacheText = String(cacheFlag || '').trim().toLowerCase();
+
+	if (toBooleanFlag(refreshFlag)) return true;
+	if (cacheText === 'skip' || cacheText === 'bypass' || cacheText === 'off') return true;
+	if (refreshText === 'force') return true;
+	return false;
+}
+
+function sendCachedSuccess(res, cacheKey, payload) {
+	setCacheValue(cacheKey, payload, PARENT_OVERVIEW_CACHE_MS);
+	return res.status(200).json(payload);
 }
 
 function emptyOverview(parentProfile) {
@@ -42,6 +67,14 @@ async function getLinkedStudentOverview(req, res) {
 		return res.status(403).json({ message: 'Only parent accounts can access linked student data.' });
 	}
 
+	const cacheKey = `parent-overview:${req.user.id}:${req.user.instituteId}`;
+	if (!shouldBypassCache(req)) {
+		const cached = getCacheValue(cacheKey);
+		if (cached) {
+			return res.status(200).json(cached);
+		}
+	}
+
 	try {
 		const rawParentProfile = await authDb.getParentProfileByUserId(req.user.id);
 		if (!rawParentProfile) {
@@ -50,7 +83,7 @@ async function getLinkedStudentOverview(req, res) {
 		const parentProfile = withSafeLinkedStudent(rawParentProfile, null);
 
 		if (!parentProfile.child_student_id) {
-			return res.status(200).json(emptyOverview(parentProfile));
+			return sendCachedSuccess(res, cacheKey, emptyOverview(parentProfile));
 		}
 
 		const linkedStudentResult = await pool.query(
@@ -63,7 +96,7 @@ async function getLinkedStudentOverview(req, res) {
 		);
 		const linkedStudent = linkedStudentResult.rows[0];
 		if (!linkedStudent) {
-			return res.status(200).json(emptyOverview(parentProfile));
+			return sendCachedSuccess(res, cacheKey, emptyOverview(parentProfile));
 		}
 
 		const instituteScopedParentProfile = withSafeLinkedStudent(parentProfile, linkedStudent);
@@ -276,7 +309,7 @@ async function getLinkedStudentOverview(req, res) {
 			});
 		}
 
-		return res.status(200).json({
+		const payload = {
 			parentProfile: instituteScopedParentProfile,
 			linkedStudent,
 			schedule: scheduleResult.rows,
@@ -294,7 +327,9 @@ async function getLinkedStudentOverview(req, res) {
 				recentGrades: weeklyRecentGrades,
 				alerts: weeklyAlerts,
 			},
-		});
+		};
+
+		return sendCachedSuccess(res, cacheKey, payload);
 	} catch (error) {
 		return res.status(500).json({ message: error.message });
 	}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
 	getMyClasses,
 	getClassEnrolledRooster,
@@ -10,16 +10,70 @@ import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
 import { Calendar, Save } from 'lucide-react';
 import Toast from '../../../../../components/Toast';
 
+const STATUS_OPTIONS = [
+	{ value: 'present', label: 'Present' },
+	{ value: 'absent', label: 'Absent' },
+	{ value: 'late', label: 'Late' },
+	{ value: 'excused', label: 'Excused' },
+];
+
+const STATUS_THEME = {
+	present: { color: 'var(--color-success)', soft: 'var(--color-success-soft)' },
+	absent: { color: 'var(--color-danger)', soft: 'var(--color-danger-soft)' },
+	late: { color: 'var(--color-warning)', soft: 'var(--color-warning-soft)' },
+	excused: { color: 'var(--color-info)', soft: 'var(--color-info-soft)' },
+};
+
+function getStatusStyles(status, isActive) {
+	const palette = STATUS_THEME[status] || STATUS_THEME.present;
+	return {
+		borderColor: palette.color,
+		color: palette.color,
+		backgroundColor: isActive ? palette.soft : 'transparent',
+		opacity: isActive ? 1 : 0.9,
+	};
+}
+
+function getToneStyles(tone) {
+	if (tone === 'danger') {
+		return {
+			color: 'var(--color-danger)',
+			borderColor: 'var(--color-danger)',
+			backgroundColor: 'var(--color-danger-soft)',
+		};
+	}
+	if (tone === 'warning') {
+		return {
+			color: 'var(--color-warning)',
+			borderColor: 'var(--color-warning)',
+			backgroundColor: 'var(--color-warning-soft)',
+		};
+	}
+	if (tone === 'info') {
+		return {
+			color: 'var(--color-info)',
+			borderColor: 'var(--color-info)',
+			backgroundColor: 'var(--color-info-soft)',
+		};
+	}
+	return {
+		color: 'var(--color-success)',
+		borderColor: 'var(--color-success)',
+		backgroundColor: 'var(--color-success-soft)',
+	};
+}
+
 export default function TeacherAttendance() {
 	const [classes, setClasses] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
-	const [selectedClass, setSelectedClass] = useState(null);
+	const [selectedClassId, setSelectedClassId] = useState('');
 	const [students, setStudents] = useState([]);
 	const [loadingRoster, setLoadingRoster] = useState(false);
 	const [selectedDate, setSelectedDate] = useState(
 		new Date().toISOString().split('T')[0],
 	);
+	const [studentSearch, setStudentSearch] = useState('');
 	const [attendanceMap, setAttendanceMap] = useState({});
 	const [saving, setSaving] = useState(false);
 	const [toast, setToast] = useState({
@@ -41,27 +95,43 @@ export default function TeacherAttendance() {
 		lowRisk: 0,
 		noData: 0,
 	});
+	const [showSummary, setShowSummary] = useState(false);
 
-	// Fetch teacher's classes
-	const fetchClasses = async () => {
+	const selectedClass = useMemo(
+		() => classes.find((entry) => entry.id === selectedClassId) || null,
+		[classes, selectedClassId],
+	);
+
+	const fetchClasses = useCallback(async () => {
 		setLoading(true);
 		try {
 			const res = await getMyClasses();
-			setClasses(res.data);
+			setClasses(Array.isArray(res.data) ? res.data : []);
+			setError('');
 		} catch (error) {
 			console.error('Failed to load classes:', error);
 			setError('Failed to load classes');
+			setClasses([]);
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, []);
 
 	useEffect(() => {
 		fetchClasses();
-	}, []);
+	}, [fetchClasses]);
 
-	// When a class is selected, fetch its roster and current attendance for the selected date
-	const fetchAttendanceForClass = async (classId, date) => {
+	useEffect(() => {
+		if (!classes.length) {
+			setSelectedClassId('');
+			return;
+		}
+		if (!classes.some((entry) => entry.id === selectedClassId)) {
+			setSelectedClassId(classes[0].id);
+		}
+	}, [classes, selectedClassId]);
+
+	const fetchAttendanceForClass = useCallback(async (classId, date) => {
 		setLoadingRoster(true);
 		try {
 			const rosterRes = await getClassEnrolledRooster(classId);
@@ -90,16 +160,18 @@ export default function TeacherAttendance() {
 			console.error('Failed to load attendance data:', error);
 			setError('Failed to load attendance data');
 			setDateRecorded(false);
+			setStudents([]);
+			setAttendanceMap({});
 		} finally {
 			setLoadingRoster(false);
 		}
-	};
+	}, []);
 
 	const fetchMonthlySummary = useCallback(async () => {
-		if (!selectedClass) return;
+		if (!selectedClassId) return;
 		setSummaryLoading(true);
 		try {
-			const response = await getClassAttendanceSummary(selectedClass.id, selectedMonth);
+			const response = await getClassAttendanceSummary(selectedClassId, selectedMonth);
 			setSummaryData(Array.isArray(response.data?.summary) ? response.data.summary : []);
 			setSummaryStats({
 				totalStudents: Number(response.data?.stats?.totalStudents || 0),
@@ -126,36 +198,70 @@ export default function TeacherAttendance() {
 		} finally {
 			setSummaryLoading(false);
 		}
-	}, [selectedClass, selectedMonth]);
+	}, [selectedClassId, selectedMonth]);
 
-	// When selectedClass or selectedMonth changes, fetch summary
 	useEffect(() => {
-		if (selectedClass) {
+		if (showSummary && selectedClassId) {
 			fetchMonthlySummary();
 		}
-	}, [fetchMonthlySummary, selectedClass]);
-	// When selectedClass or selectedDate changes, fetch attendance
-	useEffect(() => {
-		if (selectedClass) {
-			fetchAttendanceForClass(selectedClass.id, selectedDate);
-		}
-	}, [selectedClass, selectedDate]);
+	}, [fetchMonthlySummary, selectedClassId, showSummary]);
 
-	// Handle status change for a student
+	useEffect(() => {
+		if (selectedClassId) {
+			fetchAttendanceForClass(selectedClassId, selectedDate);
+		} else {
+			setStudents([]);
+			setAttendanceMap({});
+		}
+	}, [selectedClassId, selectedDate, fetchAttendanceForClass]);
+
 	const handleStatusChange = (studentId, newStatus) => {
 		setAttendanceMap((prev) => ({ ...prev, [studentId]: newStatus }));
 	};
 
+	const applyStatusToAll = (status) => {
+		const next = {};
+		students.forEach((student) => {
+			next[student.student_id] = status;
+		});
+		setAttendanceMap(next);
+	};
+
+	const filteredStudents = useMemo(() => {
+		const query = String(studentSearch || '').trim().toLowerCase();
+		if (!query) return students;
+		return students.filter((student) => {
+			const username = String(student.username || '').toLowerCase();
+			const email = String(student.email || '').toLowerCase();
+			return username.includes(query) || email.includes(query);
+		});
+	}, [students, studentSearch]);
+
+	const statusCounts = useMemo(() => {
+		const initial = { present: 0, absent: 0, late: 0, excused: 0 };
+		students.forEach((student) => {
+			const status = attendanceMap[student.student_id] || 'present';
+			if (initial[status] !== undefined) {
+				initial[status] += 1;
+			}
+		});
+		return initial;
+	}, [students, attendanceMap]);
+
 	const getRiskPillClass = (riskLevel) => {
 		switch (riskLevel) {
 			case 'high':
-				return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
+				return getToneStyles('danger');
 			case 'medium':
-				return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
+				return getToneStyles('warning');
 			case 'low':
-				return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300';
+				return getToneStyles('success');
 			default:
-				return 'bg-slate-100 text-slate-700 dark:bg-slate-800/70 dark:text-slate-300';
+				return {
+					color: 'var(--color-text-muted)',
+					borderColor: 'var(--color-border)',
+					backgroundColor: 'var(--color-input-bg)',
+				};
 		}
 	};
 
@@ -166,15 +272,15 @@ export default function TeacherAttendance() {
 		return 'No data';
 	};
 
-	// Save all changes
 	const handleSave = async () => {
+		if (!selectedClassId || students.length === 0) return;
 		setSaving(true);
 		const attendanceData = students.map((student) => ({
 			studentId: student.student_id,
 			status: attendanceMap[student.student_id] || 'present',
 		}));
 		try {
-			await postAttendance(selectedClass.id, {
+			await postAttendance(selectedClassId, {
 				date: selectedDate,
 				attendance: attendanceData,
 			});
@@ -184,7 +290,9 @@ export default function TeacherAttendance() {
 				message: 'Attendance saved successfully!',
 			});
 			setDateRecorded(true);
-			fetchMonthlySummary();
+			if (showSummary) {
+				fetchMonthlySummary();
+			}
 		} catch (err) {
 			setToast({
 				isOpen: true,
@@ -212,156 +320,185 @@ export default function TeacherAttendance() {
 		);
 	}
 
-	if (!selectedClass) {
-		// Show class selection grid
-		return (
-			<div className='p-6'>
-				<h1 className='text-2xl font-semibold text-[var(--color-text-primary)] mb-6'>
-					Student Attendance
-				</h1>
-				{error && <AlertBox message={error} />}
-				{classes.length === 0 ? (
-					<p className='text-[var(--color-text-muted)]'>
-						You haven't created any classes yet. Please create a class first.
-					</p>
-				) : (
-					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-						{classes.map((cls) => (
-							<div
-								key={cls.id}
-								onClick={() => setSelectedClass(cls)}
-								className='cursor-pointer bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow'
-							>
-								<h3 className='text-lg font-semibold text-[var(--color-text-primary)]'>
-									{cls.class_name}
-								</h3>
-								{cls.subject && (
-									<p className='text-sm text-[var(--color-text-secondary)] mt-1'>
-										{cls.subject}
-									</p>
-								)}
-								<div className='mt-4'>
-									<span className='text-sm text-[var(--color-primary)]'>
-										Mark Attendance →
-									</span>
-								</div>
-							</div>
-						))}
-					</div>
-				)}
-			</div>
-		);
-	}
-
-	// Attendance view for selected class
 	return (
-		<div className='p-6'>
-			<div className='flex items-center justify-between mb-6'>
-				<button
-					onClick={() => setSelectedClass(null)}
-					className='text-[var(--color-primary)] hover:underline flex items-center gap-1'
-				>
-					← Back to Classes
-				</button>
-				<div className='flex items-center gap-4'>
-					<div className='relative'>
-						<input
-							type='date'
-							value={selectedDate}
-							onChange={(e) => setSelectedDate(e.target.value)}
-							className='appearance-none bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl pl-10 pr-4 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)]'
-						/>
-						<Calendar
-							className='absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--color-text-muted)]'
-							size={16}
-						/>
+		<div className='p-4 sm:p-6 space-y-5'>
+			<div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5'>
+				<div className='flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
+					<div>
+						<h1 className='text-2xl font-semibold text-[var(--color-text-primary)]'>Teacher Attendance</h1>
+						<p className='mt-1 text-sm text-[var(--color-text-muted)]'>
+							Select class and date, mark quickly, then save once.
+						</p>
 					</div>
 					<button
 						onClick={handleSave}
-						disabled={saving || loadingRoster}
-						className='inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors'
+						disabled={saving || loadingRoster || !selectedClassId || students.length === 0}
+						className='inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-primary-hover)] disabled:opacity-60'
 					>
 						{saving ? <SpinnerIcon /> : <Save size={16} />}
 						{saving ? 'Saving...' : 'Save Attendance'}
 					</button>
 				</div>
+
+				<div className='mt-4 grid gap-3 md:grid-cols-[1.4fr_1fr_1fr]'>
+					<div>
+						<label className='mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]'>Class</label>
+						<select
+							value={selectedClassId}
+							onChange={(event) => setSelectedClassId(event.target.value)}
+							disabled={!classes.length}
+							className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25'
+						>
+							{classes.length === 0 ? (
+								<option value=''>No classes available</option>
+							) : (
+								classes.map((entry) => (
+									<option key={entry.id} value={entry.id}>
+										{entry.class_name}{entry.subject ? ` • ${entry.subject}` : ''}
+									</option>
+								))
+							)}
+						</select>
+					</div>
+
+					<div>
+						<label className='mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]'>Date</label>
+						<div className='relative'>
+							<input
+								type='date'
+								value={selectedDate}
+								onChange={(event) => setSelectedDate(event.target.value)}
+								className='w-full appearance-none rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] py-2.5 pl-10 pr-3 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25'
+							/>
+							<Calendar
+								className='absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]'
+								size={16}
+							/>
+						</div>
+					</div>
+
+					<div>
+						<label className='mb-1 block text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]'>Find Student</label>
+						<input
+							value={studentSearch}
+							onChange={(event) => setStudentSearch(event.target.value)}
+							placeholder='Search name or email'
+							className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25'
+						/>
+					</div>
+				</div>
+
+				<div className='mt-3 flex flex-wrap items-center gap-2'>
+					<span
+						className='inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium'
+						style={dateRecorded ? getToneStyles('success') : getToneStyles('warning')}
+					>
+						{dateRecorded ? 'Already recorded for this date' : 'Not recorded yet for this date'}
+					</span>
+					<span className='rounded-full border border-[var(--color-border)] px-2.5 py-1 text-xs text-[var(--color-text-secondary)]'>
+						Students: {students.length}
+					</span>
+					<span className='rounded-full border px-2.5 py-1 text-xs' style={getToneStyles('success')}>
+						P {statusCounts.present}
+					</span>
+					<span className='rounded-full border px-2.5 py-1 text-xs' style={getToneStyles('danger')}>
+						A {statusCounts.absent}
+					</span>
+					<span className='rounded-full border px-2.5 py-1 text-xs' style={getToneStyles('warning')}>
+						L {statusCounts.late}
+					</span>
+					<span className='rounded-full border px-2.5 py-1 text-xs' style={getToneStyles('info')}>
+						E {statusCounts.excused}
+					</span>
+				</div>
+
+				<div className='mt-3 flex flex-wrap gap-2'>
+					{STATUS_OPTIONS.map((option) => (
+						<button
+							key={option.value}
+							type='button'
+							onClick={() => applyStatusToAll(option.value)}
+							disabled={students.length === 0 || loadingRoster}
+							className='rounded-lg border px-3 py-1.5 text-xs font-medium disabled:opacity-60'
+							style={getStatusStyles(option.value, false)}
+						>
+							Mark All {option.label}
+						</button>
+					))}
+				</div>
 			</div>
 
-			<h1 className='text-2xl font-semibold text-[var(--color-text-primary)] mb-4'>
-				{selectedClass.class_name} – Attendance
-			</h1>
-			<p className='text-sm text-[var(--color-text-muted)] mb-2'>
-				Mark attendance for {selectedDate}
-			</p>
-			<p className='mb-6 text-xs'>
-				<span
-					className={`inline-flex items-center rounded-full px-2.5 py-1 font-medium ${
-						dateRecorded
-							? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-							: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-					}`}
-				>
-					{dateRecorded ? 'Attendance already recorded for this date' : 'Attendance not recorded yet for this date'}
-				</span>
-			</p>
-
+			{error && <AlertBox message={error} />}
 			{loadingRoster ? (
-				<div className='flex justify-center py-8'>
+				<div className='flex justify-center py-10'>
 					<SpinnerIcon />
 				</div>
 			) : students.length === 0 ? (
-				<p className='text-[var(--color-text-muted)] text-center py-8'>
-					No students enrolled in this class yet.
-				</p>
+				<div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center text-sm text-[var(--color-text-muted)]'>
+					{classes.length === 0
+						? "You don't have any classes yet. Create a class first."
+						: 'No students enrolled in this class yet.'}
+				</div>
+			) : filteredStudents.length === 0 ? (
+				<div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center text-sm text-[var(--color-text-muted)]'>
+					No students match your search.
+				</div>
 			) : (
-				<div className='overflow-x-auto'>
-					<table className='min-w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl overflow-hidden'>
-						<thead className='bg-[var(--color-border)]/30'>
+				<div className='overflow-x-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]'>
+					<table className='min-w-full'>
+						<thead className='bg-[var(--color-input-bg)]'>
 							<tr>
-								<th className='px-6 py-3 text-left text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider'>
+								<th className='px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]'>
 									Student
 								</th>
-								<th className='px-6 py-3 text-left text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider'>
+								<th className='px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]'>
 									Status
 								</th>
 							</tr>
 						</thead>
 						<tbody className='divide-y divide-[var(--color-border)]'>
-							{students.map((student) => (
+							{filteredStudents.map((student) => (
 								<tr key={student.student_id}>
-									<td className='px-6 py-4 whitespace-nowrap'>
+									<td className='px-4 py-3 whitespace-nowrap'>
 										<div className='flex items-center'>
 											{student.profile_pic ? (
 												<img
 													src={student.profile_pic}
 													alt={student.username}
-													className='h-8 w-8 rounded-full object-cover'
+													className='h-9 w-9 rounded-full object-cover'
 												/>
 											) : (
-												<div className='h-8 w-8 rounded-full bg-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)] text-sm font-medium'>
+												<div className='flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-primary)]/20 text-sm font-medium text-[var(--color-primary)]'>
 													{student.username.charAt(0).toUpperCase()}
 												</div>
 											)}
 											<div className='ml-3'>
-												<p className='text-sm font-medium text-[var(--color-text-primary)]'>
+												<p className='text-sm font-medium leading-5 text-[var(--color-text-primary)]'>
 													{student.username}
 												</p>
+												{student.email && (
+													<p className='text-xs text-[var(--color-text-muted)]'>{student.email}</p>
+												)}
 											</div>
 										</div>
 									</td>
-									<td className='px-6 py-4 whitespace-nowrap'>
-										<select
-											value={attendanceMap[student.student_id] || 'present'}
-											onChange={(e) =>
-												handleStatusChange(student.student_id, e.target.value)
-											}
-											className='rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]'
-										>
-											<option value='present'>Present</option>
-											<option value='absent'>Absent</option>
-											<option value='late'>Late</option>
-											<option value='excused'>Excused</option>
-										</select>
+									<td className='px-4 py-3'>
+										<div className='flex flex-wrap gap-1.5'>
+											{STATUS_OPTIONS.map((option) => {
+												const active = (attendanceMap[student.student_id] || 'present') === option.value;
+												return (
+													<button
+														key={option.value}
+														type='button'
+														onClick={() => handleStatusChange(student.student_id, option.value)}
+														className='rounded-md border px-2.5 py-1 text-xs font-medium transition-colors'
+														style={getStatusStyles(option.value, active)}
+													>
+														{option.label}
+													</button>
+												);
+											})}
+										</div>
 									</td>
 								</tr>
 							))}
@@ -369,120 +506,107 @@ export default function TeacherAttendance() {
 					</table>
 				</div>
 			)}
-			<div className='mt-8'>
-				<div className='flex items-center justify-between mb-4'>
-					<h2 className='text-lg font-semibold text-[var(--color-text-primary)]'>
-						Monthly Summary
-					</h2>
-					<div className='relative'>
-						<input
-							type='month'
-							value={selectedMonth}
-							onChange={(e) => setSelectedMonth(e.target.value)}
-							className='appearance-none bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl px-4 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)]'
-						/>
+
+			<div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5'>
+				<div className='flex flex-wrap items-center justify-between gap-3'>
+					<div>
+						<h2 className='text-base font-semibold text-[var(--color-text-primary)]'>Monthly Insights</h2>
+						<p className='text-xs text-[var(--color-text-muted)]'>Optional risk view for follow-up planning.</p>
 					</div>
+					<button
+						type='button'
+						onClick={() => setShowSummary((prev) => !prev)}
+						className='rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/40'
+					>
+						{showSummary ? 'Hide Insights' : 'Show Insights'}
+					</button>
 				</div>
 
-				<div className='mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5'>
-					<div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2'>
-						<p className='text-[10px] uppercase tracking-wide text-[var(--color-text-muted)]'>Students</p>
-						<p className='text-base font-semibold text-[var(--color-text-primary)]'>{summaryStats.totalStudents}</p>
-					</div>
-					<div className='rounded-xl border border-red-200 bg-red-50/80 px-3 py-2 dark:border-red-900/40 dark:bg-red-900/20'>
-						<p className='text-[10px] uppercase tracking-wide text-red-600 dark:text-red-300'>High Risk</p>
-						<p className='text-base font-semibold text-red-700 dark:text-red-200'>{summaryStats.highRisk}</p>
-					</div>
-					<div className='rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 dark:border-amber-900/40 dark:bg-amber-900/20'>
-						<p className='text-[10px] uppercase tracking-wide text-amber-700 dark:text-amber-300'>Medium Risk</p>
-						<p className='text-base font-semibold text-amber-800 dark:text-amber-200'>{summaryStats.mediumRisk}</p>
-					</div>
-					<div className='rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2 dark:border-emerald-900/40 dark:bg-emerald-900/20'>
-						<p className='text-[10px] uppercase tracking-wide text-emerald-700 dark:text-emerald-300'>Low Risk</p>
-						<p className='text-base font-semibold text-emerald-800 dark:text-emerald-200'>{summaryStats.lowRisk}</p>
-					</div>
-					<div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2'>
-						<p className='text-[10px] uppercase tracking-wide text-[var(--color-text-muted)]'>No Data</p>
-						<p className='text-base font-semibold text-[var(--color-text-primary)]'>{summaryStats.noData}</p>
-					</div>
-				</div>
+				{showSummary && (
+					<div className='mt-4 space-y-4'>
+						<div className='flex items-center justify-end'>
+							<input
+								type='month'
+								value={selectedMonth}
+								onChange={(event) => setSelectedMonth(event.target.value)}
+								className='rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25'
+							/>
+						</div>
 
-				{summaryLoading ? (
-					<div className='flex justify-center py-4'>
-						<SpinnerIcon />
-					</div>
-				) : summaryData.length === 0 ? (
-					<p className='text-[var(--color-text-muted)] text-center py-4'>
-						No attendance records for this month.
-					</p>
-				) : (
-					<div className='overflow-x-auto'>
-						<table className='min-w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl overflow-hidden'>
-							<thead className='bg-[var(--color-border)]/30'>
-								<tr>
-									<th className='px-4 py-2 text-left text-xs font-medium text-[var(--color-text-secondary)]'>
-										Student
-									</th>
-									<th className='px-4 py-2 text-center text-xs font-medium text-[var(--color-text-secondary)]'>
-										Recorded Days
-									</th>
-									<th className='px-4 py-2 text-center text-xs font-medium text-green-600'>
-										Present
-									</th>
-									<th className='px-4 py-2 text-center text-xs font-medium text-red-600'>
-										Absent
-									</th>
-									<th className='px-4 py-2 text-center text-xs font-medium text-yellow-600'>
-										Late
-									</th>
-									<th className='px-4 py-2 text-center text-xs font-medium text-blue-600'>
-										Excused
-									</th>
-									<th className='px-4 py-2 text-center text-xs font-medium text-[var(--color-text-secondary)]'>
-										Attendance %
-									</th>
-									<th className='px-4 py-2 text-center text-xs font-medium text-[var(--color-text-secondary)]'>
-										Risk
-									</th>
-								</tr>
-							</thead>
-							<tbody className='divide-y divide-[var(--color-border)]'>
-								{summaryData.map((student) => (
-									<tr key={student.studentId}>
-										<td className='px-4 py-2 text-sm text-[var(--color-text-primary)]'>
-											{student.name}
-										</td>
-										<td className='px-4 py-2 text-center text-sm text-[var(--color-text-secondary)]'>
-											{student.recordedDays}
-										</td>
-										<td className='px-4 py-2 text-center text-sm text-green-600'>
-											{student.present}
-										</td>
-										<td className='px-4 py-2 text-center text-sm text-red-600'>
-											{student.absent}
-										</td>
-										<td className='px-4 py-2 text-center text-sm text-yellow-600'>
-											{student.late}
-										</td>
-										<td className='px-4 py-2 text-center text-sm text-blue-600'>
-											{student.excused}
-										</td>
-										<td className='px-4 py-2 text-center text-sm text-[var(--color-text-primary)]'>
-											{student.attendanceRate === null ? 'N/A' : `${student.attendanceRate}%`}
-										</td>
-										<td className='px-4 py-2 text-center text-sm'>
-											<span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getRiskPillClass(student.riskLevel)}`}>
-												{toRiskLabel(student.riskLevel)}
-											</span>
-										</td>
-									</tr>
-								))}
-							</tbody>
-						</table>
+						<div className='grid grid-cols-2 gap-2 sm:grid-cols-5'>
+							<div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2'>
+								<p className='text-[10px] uppercase tracking-wide text-[var(--color-text-muted)]'>Students</p>
+								<p className='text-base font-semibold text-[var(--color-text-primary)]'>{summaryStats.totalStudents}</p>
+							</div>
+							<div className='rounded-xl border px-3 py-2' style={getToneStyles('danger')}>
+								<p className='text-[10px] uppercase tracking-wide'>High Risk</p>
+								<p className='text-base font-semibold'>{summaryStats.highRisk}</p>
+							</div>
+							<div className='rounded-xl border px-3 py-2' style={getToneStyles('warning')}>
+								<p className='text-[10px] uppercase tracking-wide'>Medium Risk</p>
+								<p className='text-base font-semibold'>{summaryStats.mediumRisk}</p>
+							</div>
+							<div className='rounded-xl border px-3 py-2' style={getToneStyles('success')}>
+								<p className='text-[10px] uppercase tracking-wide'>Low Risk</p>
+								<p className='text-base font-semibold'>{summaryStats.lowRisk}</p>
+							</div>
+							<div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2'>
+								<p className='text-[10px] uppercase tracking-wide text-[var(--color-text-muted)]'>No Data</p>
+								<p className='text-base font-semibold text-[var(--color-text-primary)]'>{summaryStats.noData}</p>
+							</div>
+						</div>
+
+						{summaryLoading ? (
+							<div className='flex justify-center py-4'>
+								<SpinnerIcon />
+							</div>
+						) : summaryData.length === 0 ? (
+							<p className='py-4 text-center text-sm text-[var(--color-text-muted)]'>No attendance records for this month.</p>
+						) : (
+							<div className='overflow-x-auto rounded-xl border border-[var(--color-border)]'>
+								<table className='min-w-full bg-[var(--color-surface)]'>
+									<thead className='bg-[var(--color-input-bg)]'>
+										<tr>
+											<th className='px-3 py-2 text-left text-xs font-medium text-[var(--color-text-secondary)]'>Student</th>
+											<th className='px-3 py-2 text-center text-xs font-medium text-[var(--color-text-secondary)]'>Days</th>
+											<th className='px-3 py-2 text-center text-xs font-medium' style={{ color: 'var(--color-success)' }}>P</th>
+											<th className='px-3 py-2 text-center text-xs font-medium' style={{ color: 'var(--color-danger)' }}>A</th>
+											<th className='px-3 py-2 text-center text-xs font-medium' style={{ color: 'var(--color-warning)' }}>L</th>
+											<th className='px-3 py-2 text-center text-xs font-medium' style={{ color: 'var(--color-info)' }}>E</th>
+											<th className='px-3 py-2 text-center text-xs font-medium text-[var(--color-text-secondary)]'>%</th>
+											<th className='px-3 py-2 text-center text-xs font-medium text-[var(--color-text-secondary)]'>Risk</th>
+										</tr>
+									</thead>
+									<tbody className='divide-y divide-[var(--color-border)]'>
+										{summaryData.map((student) => (
+											<tr key={student.studentId}>
+												<td className='px-3 py-2 text-sm text-[var(--color-text-primary)]'>{student.name}</td>
+												<td className='px-3 py-2 text-center text-sm text-[var(--color-text-secondary)]'>{student.recordedDays}</td>
+												<td className='px-3 py-2 text-center text-sm' style={{ color: 'var(--color-success)' }}>{student.present}</td>
+												<td className='px-3 py-2 text-center text-sm' style={{ color: 'var(--color-danger)' }}>{student.absent}</td>
+												<td className='px-3 py-2 text-center text-sm' style={{ color: 'var(--color-warning)' }}>{student.late}</td>
+												<td className='px-3 py-2 text-center text-sm' style={{ color: 'var(--color-info)' }}>{student.excused}</td>
+												<td className='px-3 py-2 text-center text-sm text-[var(--color-text-primary)]'>
+													{student.attendanceRate === null ? 'N/A' : `${student.attendanceRate}%`}
+												</td>
+												<td className='px-3 py-2 text-center text-sm'>
+													<span
+														className='inline-flex rounded-full border px-2 py-0.5 text-xs font-medium'
+														style={getRiskPillClass(student.riskLevel)}
+													>
+														{toRiskLabel(student.riskLevel)}
+													</span>
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						)}
 					</div>
 				)}
 			</div>
-			{/* Toast and confirm modal*/}
+
 			<Toast
 				type={toast.type}
 				message={toast.message}

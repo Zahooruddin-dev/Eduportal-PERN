@@ -26,7 +26,8 @@ function scheduleSummary(classItem) {
 export default function ScheduleManagement() {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedClass, setSelectedClass] = useState(null);
+  const [selectedClassId, setSelectedClassId] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [toast, setToast] = useState({ isOpen: false, type: 'success', message: '' });
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorMode, setEditorMode] = useState('create');
@@ -39,6 +40,43 @@ export default function ScheduleManagement() {
     () => [...classes].sort((a, b) => String(a.class_name || '').localeCompare(String(b.class_name || ''))),
     [classes],
   );
+
+  const selectedClass = useMemo(
+    () => classes.find((classItem) => classItem.id === selectedClassId) || null,
+    [classes, selectedClassId],
+  );
+
+  const filteredClasses = useMemo(() => {
+    const query = String(searchQuery || '').trim().toLowerCase();
+    if (!query) return sortedClasses;
+    return sortedClasses.filter((classItem) => {
+      const className = String(classItem.class_name || '').toLowerCase();
+      const subject = String(classItem.subject || '').toLowerCase();
+      const grade = String(classItem.grade_level || '').toLowerCase();
+      const room = String(classItem.room_number || '').toLowerCase();
+      return (
+        className.includes(query)
+        || subject.includes(query)
+        || grade.includes(query)
+        || room.includes(query)
+      );
+    });
+  }, [searchQuery, sortedClasses]);
+
+  const classStats = useMemo(() => {
+    const totalClasses = sortedClasses.length;
+    const totalEnrolled = sortedClasses.reduce(
+      (sum, classItem) => sum + Number(classItem.enrolledCount || 0),
+      0,
+    );
+    const classesWithMeetingLink = sortedClasses.filter((classItem) => Boolean(classItem.meeting_link)).length;
+
+    return {
+      totalClasses,
+      totalEnrolled,
+      classesWithMeetingLink,
+    };
+  }, [sortedClasses]);
 
   const fetchClasses = async () => {
     setLoading(true);
@@ -117,6 +155,9 @@ export default function ScheduleManagement() {
     try {
       await deleteMyClass(classToDelete.id);
       setToast({ isOpen: true, type: 'success', message: 'Class deleted successfully.' });
+      if (selectedClassId === classToDelete.id) {
+        setSelectedClassId('');
+      }
       setClassToDelete(null);
       setConfirmOpen(false);
       await fetchClasses();
@@ -130,7 +171,7 @@ export default function ScheduleManagement() {
   };
 
   if (selectedClass) {
-    return <ClassDetails classId={selectedClass.id} onBack={() => setSelectedClass(null)} />;
+    return <ClassDetails classId={selectedClass.id} onBack={() => setSelectedClassId('')} />;
   }
 
   if (loading) {
@@ -146,9 +187,9 @@ export default function ScheduleManagement() {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-[var(--color-text-primary)] sm:text-3xl">My Classes</h1>
+            <h1 className="text-2xl font-bold text-[var(--color-text-primary)] sm:text-3xl">Class Schedule Manager</h1>
             <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-              Create classes with detailed schedules and meeting links.
+              Manage classes, schedules, and quick class actions from one place.
             </p>
           </div>
           <button
@@ -159,13 +200,44 @@ export default function ScheduleManagement() {
           </button>
         </div>
 
+        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
+            <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">Total Classes</p>
+            <p className="mt-1 text-xl font-semibold text-[var(--color-text-primary)]">{classStats.totalClasses}</p>
+          </div>
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
+            <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">Total Enrolled</p>
+            <p className="mt-1 text-xl font-semibold text-[var(--color-text-primary)]">{classStats.totalEnrolled}</p>
+          </div>
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
+            <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">With Meeting Link</p>
+            <p className="mt-1 text-xl font-semibold text-[var(--color-text-primary)]">{classStats.classesWithMeetingLink}</p>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search class name, subject, grade, or room"
+            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25"
+          />
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+            Showing {filteredClasses.length} of {sortedClasses.length} classes
+          </p>
+        </div>
+
         {sortedClasses.length === 0 ? (
           <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-12 text-center">
             <p className="text-[var(--color-text-muted)]">No classes found. Create one to get started.</p>
           </div>
+        ) : filteredClasses.length === 0 ? (
+          <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-12 text-center">
+            <p className="text-[var(--color-text-muted)]">No classes matched your search.</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {sortedClasses.map((classItem) => (
+            {filteredClasses.map((classItem) => (
               <div
                 key={classItem.id}
                 className="group rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm transition hover:shadow-md"
@@ -210,10 +282,10 @@ export default function ScheduleManagement() {
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button
-                    onClick={() => setSelectedClass(classItem)}
+                    onClick={() => setSelectedClassId(classItem.id)}
                     className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-primary)] transition hover:bg-[var(--color-border)]/40"
                   >
-                    View Details
+                    Open Class
                   </button>
                   <button
                     onClick={() => openEditModal(classItem)}

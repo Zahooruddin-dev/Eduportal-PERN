@@ -176,7 +176,15 @@ async function ensureAdminSchema() {
 		);
 
 		CREATE INDEX IF NOT EXISTS idx_users_institute_role ON users(institute_id, role);
+		CREATE INDEX IF NOT EXISTS idx_users_institute_created ON users(institute_id, created_at DESC);
 		CREATE INDEX IF NOT EXISTS idx_classes_institute_id ON classes(institute_id);
+		CREATE INDEX IF NOT EXISTS idx_enrollments_class_student ON enrollments(class_id, student_id);
+		CREATE INDEX IF NOT EXISTS idx_enrollments_student_class ON enrollments(student_id, class_id);
+		CREATE INDEX IF NOT EXISTS idx_attendance_class_date ON attendance(class_id, date DESC);
+		CREATE INDEX IF NOT EXISTS idx_attendance_student_date ON attendance(student_id, date DESC);
+		CREATE INDEX IF NOT EXISTS idx_attendance_class_student_date ON attendance(class_id, student_id, date DESC);
+		CREATE INDEX IF NOT EXISTS idx_grades_student_released_created ON grades(student_id, released, created_at DESC);
+		CREATE INDEX IF NOT EXISTS idx_grades_class_created ON grades(class_id, created_at DESC);
 		CREATE INDEX IF NOT EXISTS idx_admin_invites_institute_status ON admin_invites(institute_id, status);
 		CREATE INDEX IF NOT EXISTS idx_reports_institute_status ON reports(institute_id, status);
 		CREATE INDEX IF NOT EXISTS idx_reports_reporter_id ON reports(reporter_id);

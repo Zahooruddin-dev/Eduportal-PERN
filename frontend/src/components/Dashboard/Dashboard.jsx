@@ -1,30 +1,41 @@
 // Dashboard.jsx
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Sidebar from '../Sidebar/Sidebar';
-import Profile from '../Sidebar/Profile/Profile';
-import EnrolledClasses from '../Sidebar/Tabs/StudentTabs/EnrolledClasses/EnrolledClasses';
-import ScheduleManagement from '../Sidebar/Tabs/TeacherTabs/ScheduleManagement/ScheduleManagement';
-import StudentAnnouncements from '../Sidebar/Tabs/StudentTabs/StudentAnnouncements/StudentAnnouncements';
-import CourseMaterial from '../Sidebar/Tabs/TeacherTabs/CourseMaterial/CourseMaterial';
-import StudentCourseMaterial from '../Sidebar/Tabs/StudentTabs/CourseMaterial/StudentCourseMaterial';
-import TeacherAttendance from '../Sidebar/Tabs/TeacherTabs/TeacherAttendance/TeacherAttendance';
-import TeacherAssignments from '../Sidebar/Tabs/TeacherTabs/Assignments/Assignments';
-import StudentAssignments from '../Sidebar/Tabs/StudentTabs/StudentAssignments/StudentAssignments';
-import Gradebook from '../Sidebar/Tabs/TeacherTabs/Gradebook/Gradebook';
-import StudentGradebook from '../Sidebar/Tabs/StudentTabs/Gradebook/StudentGradebook';
-import AcademicCalender from '../Sidebar/Tabs/StudentTabs/AcademicCalender/AcademicCalender';
-import TeacherCalender from '../Sidebar/Tabs/TeacherTabs/TeacherCalender/TeacherCalender';
-import UserManagement from '../Sidebar/Tabs/AdminTabs/UserManagement/UserManagement';
-import AdminReports from '../Sidebar/Tabs/AdminTabs/Reports/AdminReports';
-import AdminRiskOverview from '../Sidebar/Tabs/AdminTabs/RiskOverview/AdminRiskOverview';
-import ReportCenter from '../Sidebar/Tabs/Shared/ReportCenter';
-import CommunicationCenter from '../Sidebar/Tabs/Shared/CommunicationCenter';
-import AdminAnnouncements from '../Sidebar/Tabs/AdminTabs/Announcements/AdminAnnouncements';
-import AdminNotificationsCenter from '../Sidebar/Tabs/Shared/AdminNotificationsCenter';
-import ParentProfileCenter from '../Sidebar/Tabs/ParentTabs/ParentProfileCenter';
 import { getAdminNotificationUnreadSummary, markAllAdminNotificationsRead } from '../../api/api';
+
+const Profile = lazy(() => import('../Sidebar/Profile/Profile'));
+const EnrolledClasses = lazy(() => import('../Sidebar/Tabs/StudentTabs/EnrolledClasses/EnrolledClasses'));
+const ScheduleManagement = lazy(() => import('../Sidebar/Tabs/TeacherTabs/ScheduleManagement/ScheduleManagement'));
+const StudentAnnouncements = lazy(() => import('../Sidebar/Tabs/StudentTabs/StudentAnnouncements/StudentAnnouncements'));
+const CourseMaterial = lazy(() => import('../Sidebar/Tabs/TeacherTabs/CourseMaterial/CourseMaterial'));
+const StudentCourseMaterial = lazy(() => import('../Sidebar/Tabs/StudentTabs/CourseMaterial/StudentCourseMaterial'));
+const TeacherAttendance = lazy(() => import('../Sidebar/Tabs/TeacherTabs/TeacherAttendance/TeacherAttendance'));
+const TeacherAssignments = lazy(() => import('../Sidebar/Tabs/TeacherTabs/Assignments/Assignments'));
+const StudentAssignments = lazy(() => import('../Sidebar/Tabs/StudentTabs/StudentAssignments/StudentAssignments'));
+const Gradebook = lazy(() => import('../Sidebar/Tabs/TeacherTabs/Gradebook/Gradebook'));
+const StudentGradebook = lazy(() => import('../Sidebar/Tabs/StudentTabs/Gradebook/StudentGradebook'));
+const AcademicCalender = lazy(() => import('../Sidebar/Tabs/StudentTabs/AcademicCalender/AcademicCalender'));
+const TeacherCalender = lazy(() => import('../Sidebar/Tabs/TeacherTabs/TeacherCalender/TeacherCalender'));
+const UserManagement = lazy(() => import('../Sidebar/Tabs/AdminTabs/UserManagement/UserManagement'));
+const AdminReports = lazy(() => import('../Sidebar/Tabs/AdminTabs/Reports/AdminReports'));
+const AdminRiskOverview = lazy(() => import('../Sidebar/Tabs/AdminTabs/RiskOverview/AdminRiskOverview'));
+const ReportCenter = lazy(() => import('../Sidebar/Tabs/Shared/ReportCenter'));
+const CommunicationCenter = lazy(() => import('../Sidebar/Tabs/Shared/CommunicationCenter'));
+const AdminAnnouncements = lazy(() => import('../Sidebar/Tabs/AdminTabs/Announcements/AdminAnnouncements'));
+const AdminNotificationsCenter = lazy(() => import('../Sidebar/Tabs/Shared/AdminNotificationsCenter'));
+const ParentProfileCenter = lazy(() => import('../Sidebar/Tabs/ParentTabs/ParentProfileCenter'));
+
+function TabLoadingFallback() {
+	return (
+		<div className='p-6'>
+			<div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-sm text-[var(--color-text-muted)]'>
+				Loading section...
+			</div>
+		</div>
+	);
+}
 
 const ROLE_TAB_CONFIG = {
 	admin: {
@@ -337,7 +348,9 @@ export default function Dashboard() {
 					setActiveTab={setActiveTab}
 				/>
 				<main className='flex-1 overflow-auto pt-14 transition-all duration-300 lg:pt-0'>
-					{renderContent()}
+					<Suspense fallback={<TabLoadingFallback />}>
+						{renderContent()}
+					</Suspense>
 				</main>
 			</div>
 

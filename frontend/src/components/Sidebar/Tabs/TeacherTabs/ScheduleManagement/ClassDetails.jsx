@@ -28,6 +28,10 @@ export default function ClassDetails({ classId, onBack }) {
   const [announcements, setAnnouncements] = useState([]);
   const [roster, setRoster] = useState([]);
   const [removedStudents, setRemovedStudents] = useState([]);
+  const [activeSection, setActiveSection] = useState('students');
+  const [rosterQuery, setRosterQuery] = useState('');
+  const [removedQuery, setRemovedQuery] = useState('');
+  const [announcementQuery, setAnnouncementQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadingRoster, setLoadingRoster] = useState(true);
   const [loadingRemoved, setLoadingRemoved] = useState(true);
@@ -51,6 +55,48 @@ export default function ClassDetails({ classId, onBack }) {
   const [unbanSubmitting, setUnbanSubmitting] = useState(false);
 
   const scheduleBlocks = useMemo(() => getScheduleBlocksFromClass(classInfo), [classInfo]);
+  const maxStudents = Number(classInfo?.max_students) || 0;
+  const seatsRemaining = maxStudents > 0 ? Math.max(maxStudents - roster.length, 0) : null;
+
+  const filteredRoster = useMemo(() => {
+    const query = rosterQuery.trim().toLowerCase();
+    if (!query) return roster;
+    return roster.filter((student) => {
+      const username = student.username?.toLowerCase() || '';
+      const email = student.email?.toLowerCase() || '';
+      return username.includes(query) || email.includes(query);
+    });
+  }, [roster, rosterQuery]);
+
+  const filteredRemovedStudents = useMemo(() => {
+    const query = removedQuery.trim().toLowerCase();
+    if (!query) return removedStudents;
+    return removedStudents.filter((student) => {
+      const username = student.username?.toLowerCase() || '';
+      const status = student.status?.toLowerCase() || '';
+      const note = student.note?.toLowerCase() || '';
+      return username.includes(query) || status.includes(query) || note.includes(query);
+    });
+  }, [removedStudents, removedQuery]);
+
+  const filteredAnnouncements = useMemo(() => {
+    const query = announcementQuery.trim().toLowerCase();
+    if (!query) return announcements;
+    return announcements.filter((announcement) => {
+      const title = announcement.title?.toLowerCase() || '';
+      const content = announcement.content?.toLowerCase() || '';
+      return title.includes(query) || content.includes(query);
+    });
+  }, [announcements, announcementQuery]);
+
+  const sectionTabs = useMemo(
+    () => [
+      { id: 'students', label: `Students (${roster.length})` },
+      { id: 'removed', label: `Removed (${removedStudents.length})` },
+      { id: 'announcements', label: `Announcements (${announcements.length})` },
+    ],
+    [announcements.length, removedStudents.length, roster.length],
+  );
 
   const loadClass = useCallback(async () => {
     setLoading(true);
@@ -109,6 +155,13 @@ export default function ClassDetails({ classId, onBack }) {
     loadRoster();
     loadRemovedStudents();
   }, [loadClass, loadRoster, loadRemovedStudents]);
+
+  useEffect(() => {
+    setActiveSection('students');
+    setRosterQuery('');
+    setRemovedQuery('');
+    setAnnouncementQuery('');
+  }, [classId]);
 
   const handleAnnouncementChange = (event) => {
     const { name, value } = event.target;
@@ -239,7 +292,7 @@ export default function ClassDetails({ classId, onBack }) {
           ← Back to Classes
         </button>
 
-        <div className="space-y-8">
+        <div className="space-y-6">
           <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
             <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">{classInfo?.class_name}</h1>
             {classInfo?.subject && <p className="mt-1 text-sm text-[var(--color-primary)]">{classInfo.subject}</p>}
@@ -256,6 +309,23 @@ export default function ClassDetails({ classId, onBack }) {
               <div>
                 <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">Capacity</p>
                 <p className="text-sm text-[var(--color-text-primary)]">{classInfo?.max_students || '-'}</p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-3">
+                <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">Enrolled</p>
+                <p className="text-lg font-semibold text-[var(--color-text-primary)]">{roster.length}</p>
+              </div>
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-3">
+                <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">Seats Available</p>
+                <p className="text-lg font-semibold text-[var(--color-text-primary)]">
+                  {seatsRemaining === null ? '-' : seatsRemaining}
+                </p>
+              </div>
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-3">
+                <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">Announcements</p>
+                <p className="text-lg font-semibold text-[var(--color-text-primary)]">{announcements.length}</p>
               </div>
             </div>
 
@@ -299,167 +369,234 @@ export default function ClassDetails({ classId, onBack }) {
             )}
           </div>
 
-          <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-4">
-              Enrolled Students ({roster.length})
-            </h2>
-            {loadingRoster ? (
-              <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
-                <SpinnerIcon />
-                Loading roster...
-              </div>
-            ) : roster.length === 0 ? (
-              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4 text-sm text-[var(--color-text-muted)]">
-                No students enrolled in this class.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {roster.map((student) => (
+          <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 shadow-sm">
+            <div className="flex flex-wrap gap-2">
+              {sectionTabs.map((tab) => {
+                const isActive = tab.id === activeSection;
+                return (
                   <button
-                    key={student.student_id}
-                    onClick={() => openStudentModal(student.student_id)}
-                    className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-3 text-left transition hover:bg-[var(--color-border)]/30 hover:shadow-sm"
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveSection(tab.id)}
+                    className={`rounded-lg px-3 py-1.5 text-sm transition ${
+                      isActive
+                        ? 'bg-[var(--color-primary)] text-white'
+                        : 'border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/40'
+                    }`}
                   >
-                    {student.profile_pic ? (
-                      <img src={student.profile_pic} alt={student.username} className="h-10 w-10 rounded-full object-cover" />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-primary)]/15 text-sm font-semibold text-[var(--color-primary)]">
-                        {student.username?.charAt(0)?.toUpperCase()}
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">{student.username}</p>
-                      <p className="truncate text-xs text-[var(--color-text-muted)]">{student.email || 'No email'}</p>
-                    </div>
+                    {tab.label}
                   </button>
-                ))}
-              </div>
-            )}
+                );
+              })}
+            </div>
           </div>
 
-          <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-4">Removed and Banned Students</h2>
-            {loadingRemoved ? (
-              <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
-                <SpinnerIcon />
-                Loading list...
-              </div>
-            ) : removedStudents.length === 0 ? (
-              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4 text-sm text-[var(--color-text-muted)]">
-                No removed students yet.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {removedStudents.map((student) => (
-                  <div
-                    key={`${student.student_id}-${student.updated_at}`}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-3"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                        {student.username} ({student.status})
-                      </p>
-                      <p className="text-xs text-[var(--color-text-muted)]">
-                        Policy: {student.data_policy} {student.note ? `- ${student.note}` : ''}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => openStudentModal(student.student_id)}
-                        className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-primary)] transition hover:bg-[var(--color-border)]/40"
-                      >
-                        View Profile
-                      </button>
-                      <button
-                        onClick={() => setPendingUnbanStudent(student)}
-                        className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-success)] transition hover:bg-[var(--color-success)]/10"
-                      >
-                        Allow Re-enroll
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-4">Announcements</h2>
-
-            <form onSubmit={submitAnnouncement} className="mb-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4">
-              <div className="mb-3">
+          {activeSection === 'students' && (
+            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Enrolled Students</h2>
                 <input
                   type="text"
-                  name="title"
-                  value={newAnnouncement.title}
-                  onChange={handleAnnouncementChange}
-                  placeholder="Title"
-                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                  value={rosterQuery}
+                  onChange={(event) => setRosterQuery(event.target.value)}
+                  placeholder="Search by name or email"
+                  className="w-full max-w-sm rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
                 />
               </div>
-              <div className="mb-3">
-                <textarea
-                  name="content"
-                  rows="3"
-                  value={newAnnouncement.content}
-                  onChange={handleAnnouncementChange}
-                  placeholder="Announcement content"
-                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-                />
-              </div>
-              <div className="flex flex-wrap items-end gap-3">
-                <div>
-                  <label className="mb-1 block text-xs text-[var(--color-text-muted)]">Expires</label>
-                  <input
-                    type="datetime-local"
-                    name="expires_at"
-                    value={newAnnouncement.expires_at}
-                    onChange={handleAnnouncementChange}
-                    className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)]"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={submittingAnnouncement}
-                  className="rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm text-white transition hover:bg-[var(--color-primary-hover)] disabled:opacity-60"
-                >
-                  {submittingAnnouncement ? 'Posting...' : 'Post Announcement'}
-                </button>
-              </div>
-            </form>
 
-            {announcements.length === 0 ? (
-              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4 text-sm text-[var(--color-text-muted)]">
-                No announcements posted yet.
+              {loadingRoster ? (
+                <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+                  <SpinnerIcon />
+                  Loading roster...
+                </div>
+              ) : roster.length === 0 ? (
+                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4 text-sm text-[var(--color-text-muted)]">
+                  No students enrolled in this class.
+                </div>
+              ) : filteredRoster.length === 0 ? (
+                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4 text-sm text-[var(--color-text-muted)]">
+                  No students match your search.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredRoster.map((student) => (
+                    <button
+                      key={student.student_id}
+                      onClick={() => openStudentModal(student.student_id)}
+                      className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-3 text-left transition hover:bg-[var(--color-border)]/30 hover:shadow-sm"
+                    >
+                      {student.profile_pic ? (
+                        <img src={student.profile_pic} alt={student.username} className="h-10 w-10 rounded-full object-cover" />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-primary)]/15 text-sm font-semibold text-[var(--color-primary)]">
+                          {student.username?.charAt(0)?.toUpperCase()}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">{student.username}</p>
+                        <p className="truncate text-xs text-[var(--color-text-muted)]">{student.email || 'No email'}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeSection === 'removed' && (
+            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Removed and Banned Students</h2>
+                <input
+                  type="text"
+                  value={removedQuery}
+                  onChange={(event) => setRemovedQuery(event.target.value)}
+                  placeholder="Search by name, status, or note"
+                  className="w-full max-w-sm rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                />
               </div>
-            ) : (
-              <div className="space-y-3">
-                {announcements.map((announcement) => (
-                  <article
-                    key={announcement.id}
-                    className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4 transition hover:shadow-sm"
-                  >
-                    <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+
+              {loadingRemoved ? (
+                <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+                  <SpinnerIcon />
+                  Loading list...
+                </div>
+              ) : removedStudents.length === 0 ? (
+                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4 text-sm text-[var(--color-text-muted)]">
+                  No removed students yet.
+                </div>
+              ) : filteredRemovedStudents.length === 0 ? (
+                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4 text-sm text-[var(--color-text-muted)]">
+                  No removed students match your search.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredRemovedStudents.map((student) => (
+                    <div
+                      key={`${student.student_id}-${student.updated_at}`}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-3"
+                    >
                       <div>
-                        <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{announcement.title}</h3>
+                        <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                          {student.username} ({student.status})
+                        </p>
                         <p className="text-xs text-[var(--color-text-muted)]">
-                          Posted {formatDateTime(announcement.created_at)}
-                          {announcement.expires_at && ` • Expires ${formatDateTime(announcement.expires_at)}`}
+                          Policy: {student.data_policy} {student.note ? `- ${student.note}` : ''}
                         </p>
                       </div>
-                      <button
-                        onClick={() => setPendingAnnouncementDelete(announcement.id)}
-                        className="rounded-lg border border-[var(--color-border)] px-2.5 py-1 text-xs text-[var(--color-danger)] transition hover:bg-[var(--color-danger)]/10"
-                      >
-                        Delete
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => openStudentModal(student.student_id)}
+                          className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-primary)] transition hover:bg-[var(--color-border)]/40"
+                        >
+                          View Profile
+                        </button>
+                        <button
+                          onClick={() => setPendingUnbanStudent(student)}
+                          className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-success)] transition hover:bg-[var(--color-success-soft)]"
+                        >
+                          Allow Re-enroll
+                        </button>
+                      </div>
                     </div>
-                    <p className="whitespace-pre-wrap text-sm text-[var(--color-text-secondary)]">{announcement.content}</p>
-                  </article>
-                ))}
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeSection === 'announcements' && (
+            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Announcements</h2>
+                <input
+                  type="text"
+                  value={announcementQuery}
+                  onChange={(event) => setAnnouncementQuery(event.target.value)}
+                  placeholder="Search title or content"
+                  className="w-full max-w-sm rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                />
               </div>
-            )}
-          </div>
+
+              <form onSubmit={submitAnnouncement} className="mb-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4">
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    name="title"
+                    value={newAnnouncement.title}
+                    onChange={handleAnnouncementChange}
+                    placeholder="Title"
+                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                  />
+                </div>
+                <div className="mb-3">
+                  <textarea
+                    name="content"
+                    rows="3"
+                    value={newAnnouncement.content}
+                    onChange={handleAnnouncementChange}
+                    placeholder="Announcement content"
+                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                  />
+                </div>
+                <div className="flex flex-wrap items-end gap-3">
+                  <div>
+                    <label className="mb-1 block text-xs text-[var(--color-text-muted)]">Expires</label>
+                    <input
+                      type="datetime-local"
+                      name="expires_at"
+                      value={newAnnouncement.expires_at}
+                      onChange={handleAnnouncementChange}
+                      className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)]"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={submittingAnnouncement}
+                    className="rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm text-white transition hover:bg-[var(--color-primary-hover)] disabled:opacity-60"
+                  >
+                    {submittingAnnouncement ? 'Posting...' : 'Post Announcement'}
+                  </button>
+                </div>
+              </form>
+
+              {announcements.length === 0 ? (
+                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4 text-sm text-[var(--color-text-muted)]">
+                  No announcements posted yet.
+                </div>
+              ) : filteredAnnouncements.length === 0 ? (
+                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4 text-sm text-[var(--color-text-muted)]">
+                  No announcements match your search.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredAnnouncements.map((announcement) => (
+                    <article
+                      key={announcement.id}
+                      className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4 transition hover:shadow-sm"
+                    >
+                      <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{announcement.title}</h3>
+                          <p className="text-xs text-[var(--color-text-muted)]">
+                            Posted {formatDateTime(announcement.created_at)}
+                            {announcement.expires_at && ` • Expires ${formatDateTime(announcement.expires_at)}`}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setPendingAnnouncementDelete(announcement.id)}
+                          className="rounded-lg border border-[var(--color-border)] px-2.5 py-1 text-xs text-[var(--color-danger)] transition hover:bg-[var(--color-danger-soft)]"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                      <p className="whitespace-pre-wrap text-sm text-[var(--color-text-secondary)]">{announcement.content}</p>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../db/queryAuth');
 const { sendResetEmail } = require('../utility/emailSender');
+const { deleteCacheByPrefix } = require('../utility/ttlCache');
 
 function normalizeEmail(value) {
 	return String(value || '').trim().toLowerCase();
@@ -204,6 +205,7 @@ async function updateMyParentProfile(req, res) {
 		if (!updatedProfile) {
 			return res.status(404).json({ message: 'Parent profile not found.' });
 		}
+		deleteCacheByPrefix(`parent-overview:${req.user.id}:`);
 
 		return res.status(200).json({
 			message: 'Parent profile updated successfully.',
