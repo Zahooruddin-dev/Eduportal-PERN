@@ -86,6 +86,36 @@ async function ensureAdminSchema() {
 			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 		);
 
+		CREATE TABLE IF NOT EXISTS conversations (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			institute_id UUID NOT NULL REFERENCES institutes(id) ON DELETE CASCADE,
+			is_direct BOOLEAN NOT NULL DEFAULT true,
+			created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+			last_message_at TIMESTAMP WITH TIME ZONE
+		);
+
+		CREATE TABLE IF NOT EXISTS conversation_participants (
+			conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			joined_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+			last_read_at TIMESTAMP WITH TIME ZONE,
+			PRIMARY KEY (conversation_id, user_id)
+		);
+
+		CREATE TABLE IF NOT EXISTS messages (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+			sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			content TEXT NOT NULL,
+			reply_to_message_id UUID REFERENCES messages(id) ON DELETE SET NULL,
+			is_deleted BOOLEAN NOT NULL DEFAULT false,
+			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+			edited_at TIMESTAMP WITH TIME ZONE
+		);
+
 		CREATE INDEX IF NOT EXISTS idx_users_institute_role ON users(institute_id, role);
 		CREATE INDEX IF NOT EXISTS idx_classes_institute_id ON classes(institute_id);
 		CREATE INDEX IF NOT EXISTS idx_admin_invites_institute_status ON admin_invites(institute_id, status);
@@ -93,6 +123,10 @@ async function ensureAdminSchema() {
 		CREATE INDEX IF NOT EXISTS idx_reports_reporter_id ON reports(reporter_id);
 		CREATE INDEX IF NOT EXISTS idx_reports_target_user_id ON reports(target_user_id);
 		CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at DESC);
+		CREATE INDEX IF NOT EXISTS idx_conversations_institute_last_message ON conversations(institute_id, last_message_at DESC);
+		CREATE INDEX IF NOT EXISTS idx_conversation_participants_user ON conversation_participants(user_id, last_read_at);
+		CREATE INDEX IF NOT EXISTS idx_messages_conversation_created ON messages(conversation_id, created_at DESC);
+		CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id, created_at DESC);
 	`);
 
 	const { rows } = await pool.query(`

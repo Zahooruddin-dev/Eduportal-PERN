@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
 import {
 	createReport,
 	getMyReports,
@@ -33,6 +34,7 @@ export default function ReportCenter() {
 	const [targets, setTargets] = useState([]);
 	const [reports, setReports] = useState([]);
 	const [loading, setLoading] = useState(true);
+	const [refreshing, setRefreshing] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
 	const reportSnapshotRef = useRef(new Map());
 	const hasInitialSnapshotRef = useRef(false);
@@ -202,6 +204,13 @@ export default function ReportCenter() {
 		}
 	};
 
+	const handleManualRefresh = useCallback(async () => {
+		if (refreshing) return;
+		setRefreshing(true);
+		await loadReports({ silent: true });
+		setRefreshing(false);
+	}, [loadReports, refreshing]);
+
 	return (
 		<div className='p-4 sm:p-6 lg:p-8 space-y-6'>
 			<div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6'>
@@ -303,7 +312,18 @@ export default function ReportCenter() {
 			</form>
 
 			<div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6 space-y-4'>
-				<h2 className='text-lg font-semibold text-[var(--color-text-primary)]'>My submissions</h2>
+				<div className='flex items-center justify-between gap-3'>
+					<h2 className='text-lg font-semibold text-[var(--color-text-primary)]'>My submissions</h2>
+					<button
+						type='button'
+						onClick={handleManualRefresh}
+						disabled={refreshing || loading}
+						className='inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/40 disabled:opacity-60'
+					>
+						<RefreshCw size={14} className={refreshing || loading ? 'animate-spin' : ''} />
+						{refreshing || loading ? 'Refreshing' : 'Refresh'}
+					</button>
+				</div>
 				{loading ? (
 					<div className='rounded-xl border border-[var(--color-border)] p-4 text-sm text-[var(--color-text-muted)]'>Loading...</div>
 				) : reports.length ? (

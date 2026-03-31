@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
 import {
 	getInstituteReports,
 	getReportMeta,
@@ -29,6 +30,7 @@ export default function AdminReports() {
 	const [meta, setMeta] = useState({ kinds: [], types: [], statuses: [] });
 	const [reports, setReports] = useState([]);
 	const [loading, setLoading] = useState(true);
+	const [refreshing, setRefreshing] = useState(false);
 	const [savingById, setSavingById] = useState({});
 	const [statusById, setStatusById] = useState({});
 	const [feedbackById, setFeedbackById] = useState({});
@@ -54,8 +56,11 @@ export default function AdminReports() {
 		}
 	}, [openToast]);
 
-	const loadReports = useCallback(async (currentFilters = filters) => {
-		setLoading(true);
+	const loadReports = useCallback(async (currentFilters = filters, options = {}) => {
+		const { silent = false } = options;
+		if (!silent) {
+			setLoading(true);
+		}
 		try {
 			const response = await getInstituteReports(currentFilters);
 			const list = response.data || [];
@@ -69,9 +74,13 @@ export default function AdminReports() {
 			setStatusById(statusMap);
 			setFeedbackById(feedbackMap);
 		} catch (error) {
-			openToast('error', error?.response?.data?.message || 'Failed to load institute reports.');
+			if (!silent) {
+				openToast('error', error?.response?.data?.message || 'Failed to load institute reports.');
+			}
 		} finally {
-			setLoading(false);
+			if (!silent) {
+				setLoading(false);
+			}
 		}
 	}, [filters, openToast]);
 
@@ -107,6 +116,13 @@ export default function AdminReports() {
 		loadReports(filters);
 	};
 
+	const handleManualRefresh = useCallback(async () => {
+		if (refreshing) return;
+		setRefreshing(true);
+		await loadReports(filters, { silent: true });
+		setRefreshing(false);
+	}, [filters, loadReports, refreshing]);
+
 	const handleUpdateStatus = async (reportId) => {
 		const status = statusById[reportId];
 		if (!status) {
@@ -131,8 +147,21 @@ export default function AdminReports() {
 	return (
 		<div className='p-4 sm:p-6 lg:p-8 space-y-6'>
 			<div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6'>
-				<h1 className='text-2xl font-semibold text-[var(--color-text-primary)]'>Reports</h1>
-				<p className='mt-1 text-sm text-[var(--color-text-muted)]'>Review reports and complaints from students, teachers, and admins in your institute.</p>
+				<div className='flex items-start justify-between gap-3'>
+					<div>
+						<h1 className='text-2xl font-semibold text-[var(--color-text-primary)]'>Reports</h1>
+						<p className='mt-1 text-sm text-[var(--color-text-muted)]'>Review reports and complaints from students, teachers, and admins in your institute.</p>
+					</div>
+					<button
+						type='button'
+						onClick={handleManualRefresh}
+						disabled={refreshing || loading}
+						className='inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/40 disabled:opacity-60'
+					>
+						<RefreshCw size={14} className={refreshing || loading ? 'animate-spin' : ''} />
+						{refreshing || loading ? 'Refreshing' : 'Refresh'}
+					</button>
+				</div>
 				<div className='mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6'>
 					<div className='rounded-xl border border-[var(--color-border)] p-3'><p className='text-xs text-[var(--color-text-muted)]'>Total</p><p className='text-lg font-semibold text-[var(--color-text-primary)]'>{summary.total}</p></div>
 					<div className='rounded-xl border border-[var(--color-border)] p-3'><p className='text-xs text-[var(--color-text-muted)]'>Submitted</p><p className='text-lg font-semibold text-[var(--color-text-primary)]'>{summary.submitted}</p></div>
