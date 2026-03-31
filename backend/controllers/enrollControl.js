@@ -5,6 +5,57 @@ const { isUuid } = require('../middleware/uuidParamMiddleware');
 
 const REMOVAL_ACTIONS = new Set(['kick', 'ban']);
 const DATA_POLICIES = new Set(['keep', 'delete_grades', 'delete_all']);
+const READABLE_STUDENT_ROLES = new Set(['student', 'teacher', 'admin']);
+
+async function getStudentById(studentId) {
+  const userResult = await pool.query(
+    'SELECT id, role, institute_id FROM users WHERE id = $1',
+    [studentId],
+  );
+  return userResult.rows[0] || null;
+}
+
+async function teacherCanAccessStudentSchedule({ teacherId, studentId, instituteId }) {
+  const relationResult = await pool.query(
+    `SELECT 1
+     FROM enrollments e
+     JOIN classes c ON c.id = e.class_id
+     WHERE e.student_id = $1
+     AND c.teacher_id = $2
+     AND c.institute_id = $3
+     LIMIT 1`,
+    [studentId, teacherId, instituteId],
+  );
+  return relationResult.rows.length > 0;
+}
+
+async function teacherCanAccessStudentStatus({ teacherId, studentId, instituteId }) {
+  const relationResult = await pool.query(
+    `SELECT 1
+     FROM class_enrollment_status ces
+     JOIN classes c ON c.id = ces.class_id
+     WHERE ces.student_id = $1
+     AND c.teacher_id = $2
+     AND c.institute_id = $3
+     LIMIT 1`,
+    [studentId, teacherId, instituteId],
+  );
+  return relationResult.rows.length > 0;
+}
+
+async function getClassEnrollmentSummary(classId) {
+  const result = await pool.query(
+    `SELECT
+        c.max_students,
+        COUNT(e.student_id)::int AS enrolled_count
+     FROM classes c
+     LEFT JOIN enrollments e ON e.class_id = c.id
+     WHERE c.id = $1
+     GROUP BY c.id, c.max_students`,
+    [classId],
+  );
+  return result.rows[0] || null;
+}
 
 async function assertTeacherOwnsClass(classId, user) {
   const classObj = await dbClass.getClassByIdQuery(classId);
@@ -45,6 +96,8 @@ function normalizeDataPolicy(value) {
 
 async function createEnrollment(req, res) {
   const { student_id, class_id } = req.body;
+  const requesterRole = String(req.user?.role || '').toLowerCase();
+  const requesterInstituteId = req.user?.instituteId || null;
 
   if (!student_id || !class_id) {
     return res.status(400).json({ error: 'Student and Class ID are required.' });
@@ -54,13 +107,20 @@ async function createEnrollment(req, res) {
     return res.status(400).json({ error: 'Invalid student_id or class_id format.' });
   }
 
-  if (req.user.role === 'student' && req.user.id !== student_id) {
+  if (!READABLE_STUDENT_ROLES.has(requesterRole)) {
+    return res.status(403).json({ error: 'Unauthorized to enroll students.' });
+  }
+
+  if (!requesterInstituteId) {
+    return res.status(403).json({ error: 'Requester is not linked to an institute.' });
+  }
+
+  if (requesterRole === 'student' && req.user.id !== student_id) {
     return res.status(403).json({ error: 'You can only enroll yourself in a class.' });
   }
 
   try {
-    const userResult = await pool.query('SELECT id, role, institute_id FROM users WHERE id = $1', [student_id]);
-    const user = userResult.rows[0];
+    const user = await getStudentById(student_id);
 
     if (!user || user.role !== 'student') {
       return res.status(404).json({ error: 'Valid student not found. Cannot enroll.' });
@@ -71,8 +131,23 @@ async function createEnrollment(req, res) {
       return res.status(404).json({ error: 'Class not found.' });
     }
 
-    if (user.institute_id !== classObj.institute_id) {
+    if (
+      user.institute_id !== classObj.institute_id
+      || requesterInstituteId !== classObj.institute_id
+      || requesterInstituteId !== user.institute_id
+    ) {
       return res.status(403).json({ error: 'Cannot enroll outside your institute.' });
+    }
+
+    if (requesterRole === 'teacher' && classObj.teacher_id !== req.user.id) {
+      return res.status(403).json({ error: 'Teachers can only enroll students in their own classes.' });
+    }
+
+    const enrollmentSummary = await getClassEnrollmentSummary(class_id);
+    const maxStudents = Number(enrollmentSummary?.max_students || 0);
+    const enrolledCount = Number(enrollmentSummary?.enrolled_count || 0);
+    if (maxStudents > 0 && enrolledCount >= maxStudents) {
+      return res.status(409).json({ error: 'Class is at maximum capacity.' });
     }
 
     const status = await db.getEnrollmentStatusQuery(class_id, student_id);
@@ -114,15 +189,44 @@ async function rooster(req, res) {
 
 async function getStudentSchedule(req, res) {
   const { id } = req.params;
+  const requesterRole = String(req.user?.role || '').toLowerCase();
+  const requesterInstituteId = req.user?.instituteId || null;
+
   if (!id) {
     return res.status(400).json({ error: 'Id required to be able to get the student schedule' });
   }
 
-  if (req.user.role === 'student' && req.user.id !== id) {
-    return res.status(403).json({ error: 'You can only view your own schedule.' });
-  }
-
   try {
+    if (!READABLE_STUDENT_ROLES.has(requesterRole)) {
+      return res.status(403).json({ error: 'Unauthorized to access student schedule.' });
+    }
+
+    const targetStudent = await getStudentById(id);
+    if (!targetStudent || targetStudent.role !== 'student') {
+      return res.status(404).json({ error: 'Student not found.' });
+    }
+
+    if (requesterRole === 'student') {
+      if (req.user.id !== id) {
+        return res.status(403).json({ error: 'You can only view your own schedule.' });
+      }
+    } else {
+      if (!requesterInstituteId || requesterInstituteId !== targetStudent.institute_id) {
+        return res.status(403).json({ error: 'Unauthorized to access this student schedule.' });
+      }
+
+      if (requesterRole === 'teacher') {
+        const allowed = await teacherCanAccessStudentSchedule({
+          teacherId: req.user.id,
+          studentId: id,
+          instituteId: requesterInstituteId,
+        });
+        if (!allowed) {
+          return res.status(403).json({ error: 'Unauthorized to access this student schedule.' });
+        }
+      }
+    }
+
     const schedule = await db.getStudentScheduleQuery(id);
     res.status(200).json(schedule);
   } catch (err) {
@@ -136,17 +240,41 @@ async function getStudentSchedule(req, res) {
 
 async function unenrollStudent(req, res) {
   const { studentId, classId } = req.params;
+  const requesterRole = String(req.user?.role || '').toLowerCase();
+  const requesterInstituteId = req.user?.instituteId || null;
 
   if (!isUuid(studentId) || !isUuid(classId)) {
     return res.status(400).json({ error: 'Invalid student or class id format.' });
   }
 
   try {
-    if (req.user.role === 'student' && req.user.id !== studentId) {
+    if (!READABLE_STUDENT_ROLES.has(requesterRole)) {
+      return res.status(403).json({ error: 'Unauthorized to unenroll students.' });
+    }
+
+    const classObj = await dbClass.getClassByIdQuery(classId);
+    if (!classObj) {
+      return res.status(404).json({ error: 'Class not found.' });
+    }
+
+    const targetStudent = await getStudentById(studentId);
+    if (!targetStudent || targetStudent.role !== 'student') {
+      return res.status(404).json({ error: 'Student not found.' });
+    }
+
+    if (
+      !requesterInstituteId
+      || requesterInstituteId !== classObj.institute_id
+      || requesterInstituteId !== targetStudent.institute_id
+    ) {
+      return res.status(403).json({ error: 'Unauthorized to manage this enrollment.' });
+    }
+
+    if (requesterRole === 'student' && req.user.id !== studentId) {
       return res.status(403).json({ error: 'You can only unenroll yourself.' });
     }
 
-    if (req.user.role === 'teacher') {
+    if (requesterRole === 'teacher') {
       const access = await assertTeacherOwnsClass(classId, req.user);
       if (!access.ok) {
         return res.status(access.status).json({ error: access.error });
@@ -179,6 +307,10 @@ async function removeStudentFromClass(req, res) {
 
   if (!action) {
     return res.status(400).json({ error: 'Action must be either kick or ban.' });
+  }
+
+  if (note && note.length > 1000) {
+    return res.status(400).json({ error: 'Note cannot exceed 1000 characters.' });
   }
 
   try {
@@ -251,6 +383,10 @@ async function unbanStudent(req, res) {
     return res.status(400).json({ error: 'Invalid student or class id format.' });
   }
 
+  if (note && note.length > 1000) {
+    return res.status(400).json({ error: 'Note cannot exceed 1000 characters.' });
+  }
+
   try {
     const access = await assertTeacherOwnsClass(classId, req.user);
     if (!access.ok) {
@@ -301,15 +437,44 @@ async function getStudentProfileForClass(req, res) {
 
 async function getBannedClassIdsForStudent(req, res) {
   const { id } = req.params;
+  const requesterRole = String(req.user?.role || '').toLowerCase();
+  const requesterInstituteId = req.user?.instituteId || null;
+
   if (!isUuid(id)) {
     return res.status(400).json({ error: 'Invalid student id format.' });
   }
 
-  if (req.user.role === 'student' && req.user.id !== id) {
-    return res.status(403).json({ error: 'Unauthorized to access banned class list.' });
-  }
-
   try {
+    if (!READABLE_STUDENT_ROLES.has(requesterRole)) {
+      return res.status(403).json({ error: 'Unauthorized to access banned class list.' });
+    }
+
+    const targetStudent = await getStudentById(id);
+    if (!targetStudent || targetStudent.role !== 'student') {
+      return res.status(404).json({ error: 'Student not found.' });
+    }
+
+    if (requesterRole === 'student') {
+      if (req.user.id !== id) {
+        return res.status(403).json({ error: 'Unauthorized to access banned class list.' });
+      }
+    } else {
+      if (!requesterInstituteId || requesterInstituteId !== targetStudent.institute_id) {
+        return res.status(403).json({ error: 'Unauthorized to access banned class list.' });
+      }
+
+      if (requesterRole === 'teacher') {
+        const allowed = await teacherCanAccessStudentStatus({
+          teacherId: req.user.id,
+          studentId: id,
+          instituteId: requesterInstituteId,
+        });
+        if (!allowed) {
+          return res.status(403).json({ error: 'Unauthorized to access banned class list.' });
+        }
+      }
+    }
+
     const bannedClassIds = await db.getBannedClassIdsForStudentQuery(id);
     return res.status(200).json({ bannedClassIds });
   } catch (err) {

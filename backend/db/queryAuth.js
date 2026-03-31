@@ -46,6 +46,14 @@ async function deleteUserQuery(email) {
 	);
 	return rows[0] || null;
 }
+
+async function deleteUserByIdQuery(userId) {
+	const { rows } = await pool.query(
+		'DELETE FROM users WHERE id = $1 RETURNING id',
+		[userId],
+	);
+	return rows[0] || null;
+}
 async function getUserByEmail(email) {
 	const { rows } = await pool.query('SELECT * FROM users WHERE email =$1', [
 		email,
@@ -83,6 +91,7 @@ module.exports = {
 	registerQuery,
 	updateUsername,
 	deleteUserQuery,
+	deleteUserByIdQuery,
 	getUserByEmail,
 	updatePasswordQuery,
 	verifyResetCode,

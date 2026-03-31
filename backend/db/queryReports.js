@@ -61,7 +61,7 @@ async function createReportQuery({
 	return rows[0];
 }
 
-async function listMyReportsQuery({ reporterId, instituteId }) {
+async function listMyReportsQuery({ reporterId, instituteId, limit = 50, offset = 0 }) {
 	const { rows } = await pool.query(
 		`SELECT
 			r.id,
@@ -80,8 +80,9 @@ async function listMyReportsQuery({ reporterId, instituteId }) {
 		LEFT JOIN users target ON target.id = r.target_user_id
 		WHERE r.reporter_id = $1
 		AND r.institute_id = $2
-		ORDER BY r.created_at DESC`,
-		[reporterId, instituteId],
+		ORDER BY r.created_at DESC
+		LIMIT $3 OFFSET $4`,
+		[reporterId, instituteId, limit, offset],
 	);
 	return rows;
 }
@@ -111,6 +112,8 @@ async function listInstituteReportsQuery({
 	reportType,
 	reporterRole,
 	search,
+	limit = 50,
+	offset = 0,
 }) {
 	const clauses = ['r.institute_id = $1'];
 	const values = [instituteId];
@@ -151,6 +154,13 @@ async function listInstituteReportsQuery({
 		values.push(`%${search}%`);
 	}
 
+	const limitParam = paramIndex;
+	values.push(limit);
+	paramIndex += 1;
+
+	const offsetParam = paramIndex;
+	values.push(offset);
+
 	const { rows } = await pool.query(
 		`SELECT
 			r.id,
@@ -175,7 +185,8 @@ async function listInstituteReportsQuery({
 		LEFT JOIN users target ON target.id = r.target_user_id
 		LEFT JOIN users admin ON admin.id = r.updated_by_admin_id
 		WHERE ${clauses.join(' AND ')}
-		ORDER BY r.created_at DESC`,
+		ORDER BY r.created_at DESC
+		LIMIT $${limitParam} OFFSET $${offsetParam}`,
 		values,
 	);
 	return rows;

@@ -2,6 +2,9 @@ const db = require('../db/queryCommunication');
 const { isUuid } = require('../middleware/uuidParamMiddleware');
 
 const SEARCH_ROLES = ['all', 'teacher', 'student'];
+const COMMUNICATION_ROLES = new Set(['student', 'teacher', 'admin']);
+const MAX_SEARCH_LENGTH = 80;
+const MAX_SUBJECT_LENGTH = 80;
 
 function normalizeText(value) {
 	return String(value || '').trim();
@@ -11,6 +14,10 @@ async function getScopeOrFail(req, res) {
 	const scope = await db.getUserScopeByIdQuery(req.user.id);
 	if (!scope || !scope.institute_id) {
 		res.status(403).json({ message: 'User is not linked to an institute.' });
+		return null;
+	}
+	if (!COMMUNICATION_ROLES.has(String(scope.role || '').toLowerCase())) {
+		res.status(403).json({ message: 'Unauthorized to access communication module.' });
 		return null;
 	}
 	return scope;
@@ -46,6 +53,12 @@ async function searchContacts(req, res) {
 
 	if (!SEARCH_ROLES.includes(role)) {
 		return res.status(400).json({ message: 'Invalid role filter.' });
+	}
+	if (search.length > MAX_SEARCH_LENGTH) {
+		return res.status(400).json({ message: `Search cannot exceed ${MAX_SEARCH_LENGTH} characters.` });
+	}
+	if (subject.length > MAX_SUBJECT_LENGTH) {
+		return res.status(400).json({ message: `Subject cannot exceed ${MAX_SUBJECT_LENGTH} characters.` });
 	}
 
 	if (scope.role === 'student' && role === 'all') {

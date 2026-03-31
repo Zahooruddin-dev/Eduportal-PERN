@@ -21,6 +21,19 @@ const REPORT_STATUSES = [
 	'closed',
 ];
 const TARGET_ROLES = ['all', 'admin', 'teacher', 'student'];
+const MAX_TITLE_LENGTH = 200;
+const MAX_DESCRIPTION_LENGTH = 5000;
+const MAX_SEARCH_LENGTH = 120;
+const MAX_FEEDBACK_LENGTH = 2000;
+
+function parsePositiveInt(value, fallback, min, max) {
+	const numeric = Number(value);
+	if (!Number.isFinite(numeric)) return fallback;
+	const integer = Math.trunc(numeric);
+	if (integer < min) return min;
+	if (integer > max) return max;
+	return integer;
+}
 
 function normalizeText(value) {
 	return String(value || '').trim();
@@ -128,6 +141,12 @@ async function createReport(req, res) {
 	if (!description) {
 		return res.status(400).json({ message: 'Description is required.' });
 	}
+	if (title.length > MAX_TITLE_LENGTH) {
+		return res.status(400).json({ message: `Title cannot exceed ${MAX_TITLE_LENGTH} characters.` });
+	}
+	if (description.length > MAX_DESCRIPTION_LENGTH) {
+		return res.status(400).json({ message: `Description cannot exceed ${MAX_DESCRIPTION_LENGTH} characters.` });
+	}
 
 	let target = null;
 	if (targetUserId) {
@@ -167,11 +186,16 @@ async function createReport(req, res) {
 async function getMyReports(req, res) {
 	const scope = await getUserScope(req, res);
 	if (!scope) return;
+	const limit = parsePositiveInt(req.query?.limit, 50, 1, 100);
+	const page = parsePositiveInt(req.query?.page, 1, 1, 1000);
+	const offset = (page - 1) * limit;
 
 	try {
 		const reports = await db.listMyReportsQuery({
 			reporterId: scope.id,
 			instituteId: scope.institute_id,
+			limit,
+			offset,
 		});
 		return res.status(200).json(reports);
 	} catch (error) {
@@ -188,6 +212,9 @@ async function getInstituteReports(req, res) {
 	const reportType = normalizeText(req.query?.reportType || 'all').toLowerCase();
 	const reporterRole = normalizeText(req.query?.reporterRole || 'all').toLowerCase();
 	const search = normalizeText(req.query?.search || '');
+	const limit = parsePositiveInt(req.query?.limit, 50, 1, 100);
+	const page = parsePositiveInt(req.query?.page, 1, 1, 1000);
+	const offset = (page - 1) * limit;
 
 	if (status !== 'all' && !REPORT_STATUSES.includes(status)) {
 		return res.status(400).json({ message: 'Invalid status filter.' });
@@ -201,6 +228,9 @@ async function getInstituteReports(req, res) {
 	if (reporterRole !== 'all' && !['admin', 'teacher', 'student', 'parent'].includes(reporterRole)) {
 		return res.status(400).json({ message: 'Invalid reporter role filter.' });
 	}
+	if (search.length > MAX_SEARCH_LENGTH) {
+		return res.status(400).json({ message: `Search cannot exceed ${MAX_SEARCH_LENGTH} characters.` });
+	}
 
 	try {
 		const reports = await db.listInstituteReportsQuery({
@@ -210,6 +240,8 @@ async function getInstituteReports(req, res) {
 			reportType,
 			reporterRole,
 			search,
+			limit,
+			offset,
 		});
 		return res.status(200).json(reports);
 	} catch (error) {
@@ -227,6 +259,9 @@ async function updateReportStatus(req, res) {
 
 	if (!REPORT_STATUSES.includes(status)) {
 		return res.status(400).json({ message: 'Invalid status value.' });
+	}
+	if (adminFeedback.length > MAX_FEEDBACK_LENGTH) {
+		return res.status(400).json({ message: `Feedback cannot exceed ${MAX_FEEDBACK_LENGTH} characters.` });
 	}
 
 	try {

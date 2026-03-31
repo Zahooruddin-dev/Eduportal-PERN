@@ -3,8 +3,18 @@ const jwt = require('jsonwebtoken');
 const db = require('../db/queryAuth');
 const { sendResetEmail } = require('../utility/emailSender');
 
+function normalizeEmail(value) {
+	return String(value || '').trim().toLowerCase();
+}
+
 async function login(req, res) {
-	const { email, password } = req.body;
+	const email = normalizeEmail(req.body?.email);
+	const password = String(req.body?.password || '');
+
+	if (!email || !password) {
+		return res.status(400).json({ message: 'Email and password are required.' });
+	}
+
 	try {
 		const user = await db.getUserByEmail(email);
 		if (!user)
@@ -50,7 +60,7 @@ async function register(req, res) {
 	const { username, email, password, role } = req.body;
 	const normalizedRole = String(role || 'student').trim().toLowerCase();
 	const normalizedUsername = String(username || '').trim();
-	const normalizedEmail = String(email || '').trim().toLowerCase();
+	const normalizedEmail = normalizeEmail(email);
 	if (!['student', 'teacher', 'admin'].includes(normalizedRole)) {
 		return res
 			.status(403)
@@ -153,10 +163,10 @@ async function changePassword(req, res) {
 		return res
 			.status(400)
 			.json({ message: 'Both current and new password are required.' });
-	if (newPassword.length < 6)
+	if (newPassword.length < 8)
 		return res
 			.status(400)
-			.json({ message: 'New password must be at least 6 characters.' });
+			.json({ message: 'New password must be at least 8 characters.' });
 
 	try {
 		const user = await db.getUserByEmail(req.user.email);
@@ -179,9 +189,20 @@ async function changePassword(req, res) {
 }
 
 async function deleteUser(req, res) {
-	const { email, password } = req.body;
+	const password = String(req.body?.password || '');
+	const requestedEmail = normalizeEmail(req.body?.email || req.user?.email);
+	const authenticatedEmail = normalizeEmail(req.user?.email);
+
+	if (!password) {
+		return res.status(400).json({ message: 'Password is required.' });
+	}
+
+	if (!authenticatedEmail || requestedEmail !== authenticatedEmail) {
+		return res.status(403).json({ message: 'You can only delete your own account.' });
+	}
+
 	try {
-		const user = await db.getUserByEmail(email);
+		const user = await db.getUserByEmail(authenticatedEmail);
 		if (!user)
 			return res.status(401).json({ message: 'Invalid Email or Password' });
 
@@ -189,7 +210,7 @@ async function deleteUser(req, res) {
 		if (!actualMatch)
 			return res.status(401).json({ message: 'Invalid Email or Password' });
 
-		const deleted = await db.deleteUserQuery(email);
+		const deleted = await db.deleteUserByIdQuery(req.user.id);
 		res.status(200).json({ message: 'User Deleted', deleted });
 	} catch (error) {
 		res.status(500).json({ message: error.message });
@@ -197,7 +218,17 @@ async function deleteUser(req, res) {
 }
 
 async function resetPassword(req, res) {
-	const { email, code, newPassword } = req.body;
+	const email = normalizeEmail(req.body?.email);
+	const code = String(req.body?.code || '').trim();
+	const newPassword = String(req.body?.newPassword || '');
+
+	if (!email || !code || !newPassword) {
+		return res.status(400).json({ message: 'Email, code, and new password are required.' });
+	}
+	if (newPassword.length < 8) {
+		return res.status(400).json({ message: 'New password must be at least 8 characters.' });
+	}
+
 	try {
 		const resetEntry = await db.verifyResetCode(email, code);
 
@@ -214,7 +245,12 @@ async function resetPassword(req, res) {
 	}
 }
 async function requestPasswordReset(req, res) {
-	const { email } = req.body;
+	const email = normalizeEmail(req.body?.email);
+
+	if (!email) {
+		return res.status(400).json({ message: 'Email is required.' });
+	}
+
 	try {
 		const user = await db.getUserByEmail(email);
 		if (!user) {
