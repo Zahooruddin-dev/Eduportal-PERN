@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
 	getAssignmentAttachments,
 	addAssignmentAttachment,
@@ -18,9 +18,8 @@ export default function AttachmentManager({ classId, assignmentId }) {
 	const [file, setFile] = useState(null);
 	const [uploading, setUploading] = useState(false);
 	const [viewingFile, setViewingFile] = useState(null);
-	const [toast, setToast] = useState(null);
 
-	const fetchAttachments = async () => {
+	const fetchAttachments = useCallback(async () => {
 		setLoading(true);
 		try {
 			const res = await getAssignmentAttachments(classId, assignmentId);
@@ -30,11 +29,11 @@ export default function AttachmentManager({ classId, assignmentId }) {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [assignmentId, classId]);
 
 	useEffect(() => {
 		fetchAttachments();
-	}, [classId, assignmentId]);
+	}, [fetchAttachments]);
 
 	const handleAdd = async () => {
 		if (!title) return;

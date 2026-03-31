@@ -1,5 +1,6 @@
 // Dashboard.jsx
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Sidebar from '../Sidebar/Sidebar';
 import Profile from '../Sidebar/Profile/Profile';
@@ -20,10 +21,79 @@ import AdminReports from '../Sidebar/Tabs/AdminTabs/Reports/AdminReports';
 import ReportCenter from '../Sidebar/Tabs/Shared/ReportCenter';
 import CommunicationCenter from '../Sidebar/Tabs/Shared/CommunicationCenter';
 
+const ROLE_TAB_CONFIG = {
+	admin: {
+		defaultTab: 'admin-user-management',
+		allowed: new Set(['admin-user-management', 'admin-reports', 'profile']),
+	},
+	student: {
+		defaultTab: 'enrolled-classes',
+		allowed: new Set([
+			'enrolled-classes',
+			'academic-calendar',
+			'announcements',
+			'teacher-communication',
+			'course-material',
+			'gradebook',
+			'profile',
+			'assignments',
+			'report',
+		]),
+	},
+	teacher: {
+		defaultTab: 'teacher-class',
+		allowed: new Set([
+			'teacher-class',
+			'teacher-calendar',
+			'student-communication',
+			'gradebook-teacher',
+			'course-material',
+			'teacher-attendance',
+			'assignments',
+			'report',
+			'profile',
+		]),
+	},
+};
+
+function getRoleTabConfig(role) {
+	return ROLE_TAB_CONFIG[String(role || '').toLowerCase()] || null;
+}
+
 export default function Dashboard() {
 	const { user } = useAuth();
+	const navigate = useNavigate();
+	const { tab } = useParams();
 	const [collapsed, setCollapsed] = useState(false);
-	const [activeTab, setActiveTab] = useState('dashboard');
+
+	const roleConfig = useMemo(() => getRoleTabConfig(user?.role), [user?.role]);
+
+	const activeTab = useMemo(() => {
+		if (!roleConfig) return null;
+		const requested = String(tab || '').trim().toLowerCase();
+		if (roleConfig.allowed.has(requested)) {
+			return requested;
+		}
+		return roleConfig.defaultTab;
+	}, [roleConfig, tab]);
+
+	useEffect(() => {
+		if (!roleConfig) return;
+		const requested = String(tab || '').trim().toLowerCase();
+		if (!requested || !roleConfig.allowed.has(requested)) {
+			navigate(`/dashboard/${roleConfig.defaultTab}`, { replace: true });
+		}
+	}, [navigate, roleConfig, tab]);
+
+	const setActiveTab = (nextTab) => {
+		if (!roleConfig) return;
+		const normalized = String(nextTab || '').trim().toLowerCase();
+		if (!roleConfig.allowed.has(normalized)) {
+			navigate(`/dashboard/${roleConfig.defaultTab}`);
+			return;
+		}
+		navigate(`/dashboard/${normalized}`);
+	};
 
 	const renderContent = () => {
 		if (user?.role === 'admin') {
@@ -99,14 +169,14 @@ export default function Dashboard() {
 	};
 
 	return (
-		<div className='flex h-screen bg-[var(--color-bg)]'>
+		<div className='flex min-h-screen bg-[var(--color-bg)] lg:h-screen'>
 			<Sidebar
 				collapsed={collapsed}
 				setCollapsed={setCollapsed}
 				activeTab={activeTab}
 				setActiveTab={setActiveTab}
 			/>
-			<main className='flex-1 overflow-auto transition-all duration-300'>
+			<main className='flex-1 overflow-auto pt-14 transition-all duration-300 lg:pt-0'>
 				{renderContent()}
 			</main>
 		</div>

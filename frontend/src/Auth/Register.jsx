@@ -77,7 +77,7 @@ export default function Register() {
           };
       const res = isAdminInviteSignup ? await acceptAdminInvite(payload) : await registerUser(payload);
       login(res.data.token);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       setError(err?.response?.data?.message || err.message);
     } finally {

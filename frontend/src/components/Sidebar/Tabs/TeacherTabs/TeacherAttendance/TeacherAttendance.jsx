@@ -1,5 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '../../../../../context/AuthContext';
+import { useState, useEffect, useCallback } from 'react';
 import {
 	getMyClasses,
 	getClassEnrolledRooster,
@@ -9,10 +8,8 @@ import {
 import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
 import { Calendar, Save } from 'lucide-react';
 import Toast from '../../../../../components/Toast';
-import ConfirmModal from '../../../../../components/ConfirmModal';
 
 export default function TeacherAttendance() {
-	const { user } = useAuth();
 	const [classes, setClasses] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
@@ -29,7 +26,6 @@ export default function TeacherAttendance() {
 		type: 'success',
 		message: '',
 	});
-	const [confirmOpen, setConfirmOpen] = useState(false);
 	const [selectedMonth, setSelectedMonth] = useState(() => {
 		const now = new Date();
 		return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -37,13 +33,18 @@ export default function TeacherAttendance() {
 	const [summaryLoading, setSummaryLoading] = useState(false);
 	const [summaryData, setSummaryData] = useState([]);
 
+	const getDaysInMonth = useCallback((year, month) => {
+		return new Date(year, month, 0).getDate();
+	}, []);
+
 	// Fetch teacher's classes
 	const fetchClasses = async () => {
 		setLoading(true);
 		try {
 			const res = await getMyClasses();
 			setClasses(res.data);
-		} catch (err) {
+		} catch (error) {
+			console.error('Failed to load classes:', error);
 			setError('Failed to load classes');
 		} finally {
 			setLoading(false);
@@ -77,16 +78,14 @@ export default function TeacherAttendance() {
 				if (!map[student.student_id]) map[student.student_id] = 'present';
 			});
 			setAttendanceMap(map);
-		} catch (err) {
+		} catch (error) {
+			console.error('Failed to load attendance data:', error);
 			setError('Failed to load attendance data');
 		} finally {
 			setLoadingRoster(false);
 		}
 	};
-	const getDaysInMonth = (year, month) => {
-		return new Date(year, month, 0).getDate();
-	};
-	const fetchMonthlySummary = async () => {
+	const fetchMonthlySummary = useCallback(async () => {
 		if (!selectedClass) return;
 		setSummaryLoading(true);
 		try {
@@ -143,14 +142,14 @@ export default function TeacherAttendance() {
 		} finally {
 			setSummaryLoading(false);
 		}
-	};
+	}, [getDaysInMonth, selectedClass, selectedMonth]);
 
 	// When selectedClass or selectedMonth changes, fetch summary
 	useEffect(() => {
 		if (selectedClass) {
 			fetchMonthlySummary();
 		}
-	}, [selectedClass, selectedMonth]);
+	}, [fetchMonthlySummary, selectedClass]);
 	// When selectedClass or selectedDate changes, fetch attendance
 	useEffect(() => {
 		if (selectedClass) {

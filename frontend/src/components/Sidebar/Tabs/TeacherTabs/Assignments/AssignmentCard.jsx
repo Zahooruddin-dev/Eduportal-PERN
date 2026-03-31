@@ -1,5 +1,5 @@
 // src/components/AssignmentCard.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ChevronDown, ChevronUp, Edit2, Trash2, Paperclip } from 'lucide-react';
 import {
 	getAssignmentAttachments,
@@ -33,15 +33,7 @@ export default function AssignmentCard({
 	const [loadingSubmissions, setLoadingSubmissions] = useState(false);
 	const [viewingFile, setViewingFile] = useState(null);
 
-	// Fetch attachments when expanded
-	useEffect(() => {
-		if (expanded) {
-			fetchAttachments();
-			fetchSubmissions();
-		}
-	}, [expanded]);
-
-	const fetchAttachments = async () => {
+	const fetchAttachments = useCallback(async () => {
 		setLoadingAttachments(true);
 		try {
 			const res = await getAssignmentAttachments(classId, assignment.id);
@@ -51,9 +43,9 @@ export default function AssignmentCard({
 		} finally {
 			setLoadingAttachments(false);
 		}
-	};
+	}, [assignment.id, classId]);
 
-	const fetchSubmissions = async () => {
+	const fetchSubmissions = useCallback(async () => {
 		setLoadingSubmissions(true);
 		try {
 			const res = await getAssignmentSubmissions(classId, assignment.id);
@@ -73,7 +65,15 @@ export default function AssignmentCard({
 		} finally {
 			setLoadingSubmissions(false);
 		}
-	};
+	}, [assignment.id, classId, students]);
+
+	// Fetch attachments when expanded
+	useEffect(() => {
+		if (expanded) {
+			fetchAttachments();
+			fetchSubmissions();
+		}
+	}, [expanded, fetchAttachments, fetchSubmissions]);
 
 	const handleAddAttachment = async (formData) => {
 		setUploadingAttachment(true);

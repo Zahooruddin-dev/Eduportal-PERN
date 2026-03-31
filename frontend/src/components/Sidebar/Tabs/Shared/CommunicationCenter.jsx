@@ -559,7 +559,7 @@ export default function CommunicationCenter() {
 								)}
 							</div>
 
-							<div className='mt-3 h-[460px] overflow-auto rounded-xl border border-[var(--color-border)] p-3'>
+							<div className='mt-3 h-[50vh] overflow-auto rounded-xl border border-[var(--color-border)] p-3 sm:h-[460px]'>
 								{messagesLoading ? (
 									<div className='rounded-lg border border-[var(--color-border)] p-3 text-sm text-[var(--color-text-muted)]'>Loading messages...</div>
 								) : messages.length ? (
@@ -624,7 +624,7 @@ export default function CommunicationCenter() {
 										<button type='button' onClick={() => setReplyTo(null)} className='ml-2 text-[var(--color-primary)]'>Cancel</button>
 									</div>
 								)}
-								<div className='flex gap-2'>
+								<div className='flex flex-col gap-2 sm:flex-row'>
 									<textarea
 										rows={2}
 										value={draft}
@@ -650,7 +650,7 @@ export default function CommunicationCenter() {
 							</div>
 						</>
 					) : (
-						<div className='flex h-[620px] items-center justify-center rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text-muted)]'>
+						<div className='flex h-[55vh] items-center justify-center rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text-muted)] sm:h-[620px]'>
 							Select a contact or inbox conversation to start messaging.
 						</div>
 					)}

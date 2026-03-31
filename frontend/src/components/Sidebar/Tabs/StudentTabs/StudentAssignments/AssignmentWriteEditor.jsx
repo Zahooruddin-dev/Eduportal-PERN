@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { createElement, useRef, useEffect, useState, useCallback } from 'react';
 import {
   Bold, Italic, Underline, Strikethrough,
   List, ListOrdered, AlignLeft, AlignCenter, AlignRight,
@@ -20,7 +20,7 @@ function ToolBtn({ icon: Icon, label, onClick, active, disabled }) {
         active ? 'bg-[var(--color-primary)]/15 text-[var(--color-primary)]' : ''
       }`}
     >
-      <Icon size={14} strokeWidth={2} />
+      {createElement(Icon, { size: 14, strokeWidth: 2 })}
     </button>
   );
 }
@@ -62,18 +62,21 @@ export default function AssignmentWriteEditor({ value, onChange, placeholder = '
     return () => { isMounted.current = false; };
   }, []);
 
-  useEffect(() => {
-    if (editorRef.current && value && !editorRef.current.innerHTML) {
-      editorRef.current.innerHTML = value;
-      updateCounts(editorRef.current.innerText || '');
-    }
-  }, []);
-
   const updateCounts = (text) => {
     const words = text.trim() ? text.trim().split(/\s+/).length : 0;
     setWordCount(words);
     setCharCount(text.replace(/\n/g, '').length);
   };
+
+  useEffect(() => {
+    if (
+      editorRef.current
+      && typeof value === 'string'
+      && editorRef.current.innerHTML !== value
+    ) {
+      editorRef.current.innerHTML = value;
+    }
+  }, [value]);
 
   const checkActiveFormats = useCallback(() => {
     try {
@@ -88,7 +91,9 @@ export default function AssignmentWriteEditor({ value, onChange, placeholder = '
         justifyCenter: document.queryCommandState('justifyCenter'),
         justifyRight: document.queryCommandState('justifyRight'),
       });
-    } catch {}
+    } catch {
+      return null;
+    }
   }, []);
 
   const exec = useCallback((cmd, value = null) => {

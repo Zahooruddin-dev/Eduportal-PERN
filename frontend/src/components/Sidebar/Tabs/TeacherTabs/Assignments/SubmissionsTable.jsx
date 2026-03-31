@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
 	getAssignmentSubmissions,
 	submitAssignmentGrades,
@@ -161,7 +161,7 @@ export default function SubmissionsTable({ classId, assignmentId, maxScore }) {
 	const [viewingFile, setViewingFile] = useState(null);
 	const [viewingText, setViewingText] = useState(null); // { username, submission_content }
 
-	const fetchData = async () => {
+	const fetchData = useCallback(async () => {
 		setLoading(true);
 		try {
 			const res = await getAssignmentSubmissions(classId, assignmentId);
@@ -180,11 +180,11 @@ export default function SubmissionsTable({ classId, assignmentId, maxScore }) {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [assignmentId, classId]);
 
 	useEffect(() => {
 		fetchData();
-	}, [classId, assignmentId]);
+	}, [fetchData]);
 
 	const handleGradeChange = (studentId, field, value) => {
 		setGrades((prev) => ({

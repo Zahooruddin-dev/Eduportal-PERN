@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { createElement, useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { updateUsername, changePassword, deleteUser } from '../../../api/authApi';
 import { SpinnerIcon, EyeIcon } from '../../Icons/Icon';
@@ -145,8 +145,8 @@ export default function Profile() {
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
-    if (passwordForm.newPassword.length < 6) {
-      showToast('error', 'New password must be at least 6 characters');
+    if (passwordForm.newPassword.length < 8) {
+      showToast('error', 'New password must be at least 8 characters');
       return;
     }
     setLoading(true);
@@ -217,7 +217,7 @@ export default function Profile() {
                 }
               `}
             >
-              <Icon size={15} aria-hidden="true" />
+              {createElement(Icon, { size: 15, 'aria-hidden': true })}
               {label}
             </button>
           ))}
@@ -309,7 +309,7 @@ export default function Profile() {
               />
             </FieldRow>
 
-            <FieldRow label="New password" htmlFor="newPassword" hint="At least 6 characters">
+            <FieldRow label="New password" htmlFor="newPassword" hint="At least 8 characters">
               <PasswordInput
                 id="newPassword"
                 name="newPassword"
@@ -318,7 +318,7 @@ export default function Profile() {
                 show={showNewPassword}
                 onToggle={() => setShowNewPassword((v) => !v)}
                 label="New password"
-                minLength={6}
+                minLength={8}
               />
             </FieldRow>
 

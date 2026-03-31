@@ -229,12 +229,13 @@ export const openDirectConversation = (payload) => {
 };
 
 export const getCommunicationInbox = () => {
-  return api.get('/api/communication/inbox');
+  return api.get('/api/communication/inbox', { cache: false });
 };
 
 export const getConversationMessages = (conversationId, params = {}) => {
   return api.get(`/api/communication/conversations/${conversationId}/messages`, {
     params,
+    cache: false,
   });
 };
 
@@ -243,7 +244,7 @@ export const markConversationRead = (conversationId) => {
 };
 
 export const getCommunicationUnreadCount = () => {
-  return api.get('/api/communication/unread-count');
+  return api.get('/api/communication/unread-count', { cache: false });
 };
 
 export const sendCommunicationMessage = (payload) => {

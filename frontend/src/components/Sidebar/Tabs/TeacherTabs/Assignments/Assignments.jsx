@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
-import { useAuth } from '../../../../../context/AuthContext';
 import {
 	getMyClasses,
 	getClassAssignments,
@@ -17,7 +16,6 @@ import AttachmentManager from './AttachmentManager';
 import SubmissionsTable from './SubmissionsTable';
 
 export default function TeacherAssignments() {
-	const { user } = useAuth();
 	const [classes, setClasses] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
@@ -40,7 +38,8 @@ export default function TeacherAssignments() {
 		try {
 			const res = await getMyClasses();
 			setClasses(res.data);
-		} catch (err) {
+		} catch (error) {
+			console.error('Failed to load classes:', error);
 			setError('Failed to load classes');
 		} finally {
 			setLoading(false);
@@ -56,7 +55,8 @@ export default function TeacherAssignments() {
 		try {
 			const res = await getClassAssignments(classId);
 			setAssignments(res.data);
-		} catch (err) {
+		} catch (error) {
+			console.error('Failed to load assignments:', error);
 			setError('Failed to load assignments');
 		} finally {
 			setLoadingAssignments(false);
