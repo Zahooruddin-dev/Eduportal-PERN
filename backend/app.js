@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const classRoutes = require('./routes/classes');
 const enrollRoutes = require('./routes/enrollRoutes');
@@ -13,8 +15,10 @@ const assignmentRoutes = require('./routes/assignmentRoutes');
 const gradebookRoutes = require('./routes/gradebookRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const communicationRoutes = require('./routes/communicationRoutes');
 const { validateUuidParam } = require('./middleware/uuidParamMiddleware');
 const { ensureAdminSchema } = require('./db/ensureAdminSchema');
+const { initializeChatSocket } = require('./socket/chatSocket');
 
 const app = express();
 
@@ -30,6 +34,9 @@ const uuidParamLabels = {
 	attachmentId: 'attachment id',
 	announcementId: 'announcement id',
 	commentId: 'comment id',
+	conversationId: 'conversation id',
+	messageId: 'message id',
+	teacherId: 'teacher id',
 };
 
 Object.entries(uuidParamLabels).forEach(([paramName, label]) => {
@@ -47,6 +54,7 @@ app.use('/api/enroll', enrollRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/communication', communicationRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/gradebook', gradebookRoutes);
 
@@ -64,7 +72,16 @@ const PORT = process.env.PORT || 3000;
 async function startServer() {
 	try {
 		await ensureAdminSchema();
-		app.listen(PORT, '0.0.0.0', () => {
+		const server = http.createServer(app);
+		const io = new Server(server, {
+			cors: {
+				origin: '*',
+				methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+			},
+		});
+		app.set('io', io);
+		initializeChatSocket(io);
+		server.listen(PORT, '0.0.0.0', () => {
 			console.log(`Server is running on port ${PORT}`);
 		});
 	} catch (error) {

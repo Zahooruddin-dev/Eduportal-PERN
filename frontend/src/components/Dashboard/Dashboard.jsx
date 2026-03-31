@@ -18,6 +18,7 @@ import TeacherCalender from '../Sidebar/Tabs/TeacherTabs/TeacherCalender/Teacher
 import UserManagement from '../Sidebar/Tabs/AdminTabs/UserManagement/UserManagement';
 import AdminReports from '../Sidebar/Tabs/AdminTabs/Reports/AdminReports';
 import ReportCenter from '../Sidebar/Tabs/Shared/ReportCenter';
+import CommunicationCenter from '../Sidebar/Tabs/Shared/CommunicationCenter';
 
 export default function Dashboard() {
 	const { user } = useAuth();
@@ -51,6 +52,8 @@ export default function Dashboard() {
 					return <AcademicCalender />;
 				case 'announcements':
 					return <StudentAnnouncements />;
+				case 'teacher-communication':
+					return <CommunicationCenter />;
 				case 'course-material':
 					return <StudentCourseMaterial />;
 				case 'gradebook':
@@ -73,6 +76,8 @@ export default function Dashboard() {
 					return <ScheduleManagement />;
 				case 'teacher-calendar':
 					return <TeacherCalender />;
+				case 'student-communication':
+					return <CommunicationCenter />;
 				case 'gradebook-teacher':
 					return <Gradebook />;
 				case 'course-material':

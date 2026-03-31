@@ -22,6 +22,8 @@ import {
 import Toast from '../Toast';
 import ConfirmModal from '../ConfirmModal';
 import logo from '../../assets/logo.png';
+import { getCommunicationUnreadCount } from '../../api/api';
+import { io } from 'socket.io-client';
 
 const studentNavItems = [
   { id: 'enrolled-classes', label: 'Enrolled Classes', icon: GraduationCap },
@@ -113,6 +115,14 @@ function NavItem({ item, active, collapsed, onClick, onMobileClose }) {
             ${active ? 'text-[var(--color-primary)]' : ''}
           `}
         />
+        {Number(item.badgeCount || 0) > 0 && (
+          <span className={`
+            absolute top-1.5 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white
+            ${collapsed ? 'right-1.5' : 'right-2.5'}
+          `}>
+            {item.badgeCount > 99 ? '99+' : item.badgeCount}
+          </span>
+        )}
         <span
           className={`
             text-sm font-medium whitespace-nowrap overflow-hidden
@@ -344,6 +354,7 @@ export default function Sidebar({
   setActiveTab,
 }) {
   const { user, logout } = useAuth();
+  const [communicationUnreadCount, setCommunicationUnreadCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileClosing, setMobileClosing] = useState(false);
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
@@ -354,11 +365,72 @@ export default function Sidebar({
   });
   const { theme, toggle } = useTheme();
 
-  const navItems = user?.role === 'student'
+  useEffect(() => {
+    const supportsCommunication = user?.role === 'student' || user?.role === 'teacher';
+    if (!supportsCommunication) {
+      return undefined;
+    }
+
+    let mounted = true;
+    let socket;
+
+    const loadUnreadCount = async () => {
+      try {
+        const response = await getCommunicationUnreadCount();
+        const unread = Number(response.data?.unreadCount || 0);
+        if (mounted) {
+          setCommunicationUnreadCount(unread);
+        }
+      } catch {
+        return null;
+      }
+    };
+
+    const handleUnreadEvent = (event) => {
+      const unread = Number(event.detail?.count || 0);
+      setCommunicationUnreadCount(unread);
+    };
+
+    loadUnreadCount();
+    window.addEventListener('communication-unread', handleUnreadEvent);
+    const intervalId = window.setInterval(loadUnreadCount, 12000);
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000', {
+        auth: { token },
+        transports: ['websocket', 'polling'],
+      });
+      socket.on('chat:unread-count-updated', (payload) => {
+        const unread = Number(payload?.unreadCount || 0);
+        if (mounted) {
+          setCommunicationUnreadCount(unread);
+        }
+      });
+    }
+
+    return () => {
+      mounted = false;
+      window.removeEventListener('communication-unread', handleUnreadEvent);
+      window.clearInterval(intervalId);
+      if (socket) {
+        socket.disconnect();
+      }
+    };
+  }, [user?.role]);
+
+  const navItems = (user?.role === 'student'
     ? studentNavItems
     : user?.role === 'admin'
       ? adminNavItems
-      : teacherNavItems;
+      : teacherNavItems
+  ).map((item) => {
+    const isCommunication = item.id === 'teacher-communication' || item.id === 'student-communication';
+    return {
+      ...item,
+      badgeCount: isCommunication ? communicationUnreadCount : 0,
+    };
+  });
 
   const openMobile = () => {
     setMobileClosing(false);

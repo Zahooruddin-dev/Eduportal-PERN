@@ -215,3 +215,45 @@ export const getInstituteReports = (params = {}) => {
 export const updateInstituteReportStatus = (reportId, payload) => {
   return api.patch(`/api/reports/${reportId}/status`, payload);
 };
+
+export const searchCommunicationContacts = (params = {}) => {
+  return api.get('/api/communication/contacts', { params });
+};
+
+export const getTeacherCommunicationProfile = (teacherId) => {
+  return api.get(`/api/communication/teachers/${teacherId}/profile`);
+};
+
+export const openDirectConversation = (payload) => {
+  return api.post('/api/communication/conversations/direct', payload);
+};
+
+export const getCommunicationInbox = () => {
+  return api.get('/api/communication/inbox');
+};
+
+export const getConversationMessages = (conversationId, params = {}) => {
+  return api.get(`/api/communication/conversations/${conversationId}/messages`, {
+    params,
+  });
+};
+
+export const markConversationRead = (conversationId) => {
+  return api.post(`/api/communication/conversations/${conversationId}/read`);
+};
+
+export const getCommunicationUnreadCount = () => {
+  return api.get('/api/communication/unread-count');
+};
+
+export const sendCommunicationMessage = (payload) => {
+  return api.post('/api/communication/messages', payload);
+};
+
+export const editCommunicationMessage = (messageId, payload) => {
+  return api.patch(`/api/communication/messages/${messageId}`, payload);
+};
+
+export const deleteCommunicationMessage = (messageId) => {
+  return api.delete(`/api/communication/messages/${messageId}`);
+};
