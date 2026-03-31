@@ -114,6 +114,10 @@ export const getClassAttendance = (classId, date) => {
     return api.get(`/api/attendance/${classId}`, { params: { date } });
 };
 
+export const getClassAttendanceSummary = (classId, month) => {
+  return api.get(`/api/attendance/${classId}/summary`, { params: { month } });
+};
+
 export const postAttendance = (classId, data) => {
     return api.post(`/api/attendance/${classId}`, data);
 };

@@ -18,6 +18,7 @@ import AcademicCalender from '../Sidebar/Tabs/StudentTabs/AcademicCalender/Acade
 import TeacherCalender from '../Sidebar/Tabs/TeacherTabs/TeacherCalender/TeacherCalender';
 import UserManagement from '../Sidebar/Tabs/AdminTabs/UserManagement/UserManagement';
 import AdminReports from '../Sidebar/Tabs/AdminTabs/Reports/AdminReports';
+import AdminRiskOverview from '../Sidebar/Tabs/AdminTabs/RiskOverview/AdminRiskOverview';
 import ReportCenter from '../Sidebar/Tabs/Shared/ReportCenter';
 import CommunicationCenter from '../Sidebar/Tabs/Shared/CommunicationCenter';
 import AdminAnnouncements from '../Sidebar/Tabs/AdminTabs/Announcements/AdminAnnouncements';
@@ -28,7 +29,7 @@ import { getAdminNotificationUnreadSummary, markAllAdminNotificationsRead } from
 const ROLE_TAB_CONFIG = {
 	admin: {
 		defaultTab: 'admin-user-management',
-		allowed: new Set(['admin-user-management', 'admin-announcements', 'admin-reports', 'profile']),
+		allowed: new Set(['admin-user-management', 'admin-risk-overview', 'admin-announcements', 'admin-reports', 'profile']),
 	},
 	student: {
 		defaultTab: 'enrolled-classes',
@@ -161,6 +162,8 @@ export default function Dashboard() {
 			switch (activeTab) {
 				case 'admin-user-management':
 					return <UserManagement />;
+				case 'admin-risk-overview':
+					return <AdminRiskOverview />;
 				case 'admin-announcements':
 					return <AdminAnnouncements />;
 				case 'admin-reports':

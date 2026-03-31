@@ -6,6 +6,7 @@ const { validateUuidParam } = require('../middleware/uuidParamMiddleware');
 
 router.param('classId', validateUuidParam('classId', 'class id'));
 
+router.get('/:classId/summary', verifyToken, attendanceController.getClassAttendanceSummary);
 router.get('/:classId', verifyToken, attendanceController.getClassAttendance);
 router.post('/:classId', verifyToken, attendanceController.markBulkAttendance);
 

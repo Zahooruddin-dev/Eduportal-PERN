@@ -49,6 +49,11 @@ function generateTempPassword(length = 12) {
 	return password;
 }
 
+function toNumber(value, fallback = 0) {
+	const numeric = Number(value);
+	return Number.isFinite(numeric) ? numeric : fallback;
+}
+
 async function getAdminInstituteOr404(userId, res) {
 	const institute = await adminDb.getInstituteByUserIdQuery(userId);
 	if (!institute) {
@@ -436,6 +441,76 @@ async function listInstituteUsers(req, res) {
 	}
 }
 
+async function getRiskOverview(req, res) {
+	const institute = await getAdminInstituteOr404(req.user.id, res);
+	if (!institute) return;
+
+	try {
+		const overview = await adminDb.getInstituteRiskOverviewQuery(institute.id);
+		const unresolved = {
+			submitted: 0,
+			under_process: 0,
+		};
+
+		overview.unresolvedReportsByStatus.forEach((row) => {
+			const status = String(row.status || '').toLowerCase();
+			if (status === 'submitted' || status === 'under_process') {
+				unresolved[status] = toNumber(row.count, 0);
+			}
+		});
+
+		const atRiskStudents = overview.atRiskStudents.map((row) => {
+			const attendanceRate = toNumber(row.attendance_rate, 0);
+			const absentCount = toNumber(row.absent_count, 0);
+			const lateCount = toNumber(row.late_count, 0);
+
+			let riskLevel = 'low';
+			if (attendanceRate < 75 || absentCount >= 4) {
+				riskLevel = 'high';
+			} else if (attendanceRate < 85 || absentCount >= 2 || lateCount >= 3) {
+				riskLevel = 'medium';
+			}
+
+			return {
+				studentId: row.student_id,
+				studentName: row.student_name,
+				recordedDays: toNumber(row.recorded_days, 0),
+				presentCount: toNumber(row.present_count, 0),
+				absentCount,
+				lateCount,
+				attendanceRate,
+				riskLevel,
+			};
+		});
+
+		const lowAttendanceClasses = overview.lowAttendanceClasses.map((row) => ({
+			classId: row.class_id,
+			className: row.class_name,
+			recordedEntries: toNumber(row.recorded_entries, 0),
+			presentCount: toNumber(row.present_count, 0),
+			absentCount: toNumber(row.absent_count, 0),
+			attendanceRate: toNumber(row.attendance_rate, 0),
+		}));
+
+		return res.status(200).json({
+			institute: {
+				id: institute.id,
+				name: institute.name,
+			},
+			totals: {
+				totalStudents: toNumber(overview.totals.total_students, 0),
+				totalClasses: toNumber(overview.totals.total_classes, 0),
+				unresolvedReports: toNumber(overview.totals.unresolved_reports, 0),
+			},
+			unresolvedReportsByStatus: unresolved,
+			atRiskStudents,
+			lowAttendanceClasses,
+		});
+	} catch (error) {
+		return res.status(500).json({ message: error.message });
+	}
+}
+
 async function resetUserPasswordByAdmin(req, res) {
 	const institute = await getAdminInstituteOr404(req.user.id, res);
 	if (!institute) return;
@@ -558,6 +633,7 @@ module.exports = {
 	acceptAdminInvite,
 	getInstituteClasses,
 	listInstituteUsers,
+	getRiskOverview,
 	resetUserPasswordByAdmin,
 	linkParentStudent,
 };

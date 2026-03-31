@@ -224,6 +224,77 @@ async function validateClassIdsForInstituteQuery({ instituteId, classIds }) {
 	return rows.map((row) => row.id);
 }
 
+async function getInstituteRiskOverviewQuery(instituteId) {
+	const [atRiskStudentsResult, lowAttendanceClassesResult, unresolvedReportsResult, totalsResult] = await Promise.all([
+		pool.query(
+			`SELECT
+				a.student_id,
+				u.username AS student_name,
+				COUNT(*)::int AS recorded_days,
+				SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)::int AS present_count,
+				SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END)::int AS absent_count,
+				SUM(CASE WHEN a.status = 'late' THEN 1 ELSE 0 END)::int AS late_count,
+				ROUND((SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)::numeric / NULLIF(COUNT(*), 0)) * 100, 1) AS attendance_rate
+			 FROM attendance a
+			 JOIN classes c ON c.id = a.class_id
+			 JOIN users u ON u.id = a.student_id
+			 WHERE c.institute_id = $1
+			 AND a.date >= date_trunc('month', CURRENT_DATE)::date
+			 AND a.date < (date_trunc('month', CURRENT_DATE) + interval '1 month')::date
+			 GROUP BY a.student_id, u.username
+			 HAVING COUNT(*) >= 3
+			 ORDER BY attendance_rate ASC, absent_count DESC, late_count DESC
+			 LIMIT 12`,
+			[instituteId],
+		),
+		pool.query(
+			`SELECT
+				c.id AS class_id,
+				c.class_name,
+				COUNT(*)::int AS recorded_entries,
+				SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)::int AS present_count,
+				SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END)::int AS absent_count,
+				ROUND((SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)::numeric / NULLIF(COUNT(*), 0)) * 100, 1) AS attendance_rate
+			 FROM attendance a
+			 JOIN classes c ON c.id = a.class_id
+			 WHERE c.institute_id = $1
+			 AND a.date >= date_trunc('month', CURRENT_DATE)::date
+			 AND a.date < (date_trunc('month', CURRENT_DATE) + interval '1 month')::date
+			 GROUP BY c.id, c.class_name
+			 HAVING COUNT(*) >= 5
+			 ORDER BY attendance_rate ASC, absent_count DESC
+			 LIMIT 10`,
+			[instituteId],
+		),
+		pool.query(
+			`SELECT status, COUNT(*)::int AS count
+			 FROM reports
+			 WHERE institute_id = $1
+			 AND status IN ('submitted', 'under_process')
+			 GROUP BY status`,
+			[instituteId],
+		),
+		pool.query(
+			`SELECT
+				(SELECT COUNT(*)::int FROM users WHERE institute_id = $1 AND role = 'student') AS total_students,
+				(SELECT COUNT(*)::int FROM classes WHERE institute_id = $1) AS total_classes,
+				(SELECT COUNT(*)::int FROM reports WHERE institute_id = $1 AND status IN ('submitted', 'under_process')) AS unresolved_reports`,
+			[instituteId],
+		),
+	]);
+
+	return {
+		atRiskStudents: atRiskStudentsResult.rows,
+		lowAttendanceClasses: lowAttendanceClassesResult.rows,
+		unresolvedReportsByStatus: unresolvedReportsResult.rows,
+		totals: totalsResult.rows[0] || {
+			total_students: 0,
+			total_classes: 0,
+			unresolved_reports: 0,
+		},
+	};
+}
+
 module.exports = {
 	countAdminsQuery,
 	createInstituteQuery,
@@ -238,4 +309,5 @@ module.exports = {
 	validateClassIdsForInstituteQuery,
 	updateParentLinkedStudentQuery,
 	getParentProfileWithLinkedStudentQuery,
+	getInstituteRiskOverviewQuery,
 };

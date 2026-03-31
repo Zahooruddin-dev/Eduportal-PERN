@@ -15,6 +15,7 @@ router.use(verifyToken, isAdmin);
 
 router.get('/classes', controller.getInstituteClasses);
 router.get('/users', controller.listInstituteUsers);
+router.get('/risk-overview', controller.getRiskOverview);
 router.post('/teachers', controller.createTeacher);
 router.post('/students/bulk', controller.bulkCreateStudents);
 router.post('/invites', controller.createAdminInvite);

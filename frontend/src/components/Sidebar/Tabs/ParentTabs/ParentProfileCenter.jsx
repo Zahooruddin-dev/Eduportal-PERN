@@ -165,6 +165,18 @@ export default function ParentProfileCenter() {
 	const byClassAttendance = overview?.attendanceSummary?.byClass || [];
 	const grades = overview?.grades || [];
 	const schedule = overview?.schedule || [];
+	const weeklySnapshot = overview?.weeklySnapshot || null;
+	const weeklyTotals = weeklySnapshot?.totals || DEFAULT_ATTENDANCE_TOTALS;
+	const weeklyAttendanceRate = Number.isFinite(Number(weeklySnapshot?.attendanceRate))
+		? Number(weeklySnapshot.attendanceRate)
+		: null;
+	const weeklyAlerts = Array.isArray(weeklySnapshot?.alerts) ? weeklySnapshot.alerts : [];
+	const weeklyAttendanceByDay = Array.isArray(weeklySnapshot?.attendanceByDay)
+		? weeklySnapshot.attendanceByDay
+		: [];
+	const weeklyRecentGrades = Array.isArray(weeklySnapshot?.recentGrades)
+		? weeklySnapshot.recentGrades
+		: [];
 
 	if (loading) {
 		return (
@@ -315,6 +327,121 @@ export default function ParentProfileCenter() {
 								</div>
 							)}
 						</div>
+					</div>
+				</div>
+
+				<div className='grid gap-6 xl:grid-cols-2'>
+					<div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6'>
+						<div className='flex flex-wrap items-center justify-between gap-2'>
+							<h3 className='text-base font-semibold text-[var(--color-text-primary)]'>Weekly Snapshot</h3>
+							<p className='text-xs text-[var(--color-text-muted)]'>
+								{weeklySnapshot?.startDate && weeklySnapshot?.endDate
+									? `${formatDate(weeklySnapshot.startDate)} - ${formatDate(weeklySnapshot.endDate)}`
+									: 'Last 7 days'}
+							</p>
+						</div>
+
+						<div className='mt-3 grid grid-cols-2 gap-2 text-sm'>
+							<div className='rounded-lg border border-[var(--color-border)] p-2'>
+								<p className='text-xs text-[var(--color-text-muted)]'>Attendance Rate</p>
+								<p className='font-semibold text-[var(--color-text-primary)]'>
+									{weeklyAttendanceRate === null ? 'N/A' : `${weeklyAttendanceRate}%`}
+								</p>
+							</div>
+							<div className='rounded-lg border border-[var(--color-border)] p-2'>
+								<p className='text-xs text-[var(--color-text-muted)]'>Recorded Entries</p>
+								<p className='font-semibold text-[var(--color-text-primary)]'>{weeklyTotals.total || 0}</p>
+							</div>
+							<div className='rounded-lg border border-[var(--color-border)] p-2'>
+								<p className='text-xs text-[var(--color-text-muted)]'>Absences</p>
+								<p className='font-semibold text-[var(--color-text-primary)]'>{weeklyTotals.absent || 0}</p>
+							</div>
+							<div className='rounded-lg border border-[var(--color-border)] p-2'>
+								<p className='text-xs text-[var(--color-text-muted)]'>Late</p>
+								<p className='font-semibold text-[var(--color-text-primary)]'>{weeklyTotals.late || 0}</p>
+							</div>
+						</div>
+
+						<div className='mt-4 space-y-2'>
+							{weeklyAlerts.length === 0 ? (
+								<p className='rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-secondary)]'>
+									No active weekly alerts.
+								</p>
+							) : (
+								weeklyAlerts.map((alert) => (
+									<div
+										key={`${alert.type || 'notice'}-${alert.message || 'notice'}`}
+										className={`rounded-lg border px-3 py-2 text-sm ${alert.type === 'warning'
+											? 'border-amber-200 bg-amber-50 text-amber-900'
+											: 'border-blue-200 bg-blue-50 text-blue-900'}`}
+									>
+										{alert.message}
+									</div>
+								))
+							)}
+						</div>
+
+						{weeklyAttendanceByDay.length > 0 && (
+							<div className='mt-4 rounded-xl border border-[var(--color-border)]'>
+								<div className='max-h-48 overflow-auto'>
+									<table className='min-w-full divide-y divide-[var(--color-border)] text-xs'>
+										<thead className='bg-[var(--color-input-bg)]'>
+											<tr>
+												<th className='px-3 py-2 text-left font-medium text-[var(--color-text-muted)]'>Date</th>
+												<th className='px-3 py-2 text-left font-medium text-[var(--color-text-muted)]'>P</th>
+												<th className='px-3 py-2 text-left font-medium text-[var(--color-text-muted)]'>A</th>
+												<th className='px-3 py-2 text-left font-medium text-[var(--color-text-muted)]'>L</th>
+												<th className='px-3 py-2 text-left font-medium text-[var(--color-text-muted)]'>E</th>
+											</tr>
+										</thead>
+										<tbody className='divide-y divide-[var(--color-border)]'>
+											{weeklyAttendanceByDay.map((day) => (
+												<tr key={day.date}>
+													<td className='px-3 py-2 text-[var(--color-text-secondary)]'>{formatDate(day.date)}</td>
+													<td className='px-3 py-2 text-[var(--color-text-primary)]'>{day.present || 0}</td>
+													<td className='px-3 py-2 text-[var(--color-text-primary)]'>{day.absent || 0}</td>
+													<td className='px-3 py-2 text-[var(--color-text-primary)]'>{day.late || 0}</td>
+													<td className='px-3 py-2 text-[var(--color-text-primary)]'>{day.excused || 0}</td>
+												</tr>
+											))}
+										</tbody>
+									</table>
+								</div>
+							</div>
+						)}
+					</div>
+
+					<div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6'>
+						<h3 className='text-base font-semibold text-[var(--color-text-primary)]'>Recent Weekly Grades</h3>
+						{weeklyRecentGrades.length === 0 ? (
+							<p className='mt-2 text-sm text-[var(--color-text-muted)]'>No recent grade activity in the last 2 weeks.</p>
+						) : (
+							<div className='mt-3 max-h-72 overflow-auto rounded-xl border border-[var(--color-border)]'>
+								<table className='min-w-full divide-y divide-[var(--color-border)] text-sm'>
+									<thead className='bg-[var(--color-input-bg)]'>
+										<tr>
+											<th className='px-3 py-2 text-left font-medium text-[var(--color-text-muted)]'>Date</th>
+											<th className='px-3 py-2 text-left font-medium text-[var(--color-text-muted)]'>Class</th>
+											<th className='px-3 py-2 text-left font-medium text-[var(--color-text-muted)]'>Type</th>
+											<th className='px-3 py-2 text-left font-medium text-[var(--color-text-muted)]'>Score</th>
+										</tr>
+									</thead>
+									<tbody className='divide-y divide-[var(--color-border)]'>
+										{weeklyRecentGrades.map((gradeItem) => (
+											<tr key={gradeItem.id}>
+												<td className='px-3 py-2 text-[var(--color-text-secondary)]'>{formatDate(gradeItem.createdAt)}</td>
+												<td className='px-3 py-2 text-[var(--color-text-secondary)]'>{gradeItem.className || gradeItem.classId}</td>
+												<td className='px-3 py-2 text-[var(--color-text-secondary)]'>{gradeItem.gradeType || 'N/A'}</td>
+												<td className={`px-3 py-2 font-medium ${(gradeItem.percentage ?? 100) < 50 ? 'text-rose-600' : 'text-[var(--color-text-primary)]'}`}>
+													{gradeItem.grade} / {gradeItem.maxGrade}
+													{gradeItem.percentage !== null ? ` (${gradeItem.percentage}%)` : ''}
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						)}
 					</div>
 				</div>
 

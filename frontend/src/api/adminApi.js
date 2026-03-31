@@ -20,6 +20,10 @@ export const listInstituteClasses = () => {
 	return api.get('/api/admin/classes');
 };
 
+export const getAdminRiskOverview = () => {
+	return api.get('/api/admin/risk-overview', { cache: false });
+};
+
 export const createTeacherAccount = (payload) => {
 	return api.post('/api/admin/teachers', payload);
 };

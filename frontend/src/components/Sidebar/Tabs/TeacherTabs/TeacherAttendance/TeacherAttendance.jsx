@@ -3,6 +3,7 @@ import {
 	getMyClasses,
 	getClassEnrolledRooster,
 	getClassAttendance,
+	getClassAttendanceSummary,
 	postAttendance,
 } from '../../../../../api/api';
 import { SpinnerIcon, AlertBox } from '../../../../Icons/Icon';
@@ -30,12 +31,16 @@ export default function TeacherAttendance() {
 		const now = new Date();
 		return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 	});
+	const [dateRecorded, setDateRecorded] = useState(false);
 	const [summaryLoading, setSummaryLoading] = useState(false);
 	const [summaryData, setSummaryData] = useState([]);
-
-	const getDaysInMonth = useCallback((year, month) => {
-		return new Date(year, month, 0).getDate();
-	}, []);
+	const [summaryStats, setSummaryStats] = useState({
+		totalStudents: 0,
+		highRisk: 0,
+		mediumRisk: 0,
+		lowRisk: 0,
+		noData: 0,
+	});
 
 	// Fetch teacher's classes
 	const fetchClasses = async () => {
@@ -59,79 +64,50 @@ export default function TeacherAttendance() {
 	const fetchAttendanceForClass = async (classId, date) => {
 		setLoadingRoster(true);
 		try {
-			// Get roster
 			const rosterRes = await getClassEnrolledRooster(classId);
-			const studentsList = rosterRes.data;
+			const studentsList = Array.isArray(rosterRes.data) ? rosterRes.data : [];
 			setStudents(studentsList);
 
-			// Get existing attendance for the date
 			const attendanceRes = await getClassAttendance(classId, date);
-			const attendanceData = attendanceRes.data.attendance; // assumes { date, attendance: [...] }
+			const attendancePayload = attendanceRes.data || {};
+			const attendanceData = Array.isArray(attendancePayload.attendance)
+				? attendancePayload.attendance
+				: [];
+			setDateRecorded(Boolean(attendancePayload.hasRecordedAttendance));
 
-			// Build map of studentId -> status
 			const map = {};
 			attendanceData.forEach((record) => {
 				map[record.studentId] = record.status;
 			});
-			// For students without recorded status, default to 'present'
+
 			studentsList.forEach((student) => {
 				if (!map[student.student_id]) map[student.student_id] = 'present';
 			});
+
 			setAttendanceMap(map);
+			setError('');
 		} catch (error) {
 			console.error('Failed to load attendance data:', error);
 			setError('Failed to load attendance data');
+			setDateRecorded(false);
 		} finally {
 			setLoadingRoster(false);
 		}
 	};
+
 	const fetchMonthlySummary = useCallback(async () => {
 		if (!selectedClass) return;
 		setSummaryLoading(true);
 		try {
-			const [year, month] = selectedMonth.split('-').map(Number);
-			const daysCount = getDaysInMonth(year, month);
-			const fetchPromises = [];
-			for (let day = 1; day <= daysCount; day++) {
-				const date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-				fetchPromises.push(getClassAttendance(selectedClass.id, date));
-			}
-			const results = await Promise.all(fetchPromises);
-			// results is array of { data: { date, attendance: [...] } }
-			// Aggregate per student
-			const studentTotals = {};
-			results.forEach((result) => {
-				const dayData = result.data.attendance;
-				dayData.forEach((record) => {
-					const studentId = record.studentId;
-					if (!studentTotals[studentId]) {
-						studentTotals[studentId] = {
-							name: record.name,
-							present: 0,
-							absent: 0,
-							late: 0,
-							excused: 0,
-						};
-					}
-					switch (record.status) {
-						case 'present':
-							studentTotals[studentId].present++;
-							break;
-						case 'absent':
-							studentTotals[studentId].absent++;
-							break;
-						case 'late':
-							studentTotals[studentId].late++;
-							break;
-						case 'excused':
-							studentTotals[studentId].excused++;
-							break;
-						default:
-							break;
-					}
-				});
+			const response = await getClassAttendanceSummary(selectedClass.id, selectedMonth);
+			setSummaryData(Array.isArray(response.data?.summary) ? response.data.summary : []);
+			setSummaryStats({
+				totalStudents: Number(response.data?.stats?.totalStudents || 0),
+				highRisk: Number(response.data?.stats?.highRisk || 0),
+				mediumRisk: Number(response.data?.stats?.mediumRisk || 0),
+				lowRisk: Number(response.data?.stats?.lowRisk || 0),
+				noData: Number(response.data?.stats?.noData || 0),
 			});
-			setSummaryData(Object.values(studentTotals));
 		} catch (err) {
 			console.error(err);
 			setToast({
@@ -139,10 +115,18 @@ export default function TeacherAttendance() {
 				type: 'error',
 				message: 'Failed to load monthly summary',
 			});
+			setSummaryData([]);
+			setSummaryStats({
+				totalStudents: 0,
+				highRisk: 0,
+				mediumRisk: 0,
+				lowRisk: 0,
+				noData: 0,
+			});
 		} finally {
 			setSummaryLoading(false);
 		}
-	}, [getDaysInMonth, selectedClass, selectedMonth]);
+	}, [selectedClass, selectedMonth]);
 
 	// When selectedClass or selectedMonth changes, fetch summary
 	useEffect(() => {
@@ -162,6 +146,26 @@ export default function TeacherAttendance() {
 		setAttendanceMap((prev) => ({ ...prev, [studentId]: newStatus }));
 	};
 
+	const getRiskPillClass = (riskLevel) => {
+		switch (riskLevel) {
+			case 'high':
+				return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
+			case 'medium':
+				return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
+			case 'low':
+				return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300';
+			default:
+				return 'bg-slate-100 text-slate-700 dark:bg-slate-800/70 dark:text-slate-300';
+		}
+	};
+
+	const toRiskLabel = (riskLevel) => {
+		if (riskLevel === 'high') return 'High risk';
+		if (riskLevel === 'medium') return 'Medium risk';
+		if (riskLevel === 'low') return 'Low risk';
+		return 'No data';
+	};
+
 	// Save all changes
 	const handleSave = async () => {
 		setSaving(true);
@@ -179,6 +183,8 @@ export default function TeacherAttendance() {
 				type: 'success',
 				message: 'Attendance saved successfully!',
 			});
+			setDateRecorded(true);
+			fetchMonthlySummary();
 		} catch (err) {
 			setToast({
 				isOpen: true,
@@ -284,8 +290,19 @@ export default function TeacherAttendance() {
 			<h1 className='text-2xl font-semibold text-[var(--color-text-primary)] mb-4'>
 				{selectedClass.class_name} – Attendance
 			</h1>
-			<p className='text-sm text-[var(--color-text-muted)] mb-6'>
+			<p className='text-sm text-[var(--color-text-muted)] mb-2'>
 				Mark attendance for {selectedDate}
+			</p>
+			<p className='mb-6 text-xs'>
+				<span
+					className={`inline-flex items-center rounded-full px-2.5 py-1 font-medium ${
+						dateRecorded
+							? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+							: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+					}`}
+				>
+					{dateRecorded ? 'Attendance already recorded for this date' : 'Attendance not recorded yet for this date'}
+				</span>
 			</p>
 
 			{loadingRoster ? (
@@ -367,13 +384,36 @@ export default function TeacherAttendance() {
 					</div>
 				</div>
 
+				<div className='mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5'>
+					<div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2'>
+						<p className='text-[10px] uppercase tracking-wide text-[var(--color-text-muted)]'>Students</p>
+						<p className='text-base font-semibold text-[var(--color-text-primary)]'>{summaryStats.totalStudents}</p>
+					</div>
+					<div className='rounded-xl border border-red-200 bg-red-50/80 px-3 py-2 dark:border-red-900/40 dark:bg-red-900/20'>
+						<p className='text-[10px] uppercase tracking-wide text-red-600 dark:text-red-300'>High Risk</p>
+						<p className='text-base font-semibold text-red-700 dark:text-red-200'>{summaryStats.highRisk}</p>
+					</div>
+					<div className='rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 dark:border-amber-900/40 dark:bg-amber-900/20'>
+						<p className='text-[10px] uppercase tracking-wide text-amber-700 dark:text-amber-300'>Medium Risk</p>
+						<p className='text-base font-semibold text-amber-800 dark:text-amber-200'>{summaryStats.mediumRisk}</p>
+					</div>
+					<div className='rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2 dark:border-emerald-900/40 dark:bg-emerald-900/20'>
+						<p className='text-[10px] uppercase tracking-wide text-emerald-700 dark:text-emerald-300'>Low Risk</p>
+						<p className='text-base font-semibold text-emerald-800 dark:text-emerald-200'>{summaryStats.lowRisk}</p>
+					</div>
+					<div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2'>
+						<p className='text-[10px] uppercase tracking-wide text-[var(--color-text-muted)]'>No Data</p>
+						<p className='text-base font-semibold text-[var(--color-text-primary)]'>{summaryStats.noData}</p>
+					</div>
+				</div>
+
 				{summaryLoading ? (
 					<div className='flex justify-center py-4'>
 						<SpinnerIcon />
 					</div>
 				) : summaryData.length === 0 ? (
 					<p className='text-[var(--color-text-muted)] text-center py-4'>
-						No attendance data for this month.
+						No attendance records for this month.
 					</p>
 				) : (
 					<div className='overflow-x-auto'>
@@ -382,6 +422,9 @@ export default function TeacherAttendance() {
 								<tr>
 									<th className='px-4 py-2 text-left text-xs font-medium text-[var(--color-text-secondary)]'>
 										Student
+									</th>
+									<th className='px-4 py-2 text-center text-xs font-medium text-[var(--color-text-secondary)]'>
+										Recorded Days
 									</th>
 									<th className='px-4 py-2 text-center text-xs font-medium text-green-600'>
 										Present
@@ -395,13 +438,22 @@ export default function TeacherAttendance() {
 									<th className='px-4 py-2 text-center text-xs font-medium text-blue-600'>
 										Excused
 									</th>
+									<th className='px-4 py-2 text-center text-xs font-medium text-[var(--color-text-secondary)]'>
+										Attendance %
+									</th>
+									<th className='px-4 py-2 text-center text-xs font-medium text-[var(--color-text-secondary)]'>
+										Risk
+									</th>
 								</tr>
 							</thead>
 							<tbody className='divide-y divide-[var(--color-border)]'>
 								{summaryData.map((student) => (
-									<tr key={student.name}>
+									<tr key={student.studentId}>
 										<td className='px-4 py-2 text-sm text-[var(--color-text-primary)]'>
 											{student.name}
+										</td>
+										<td className='px-4 py-2 text-center text-sm text-[var(--color-text-secondary)]'>
+											{student.recordedDays}
 										</td>
 										<td className='px-4 py-2 text-center text-sm text-green-600'>
 											{student.present}
@@ -414,6 +466,14 @@ export default function TeacherAttendance() {
 										</td>
 										<td className='px-4 py-2 text-center text-sm text-blue-600'>
 											{student.excused}
+										</td>
+										<td className='px-4 py-2 text-center text-sm text-[var(--color-text-primary)]'>
+											{student.attendanceRate === null ? 'N/A' : `${student.attendanceRate}%`}
+										</td>
+										<td className='px-4 py-2 text-center text-sm'>
+											<span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getRiskPillClass(student.riskLevel)}`}>
+												{toRiskLabel(student.riskLevel)}
+											</span>
 										</td>
 									</tr>
 								))}
