@@ -104,21 +104,56 @@ async function getUserByEmail(email) {
 async function getParentProfileByUserId(userId) {
 	const { rows } = await pool.query(
 		`SELECT
-			user_id,
-			child_full_name,
-			child_grade,
-			relationship_to_child,
-			parent_phone,
-			alternate_phone,
-			address,
-			notes,
-			created_at,
-			updated_at
-		 FROM parent_profiles
-		 WHERE user_id = $1`,
+			pp.user_id,
+			pp.child_full_name,
+			pp.child_grade,
+			pp.relationship_to_child,
+			pp.child_student_id,
+			pp.parent_phone,
+			pp.alternate_phone,
+			pp.address,
+			pp.notes,
+			pp.created_at,
+			pp.updated_at,
+			linked.username AS linked_student_username,
+			linked.email AS linked_student_email,
+			linked.profile_pic AS linked_student_profile_pic
+		 FROM parent_profiles pp
+		 LEFT JOIN users linked ON linked.id = pp.child_student_id
+		 WHERE pp.user_id = $1`,
 		[userId],
 	);
 	return rows[0] || null;
+}
+
+async function updateParentProfileByUserId(userId, profile) {
+	const { rows } = await pool.query(
+		`UPDATE parent_profiles
+		 SET
+			child_full_name = $2,
+			child_grade = $3,
+			relationship_to_child = $4,
+			parent_phone = $5,
+			alternate_phone = $6,
+			address = $7,
+			notes = $8,
+			updated_at = NOW()
+		 WHERE user_id = $1
+		 RETURNING user_id`,
+		[
+			userId,
+			profile.childFullName,
+			profile.childGrade,
+			profile.relationshipToChild,
+			profile.parentPhone,
+			profile.alternatePhone || null,
+			profile.address || null,
+			profile.notes || null,
+		],
+	);
+
+	if (!rows[0]) return null;
+	return getParentProfileByUserId(userId);
 }
 
 async function saveResetCode(email, code, expires) {
@@ -159,4 +194,5 @@ module.exports = {
 	saveResetCode,
 	updateUserPassword,
 	getParentProfileByUserId,
+	updateParentProfileByUserId,
 };

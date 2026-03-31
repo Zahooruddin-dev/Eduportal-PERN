@@ -91,6 +91,7 @@ async function ensureAdminSchema() {
 			child_full_name VARCHAR(160) NOT NULL,
 			child_grade VARCHAR(80) NOT NULL,
 			relationship_to_child VARCHAR(80) NOT NULL,
+			child_student_id UUID REFERENCES users(id) ON DELETE SET NULL,
 			parent_phone VARCHAR(40) NOT NULL,
 			alternate_phone VARCHAR(40),
 			address TEXT,
@@ -98,6 +99,25 @@ async function ensureAdminSchema() {
 			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 		);
+
+		ALTER TABLE parent_profiles
+		ADD COLUMN IF NOT EXISTS child_student_id UUID;
+
+		DO $$
+		BEGIN
+			IF NOT EXISTS (
+				SELECT 1
+				FROM information_schema.table_constraints
+				WHERE constraint_schema = 'public'
+				AND table_name = 'parent_profiles'
+				AND constraint_name = 'parent_profiles_child_student_id_fkey'
+			) THEN
+				ALTER TABLE parent_profiles
+				ADD CONSTRAINT parent_profiles_child_student_id_fkey
+				FOREIGN KEY (child_student_id) REFERENCES users(id) ON DELETE SET NULL;
+			END IF;
+		END
+		$$;
 
 		CREATE TABLE IF NOT EXISTS admin_announcements (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -163,6 +183,7 @@ async function ensureAdminSchema() {
 		CREATE INDEX IF NOT EXISTS idx_reports_target_user_id ON reports(target_user_id);
 		CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at DESC);
 		CREATE INDEX IF NOT EXISTS idx_parent_profiles_child_grade ON parent_profiles(child_grade);
+		CREATE INDEX IF NOT EXISTS idx_parent_profiles_child_student_id ON parent_profiles(child_student_id);
 		CREATE INDEX IF NOT EXISTS idx_admin_announcements_institute_created ON admin_announcements(institute_id, created_at DESC);
 		CREATE INDEX IF NOT EXISTS idx_admin_announcements_audience_scope ON admin_announcements(audience_scope);
 		CREATE INDEX IF NOT EXISTS idx_admin_announcement_reads_user_read ON admin_announcement_reads(user_id, read_at DESC);

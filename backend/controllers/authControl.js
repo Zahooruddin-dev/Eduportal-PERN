@@ -20,6 +20,22 @@ function normalizeParentProfile(rawProfile) {
 	};
 }
 
+function validateRequiredParentProfile(profile) {
+	if (!profile.childFullName) {
+		return 'Child full name is required for parent accounts.';
+	}
+	if (!profile.childGrade) {
+		return 'Child grade is required for parent accounts.';
+	}
+	if (!profile.relationshipToChild) {
+		return 'Relationship to child is required for parent accounts.';
+	}
+	if (!profile.parentPhone) {
+		return 'Parent phone is required for parent accounts.';
+	}
+	return null;
+}
+
 async function login(req, res) {
 	const email = normalizeEmail(req.body?.email);
 	const password = String(req.body?.password || '');
@@ -97,17 +113,9 @@ async function register(req, res) {
 			: null;
 
 	if (normalizedRole === 'parent') {
-		if (!parentProfile.childFullName) {
-			return res.status(400).json({ message: 'Child full name is required for parent accounts.' });
-		}
-		if (!parentProfile.childGrade) {
-			return res.status(400).json({ message: 'Child grade is required for parent accounts.' });
-		}
-		if (!parentProfile.relationshipToChild) {
-			return res.status(400).json({ message: 'Relationship to child is required for parent accounts.' });
-		}
-		if (!parentProfile.parentPhone) {
-			return res.status(400).json({ message: 'Parent phone is required for parent accounts.' });
+		const parentProfileValidationMessage = validateRequiredParentProfile(parentProfile);
+		if (parentProfileValidationMessage) {
+			return res.status(400).json({ message: parentProfileValidationMessage });
 		}
 	}
 
@@ -160,6 +168,49 @@ async function register(req, res) {
 		if (error.code === '23505')
 			return res.status(400).json({ message: 'Email Already exists' });
 		res.status(400).json({ message: error.message });
+	}
+}
+
+async function getMyParentProfile(req, res) {
+	if (req.user?.role !== 'parent') {
+		return res.status(403).json({ message: 'Only parent accounts can access parent profile details.' });
+	}
+
+	try {
+		const parentProfile = await db.getParentProfileByUserId(req.user.id);
+		if (!parentProfile) {
+			return res.status(404).json({ message: 'Parent profile not found.' });
+		}
+
+		return res.status(200).json(parentProfile);
+	} catch (error) {
+		return res.status(500).json({ message: error.message });
+	}
+}
+
+async function updateMyParentProfile(req, res) {
+	if (req.user?.role !== 'parent') {
+		return res.status(403).json({ message: 'Only parent accounts can update parent profile details.' });
+	}
+
+	const normalizedParentProfile = normalizeParentProfile(req.body);
+	const parentProfileValidationMessage = validateRequiredParentProfile(normalizedParentProfile);
+	if (parentProfileValidationMessage) {
+		return res.status(400).json({ message: parentProfileValidationMessage });
+	}
+
+	try {
+		const updatedProfile = await db.updateParentProfileByUserId(req.user.id, normalizedParentProfile);
+		if (!updatedProfile) {
+			return res.status(404).json({ message: 'Parent profile not found.' });
+		}
+
+		return res.status(200).json({
+			message: 'Parent profile updated successfully.',
+			parentProfile: updatedProfile,
+		});
+	} catch (error) {
+		return res.status(500).json({ message: error.message });
 	}
 }
 
@@ -328,4 +379,6 @@ module.exports = {
 	deleteUser,
 	resetPassword,
 	requestPasswordReset,
+	getMyParentProfile,
+	updateMyParentProfile,
 };

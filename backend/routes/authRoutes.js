@@ -14,6 +14,8 @@ router.put(
 );
 router.put('/change-password', verifyToken, authController.changePassword);
 router.delete('/delete', verifyToken, authController.deleteUser);
+router.get('/parent-profile', verifyToken, authController.getMyParentProfile);
+router.put('/parent-profile', verifyToken, authController.updateMyParentProfile);
 
 router.post('/request-reset', authController.requestPasswordReset);
 router.post('/reset-password', authController.resetPassword);

@@ -483,6 +483,73 @@ async function resetUserPasswordByAdmin(req, res) {
 	}
 }
 
+async function linkParentStudent(req, res) {
+	const institute = await getAdminInstituteOr404(req.user.id, res);
+	if (!institute) return;
+
+	const parentUserId = String(req.params?.userId || '').trim();
+	const rawStudentId = req.body?.studentId;
+	const studentId = rawStudentId ? String(rawStudentId).trim() : null;
+
+	if (!isUuid(parentUserId)) {
+		return res.status(400).json({ message: 'Invalid parent user id format.' });
+	}
+	if (studentId && !isUuid(studentId)) {
+		return res.status(400).json({ message: 'Invalid student id format.' });
+	}
+
+	try {
+		const parentUser = await adminDb.getUserByIdInInstituteQuery({
+			userId: parentUserId,
+			instituteId: institute.id,
+		});
+		if (!parentUser || parentUser.role !== 'parent') {
+			return res.status(404).json({ message: 'Parent account not found in your institute.' });
+		}
+
+		const existingParentProfile = await adminDb.getParentProfileWithLinkedStudentQuery({
+			parentUserId,
+			instituteId: institute.id,
+		});
+		if (!existingParentProfile) {
+			return res.status(404).json({ message: 'Parent profile details are missing for this account.' });
+		}
+
+		if (studentId) {
+			const studentUser = await adminDb.getUserByIdInInstituteQuery({
+				userId: studentId,
+				instituteId: institute.id,
+			});
+			if (!studentUser || studentUser.role !== 'student') {
+				return res.status(404).json({ message: 'Student account not found in your institute.' });
+			}
+		}
+
+		const linked = await adminDb.updateParentLinkedStudentQuery({
+			parentUserId,
+			instituteId: institute.id,
+			studentId,
+		});
+		if (!linked) {
+			return res.status(404).json({ message: 'Unable to update parent link.' });
+		}
+
+		const updatedParentProfile = await adminDb.getParentProfileWithLinkedStudentQuery({
+			parentUserId,
+			instituteId: institute.id,
+		});
+
+		return res.status(200).json({
+			message: studentId
+				? 'Student linked to parent profile successfully.'
+				: 'Linked student removed from parent profile successfully.',
+			parentProfile: updatedParentProfile,
+		});
+	} catch (error) {
+		return res.status(500).json({ message: error.message });
+	}
+}
+
 module.exports = {
 	bootstrapAdmin,
 	createTeacher,
@@ -492,4 +559,5 @@ module.exports = {
 	getInstituteClasses,
 	listInstituteUsers,
 	resetUserPasswordByAdmin,
+	linkParentStudent,
 };

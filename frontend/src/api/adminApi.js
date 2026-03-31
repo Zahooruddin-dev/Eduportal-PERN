@@ -47,3 +47,7 @@ export const createAdminAnnouncement = (payload) => {
 export const deleteAdminAnnouncement = (announcementId) => {
 	return api.delete(`/api/admin/announcements/${announcementId}`);
 };
+
+export const linkParentStudent = (parentUserId, payload) => {
+	return api.patch(`/api/admin/parents/${parentUserId}/link-student`, payload);
+};

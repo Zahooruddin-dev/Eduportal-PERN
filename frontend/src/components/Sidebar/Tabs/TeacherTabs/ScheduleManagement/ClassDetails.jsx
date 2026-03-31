@@ -16,12 +16,6 @@ import Toast from '../../../../Toast';
 import { SpinnerIcon } from '../../../../Icons/Icon';
 import { formatTimeRange, getScheduleBlocksFromClass } from '../../../../../utils/scheduleUtils';
 
-function toLabel(value) {
-  return String(value || '')
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
 function formatDateTime(value) {
   if (!value) return '';
   const date = new Date(value);

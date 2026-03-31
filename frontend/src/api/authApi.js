@@ -28,3 +28,15 @@ export const requestReset = (data) => {
 export const resetPassword = (data) => {
 	return api.post('/api/auth/reset-password', data);
 };
+
+export const getParentProfile = () => {
+	return api.get('/api/auth/parent-profile');
+};
+
+export const updateParentProfile = (data) => {
+	return api.put('/api/auth/parent-profile', data);
+};
+
+export const getParentLinkedStudentOverview = () => {
+	return api.get('/api/parent/linked-student');
+};

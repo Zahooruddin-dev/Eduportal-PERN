@@ -9,6 +9,7 @@ import {
   Calendar,
   BookOpen,
   FileText,
+  User,
   BarChart,
   MessageSquare,
   UserCheck,
@@ -52,6 +53,7 @@ const teacherNavItems = [
 
 const parentNavItems = [
   { id: 'parent-announcements', label: 'Announcements', icon: Megaphone },
+  { id: 'parent-profile-center', label: 'Parent Profile', icon: User },
   { id: 'parent-teacher-complaint', label: 'Teacher Complaint', icon: MessageSquare },
   { id: 'parent-suggestions', label: 'Suggestions', icon: FileText },
   { id: 'parent-report', label: 'Report', icon: FileText },

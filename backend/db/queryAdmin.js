@@ -73,17 +73,66 @@ async function listInstituteUsersQuery({ instituteId, role, search }) {
 			pp.child_full_name,
 			pp.child_grade,
 			pp.relationship_to_child,
+			pp.child_student_id,
 			pp.parent_phone,
 			pp.alternate_phone,
 			pp.address,
-			pp.notes
+			pp.notes,
+			linked.username AS linked_student_username,
+			linked.email AS linked_student_email
 		 FROM users u
 		 LEFT JOIN parent_profiles pp ON pp.user_id = u.id
+		 LEFT JOIN users linked ON linked.id = pp.child_student_id
 		 WHERE ${clauses.join(' AND ')}
 		 ORDER BY u.created_at DESC`,
 		values,
 	);
 	return rows;
+}
+
+async function updateParentLinkedStudentQuery({ parentUserId, instituteId, studentId = null }) {
+	const { rows } = await pool.query(
+		`UPDATE parent_profiles pp
+		 SET child_student_id = $3,
+		 	 updated_at = NOW()
+		 FROM users parent_user
+		 WHERE pp.user_id = parent_user.id
+		 	AND parent_user.id = $1
+		 	AND parent_user.institute_id = $2
+		 	AND parent_user.role = 'parent'
+		 RETURNING pp.user_id, pp.child_student_id`,
+		[parentUserId, instituteId, studentId],
+	);
+
+	return rows[0] || null;
+}
+
+async function getParentProfileWithLinkedStudentQuery({ parentUserId, instituteId }) {
+	const { rows } = await pool.query(
+		`SELECT
+			pp.user_id,
+			pp.child_full_name,
+			pp.child_grade,
+			pp.relationship_to_child,
+			pp.child_student_id,
+			pp.parent_phone,
+			pp.alternate_phone,
+			pp.address,
+			pp.notes,
+			pp.created_at,
+			pp.updated_at,
+			linked.username AS linked_student_username,
+			linked.email AS linked_student_email
+		 FROM parent_profiles pp
+		 JOIN users parent_user ON parent_user.id = pp.user_id
+		 LEFT JOIN users linked ON linked.id = pp.child_student_id
+		 WHERE pp.user_id = $1
+		 	AND parent_user.role = 'parent'
+		 	AND parent_user.institute_id = $2`,
+		[parentUserId, instituteId],
+	);
+
+	return rows[0] || null;
 }
 
 async function listInstituteClassesQuery(instituteId) {
@@ -187,4 +236,6 @@ module.exports = {
 	markInviteAcceptedQuery,
 	getUserByIdInInstituteQuery,
 	validateClassIdsForInstituteQuery,
+	updateParentLinkedStudentQuery,
+	getParentProfileWithLinkedStudentQuery,
 };

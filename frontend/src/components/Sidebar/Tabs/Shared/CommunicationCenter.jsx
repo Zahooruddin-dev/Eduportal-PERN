@@ -112,7 +112,6 @@ export default function CommunicationCenter() {
 	const [profileModalOpen, setProfileModalOpen] = useState(false);
 	const [teacherProfile, setTeacherProfile] = useState(null);
 	const [teacherProfileLoading, setTeacherProfileLoading] = useState(false);
-	const [activeSidebarPanel, setActiveSidebarPanel] = useState('inbox');
 	const [toast, setToast] = useState({
 		isOpen: false,
 		type: 'info',
@@ -296,7 +295,6 @@ export default function CommunicationCenter() {
 				setReplyTo(null);
 				setEditingMessageId(null);
 				setEditingText('');
-				setActiveSidebarPanel('inbox');
 				joinConversationRoom(conversation.id);
 				await loadConversationMessages(conversation.id);
 				await markRead(conversation.id);
@@ -332,7 +330,6 @@ export default function CommunicationCenter() {
 			setReplyTo(null);
 			setEditingMessageId(null);
 			setEditingText('');
-			setActiveSidebarPanel('inbox');
 			joinConversationRoom(item.conversation_id);
 			await loadConversationMessages(item.conversation_id);
 			await markRead(item.conversation_id);
@@ -446,16 +443,6 @@ export default function CommunicationCenter() {
 				String(a?.username || '').localeCompare(String(b?.username || '')),
 			),
 		[contacts],
-	);
-
-	const unreadConversationsCount = useMemo(
-		() =>
-			inbox.reduce(
-				(total, item) =>
-					Number(item.unread_count || 0) > 0 ? total + 1 : total,
-				0,
-			),
-		[inbox],
 	);
 
 	const canManageOwnMessage = useCallback(
@@ -617,9 +604,6 @@ export default function CommunicationCenter() {
 
 	const actionButtonClass =
 		'inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-2 py-1 text-[11px] text-[var(--color-text-secondary)] transition hover:bg-[var(--color-border)]/40';
-
-	const activeSidebarButtonClass =
-		'rounded-lg px-3 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40';
 
 	return (
 		<div className='min-h-screen bg-[var(--color-bg)]'>

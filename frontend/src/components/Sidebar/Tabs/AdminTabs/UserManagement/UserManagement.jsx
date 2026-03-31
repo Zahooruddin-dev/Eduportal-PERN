@@ -3,6 +3,7 @@ import {
 	createAdminInvite,
 	createBulkStudents,
 	createTeacherAccount,
+	linkParentStudent,
 	listInstituteClasses,
 	listInstituteUsers,
 	resetUserPasswordAsAdmin,
@@ -91,10 +92,14 @@ export default function UserManagement() {
 	const [bulkRows, setBulkRows] = useState([]);
 	const [bulkFileName, setBulkFileName] = useState('');
 	const [loadingUsers, setLoadingUsers] = useState(true);
+	const [loadingStudents, setLoadingStudents] = useState(true);
 	const [submittingTeacher, setSubmittingTeacher] = useState(false);
 	const [submittingInvite, setSubmittingInvite] = useState(false);
 	const [submittingBulk, setSubmittingBulk] = useState(false);
 	const [filters, setFilters] = useState({ role: 'all', search: '' });
+	const [studentOptions, setStudentOptions] = useState([]);
+	const [parentStudentSelection, setParentStudentSelection] = useState({});
+	const [linkingParentIds, setLinkingParentIds] = useState({});
 	const [confirmState, setConfirmState] = useState({
 		isOpen: false,
 		title: '',
@@ -122,6 +127,28 @@ export default function UserManagement() {
 		}
 	}, [openToast]);
 
+	const loadStudentOptions = useCallback(async () => {
+		setLoadingStudents(true);
+		try {
+			const response = await listInstituteUsers({ role: 'student', search: '' });
+			setStudentOptions(response.data || []);
+		} catch (error) {
+			openToast('error', error?.response?.data?.message || 'Failed to load students for parent linking.');
+		} finally {
+			setLoadingStudents(false);
+		}
+	}, [openToast]);
+
+	const syncParentSelections = useCallback((nextUsers) => {
+		const nextSelection = {};
+		nextUsers.forEach((entry) => {
+			if (entry.role === 'parent') {
+				nextSelection[entry.id] = entry.child_student_id || '';
+			}
+		});
+		setParentStudentSelection(nextSelection);
+	}, []);
+
 	const loadUsers = useCallback(async (query = filters) => {
 		setLoadingUsers(true);
 		try {
@@ -129,18 +156,21 @@ export default function UserManagement() {
 				role: query.role,
 				search: query.search,
 			});
-			setUsers(response.data || []);
+			const fetchedUsers = response.data || [];
+			setUsers(fetchedUsers);
+			syncParentSelections(fetchedUsers);
 		} catch (error) {
 			openToast('error', error?.response?.data?.message || 'Failed to load users.');
 		} finally {
 			setLoadingUsers(false);
 		}
-	}, [filters, openToast]);
+	}, [filters, openToast, syncParentSelections]);
 
 	useEffect(() => {
 		loadClasses();
+		loadStudentOptions();
 		loadUsers({ role: 'all', search: '' });
-	}, [loadClasses, loadUsers]);
+	}, [loadClasses, loadStudentOptions, loadUsers]);
 
 	const summary = useMemo(() => {
 		const byRole = { admin: 0, teacher: 0, student: 0, parent: 0 };
@@ -221,12 +251,51 @@ export default function UserManagement() {
 			setBulkRows([]);
 			setBulkFileName('');
 			openToast('success', `Bulk creation completed. Created: ${createdCount}, Skipped: ${skippedCount}.`);
-			loadUsers();
+			await Promise.all([loadUsers(), loadStudentOptions()]);
 		} catch (error) {
 			openToast('error', error?.response?.data?.message || 'Bulk student creation failed.');
 		} finally {
 			setSubmittingBulk(false);
 		}
+	};
+
+	const handleSaveParentLink = (parentUser) => {
+		const selectedStudentId = parentStudentSelection[parentUser.id] || '';
+		const canUpdate = Boolean(selectedStudentId) || Boolean(parentUser.child_student_id);
+
+		if (!canUpdate) {
+			openToast('warning', 'Select a student first to create a parent-student link.');
+			return;
+		}
+
+		setConfirmState({
+			isOpen: true,
+			title: selectedStudentId ? 'Link parent to student' : 'Remove parent link',
+			message: selectedStudentId
+				? `Link ${parentUser.username} to the selected student account?`
+				: `Remove the linked student from ${parentUser.username}?`,
+			type: 'warning',
+			onConfirm: async () => {
+				setLinkingParentIds((previous) => ({ ...previous, [parentUser.id]: true }));
+				try {
+					await linkParentStudent(parentUser.id, {
+						studentId: selectedStudentId || null,
+					});
+					openToast('success', selectedStudentId
+						? 'Student linked to parent account successfully.'
+						: 'Parent account unlinked from student successfully.');
+					await Promise.all([loadUsers(filters), loadStudentOptions()]);
+				} catch (error) {
+					openToast('error', error?.response?.data?.message || 'Failed to update parent-student mapping.');
+				} finally {
+					setLinkingParentIds((previous) => {
+						const next = { ...previous };
+						delete next[parentUser.id];
+						return next;
+					});
+				}
+			},
+		});
 	};
 
 	const handleBulkSubmit = async (event) => {
@@ -471,12 +540,59 @@ export default function UserManagement() {
 												<p><span className='font-medium text-[var(--color-text-primary)]'>Grade:</span> {user.child_grade || 'Not provided'}</p>
 												<p><span className='font-medium text-[var(--color-text-primary)]'>Relationship:</span> {user.relationship_to_child || 'Not provided'}</p>
 												<p><span className='font-medium text-[var(--color-text-primary)]'>Primary phone:</span> {user.parent_phone || 'Not provided'}</p>
+												<p>
+													<span className='font-medium text-[var(--color-text-primary)]'>Linked student account:</span>{' '}
+													{user.linked_student_username
+														? `${user.linked_student_username} (${user.linked_student_email || 'No email'})`
+														: 'Not linked yet'}
+												</p>
 												{user.alternate_phone && (
 													<p><span className='font-medium text-[var(--color-text-primary)]'>Alternate phone:</span> {user.alternate_phone}</p>
 												)}
 												{user.address && (
 													<p><span className='font-medium text-[var(--color-text-primary)]'>Address:</span> {user.address}</p>
 												)}
+
+												<div className='mt-2 rounded-lg border border-emerald-500/30 bg-emerald-500/8 p-2.5'>
+													<p className='font-medium text-emerald-700 dark:text-emerald-300'>Parent to student mapping</p>
+													<div className='mt-2 flex flex-col gap-2 sm:flex-row'>
+														<select
+															value={parentStudentSelection[user.id] || ''}
+															onChange={(event) => {
+																const value = event.target.value;
+																setParentStudentSelection((previous) => ({
+																	...previous,
+																	[user.id]: value,
+																}));
+															}}
+															disabled={loadingStudents || Boolean(linkingParentIds[user.id])}
+															className='w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1.5 text-xs text-[var(--color-text-primary)]'
+														>
+															<option value=''>No linked student</option>
+															{studentOptions.map((studentOption) => (
+																<option key={studentOption.id} value={studentOption.id}>
+																	{studentOption.username} ({studentOption.email})
+																</option>
+															))}
+														</select>
+														<button
+															type='button'
+															onClick={() => handleSaveParentLink(user)}
+															disabled={
+																loadingStudents
+																|| Boolean(linkingParentIds[user.id])
+																|| (!parentStudentSelection[user.id] && !user.child_student_id)
+															}
+															className='rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-500/20 disabled:opacity-60 dark:text-emerald-300'
+														>
+															{linkingParentIds[user.id]
+																? 'Saving...'
+																: parentStudentSelection[user.id]
+																	? 'Save Link'
+																	: 'Unlink Student'}
+														</button>
+													</div>
+												</div>
 											</div>
 										)}
 									</div>

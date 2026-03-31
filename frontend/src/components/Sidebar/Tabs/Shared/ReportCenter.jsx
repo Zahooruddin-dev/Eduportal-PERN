@@ -32,6 +32,7 @@ export default function ReportCenter({
   presetKind = null,
   lockKind = false,
   defaultTargetRole = null,
+  allowedTypes = null,
   heading = 'Reports & Complaints',
   subheading = 'Submit issues or complaints and track their status in real time.',
   submitLabel = '',
@@ -96,11 +97,6 @@ export default function ReportCenter({
       const response = await getReportMeta();
       const fetchedMeta = response.data || { kinds: [], types: [], statuses: [] };
       setMeta(fetchedMeta);
-      setForm((previous) => ({
-        ...previous,
-        reportType:
-          fetchedMeta.types?.[0]?.value || previous.reportType || 'technical_issue',
-      }));
     } catch (error) {
       openToast('error', error?.response?.data?.message || 'Failed to load report types.');
     }
@@ -180,6 +176,37 @@ export default function ReportCenter({
     meta.types.forEach((item) => map.set(item.value, item.label));
     return map;
   }, [meta.types]);
+
+  const availableTypeOptions = useMemo(() => {
+    const allTypes = Array.isArray(meta.types) ? meta.types : [];
+    if (!Array.isArray(allowedTypes) || !allowedTypes.length) {
+      return allTypes;
+    }
+
+    const allowedValues = new Set(allowedTypes.map((item) => String(item || '').trim().toLowerCase()));
+    const filtered = allTypes.filter((item) => allowedValues.has(String(item.value || '').toLowerCase()));
+    return filtered.length ? filtered : allTypes;
+  }, [allowedTypes, meta.types]);
+
+  useEffect(() => {
+    if (!availableTypeOptions.length) return;
+
+    setForm((previous) => {
+      const selectedType = String(previous.reportType || '').toLowerCase();
+      const isSelectedTypeAvailable = availableTypeOptions.some(
+        (item) => String(item.value || '').toLowerCase() === selectedType,
+      );
+
+      if (isSelectedTypeAvailable) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        reportType: availableTypeOptions[0].value,
+      };
+    });
+  }, [availableTypeOptions]);
 
   const validateForm = () => {
     const errors = {};
@@ -374,7 +401,7 @@ export default function ReportCenter({
                         onChange={(e) => setForm(prev => ({ ...prev, reportType: e.target.value }))}
                         className="mt-1 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-[var(--color-text-primary)] shadow-sm focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
                       >
-                        {meta.types.map(item => (
+                        {availableTypeOptions.map(item => (
                           <option key={item.value} value={item.value}>{item.label}</option>
                         ))}
                       </select>

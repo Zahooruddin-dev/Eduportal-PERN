@@ -22,6 +22,7 @@ import ReportCenter from '../Sidebar/Tabs/Shared/ReportCenter';
 import CommunicationCenter from '../Sidebar/Tabs/Shared/CommunicationCenter';
 import AdminAnnouncements from '../Sidebar/Tabs/AdminTabs/Announcements/AdminAnnouncements';
 import AdminNotificationsCenter from '../Sidebar/Tabs/Shared/AdminNotificationsCenter';
+import ParentProfileCenter from '../Sidebar/Tabs/ParentTabs/ParentProfileCenter';
 import { getAdminNotificationUnreadSummary, markAllAdminNotificationsRead } from '../../api/api';
 
 const ROLE_TAB_CONFIG = {
@@ -63,6 +64,7 @@ const ROLE_TAB_CONFIG = {
 		defaultTab: 'parent-announcements',
 		allowed: new Set([
 			'parent-announcements',
+			'parent-profile-center',
 			'parent-teacher-complaint',
 			'parent-suggestions',
 			'parent-report',
@@ -179,12 +181,21 @@ export default function Dashboard() {
 							subtitle='Read the latest announcements shared by your institute admin.'
 						/>
 					);
+				case 'parent-profile-center':
+					return <ParentProfileCenter />;
 				case 'parent-teacher-complaint':
 					return (
 						<ReportCenter
 							presetKind='complaint'
 							lockKind
 							defaultTargetRole='teacher'
+							allowedTypes={[
+								'teacher_conduct',
+								'academic_issue',
+								'attendance_issue',
+								'bullying_harassment',
+								'other',
+							]}
 							heading='Teacher Complaints'
 							subheading='Submit complaints related to teacher conduct or classroom concerns.'
 							submitLabel='Submit Complaint'
@@ -195,6 +206,12 @@ export default function Dashboard() {
 						<ReportCenter
 							presetKind='suggestion'
 							lockKind
+							allowedTypes={[
+								'academic_issue',
+								'schedule_issue',
+								'infrastructure_issue',
+								'other',
+							]}
 							heading='Suggestions'
 							subheading='Share improvement ideas with your institute administration.'
 							submitLabel='Submit Suggestion'
@@ -205,6 +222,12 @@ export default function Dashboard() {
 						<ReportCenter
 							presetKind='report'
 							lockKind
+							allowedTypes={[
+								'technical_issue',
+								'fees_issue',
+								'infrastructure_issue',
+								'other',
+							]}
 							heading='Report'
 							subheading='Report incidents, issues, or urgent concerns for admin review.'
 							submitLabel='Submit Report'

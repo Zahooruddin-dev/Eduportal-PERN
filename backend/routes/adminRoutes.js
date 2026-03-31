@@ -19,6 +19,7 @@ router.post('/teachers', controller.createTeacher);
 router.post('/students/bulk', controller.bulkCreateStudents);
 router.post('/invites', controller.createAdminInvite);
 router.post('/users/:userId/reset-password', controller.resetUserPasswordByAdmin);
+router.patch('/parents/:userId/link-student', controller.linkParentStudent);
 router.get('/announcements', announcementController.listAdminAnnouncements);
 router.post('/announcements', announcementController.createAdminAnnouncement);
 router.delete('/announcements/:announcementId', announcementController.deleteAdminAnnouncement);
