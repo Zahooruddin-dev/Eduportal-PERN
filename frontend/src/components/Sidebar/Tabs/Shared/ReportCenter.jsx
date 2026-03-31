@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, FileText, AlertCircle } from 'lucide-react';
 import {
 	createReport,
 	getMyReports,
@@ -11,15 +11,15 @@ import Toast from '../../../Toast';
 
 function statusClass(status) {
 	if (status === 'resolved' || status === 'closed') {
-		return 'bg-green-500/10 text-green-600 border border-green-500/20';
+		return 'bg-green-500/15 text-green-700 dark:text-green-300 border border-green-500/20';
 	}
 	if (status === 'rejected') {
-		return 'bg-red-500/10 text-red-600 border border-red-500/20';
+		return 'bg-red-500/15 text-red-700 dark:text-red-300 border border-red-500/20';
 	}
 	if (status === 'under_process') {
-		return 'bg-amber-500/10 text-amber-600 border border-amber-500/20';
+		return 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/20';
 	}
-	return 'bg-blue-500/10 text-blue-600 border border-blue-500/20';
+	return 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/20';
 }
 
 function toLabel(value) {
@@ -46,6 +46,7 @@ export default function ReportCenter() {
 		targetUserId: '',
 		attachment: null,
 	});
+	const [formErrors, setFormErrors] = useState({});
 	const [toast, setToast] = useState({ isOpen: false, type: 'info', message: '' });
 
 	const openToast = useCallback((type, message) => {
@@ -162,14 +163,21 @@ export default function ReportCenter() {
 		return map;
 	}, [meta.types]);
 
+	const validateForm = () => {
+		const errors = {};
+		if (!form.title.trim()) errors.title = 'Title is required';
+		if (!form.description.trim()) errors.description = 'Description is required';
+		if (form.kind === 'complaint' && !form.targetUserId) {
+			errors.targetUserId = 'Please select a complaint target';
+		}
+		setFormErrors(errors);
+		return Object.keys(errors).length === 0;
+	};
+
 	const handleSubmit = async (event) => {
 		event.preventDefault();
-		if (!form.title.trim() || !form.description.trim()) {
-			openToast('warning', 'Title and description are required.');
-			return;
-		}
-		if (form.kind === 'complaint' && !form.targetUserId) {
-			openToast('warning', 'Select a complaint target or switch to report.');
+		if (!validateForm()) {
+			openToast('warning', 'Please fill in all required fields.');
 			return;
 		}
 
@@ -195,6 +203,7 @@ export default function ReportCenter() {
 				targetUserId: '',
 				attachment: null,
 			}));
+			setFormErrors({});
 			openToast('success', 'Submitted successfully.');
 			await loadReports();
 		} catch (error) {
@@ -212,41 +221,65 @@ export default function ReportCenter() {
 	}, [loadReports, refreshing]);
 
 	return (
-		<div className='p-4 sm:p-6 lg:p-8 space-y-6'>
-			<div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6'>
-				<h1 className='text-2xl font-semibold text-[var(--color-text-primary)]'>Reports and Complaints</h1>
-				<p className='mt-1 text-sm text-[var(--color-text-muted)]'>
-					Submit technical or academic issues, and complaints. Admins can review and update status with feedback.
+		<div className="p-4 sm:p-6 lg:p-8 space-y-6">
+			{/* Header */}
+			<div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6 transition-colors">
+				<h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">
+					Reports & Complaints
+				</h1>
+				<p className="mt-1 text-sm text-[var(--color-text-muted)]">
+					Submit technical or academic issues, and complaints. Admins can review and update
+					status with feedback.
 				</p>
-				<p className='mt-1 text-xs text-[var(--color-text-muted)]'>
-					Auto-refresh is active and status updates appear automatically.
+				<p className="mt-1 text-xs text-[var(--color-text-muted)]">
+					Auto-refresh is active — status updates appear automatically.
 				</p>
 			</div>
 
-			<form onSubmit={handleSubmit} className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6 space-y-4'>
-				<h2 className='text-lg font-semibold text-[var(--color-text-primary)]'>New submission</h2>
-				<div className='grid gap-4 md:grid-cols-2'>
+			{/* Submission Form */}
+			<form
+				onSubmit={handleSubmit}
+				className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6 space-y-4 transition-colors"
+			>
+				<h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+					New submission
+				</h2>
+
+				<div className="grid gap-4 md:grid-cols-2">
 					<div>
-						<label className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'>Kind</label>
+						<label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
+							Kind
+						</label>
 						<select
 							value={form.kind}
-							onChange={(event) => setForm((previous) => ({ ...previous, kind: event.target.value, targetUserId: '' }))}
-							className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30'
+							onChange={(event) =>
+								setForm((prev) => ({ ...prev, kind: event.target.value, targetUserId: '' }))
+							}
+							className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]"
 						>
 							{meta.kinds.map((item) => (
-								<option key={item.value} value={item.value}>{item.label}</option>
+								<option key={item.value} value={item.value}>
+									{item.label}
+								</option>
 							))}
 						</select>
 					</div>
+
 					<div>
-						<label className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'>Type</label>
+						<label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
+							Type
+						</label>
 						<select
 							value={form.reportType}
-							onChange={(event) => setForm((previous) => ({ ...previous, reportType: event.target.value }))}
-							className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30'
+							onChange={(event) =>
+								setForm((prev) => ({ ...prev, reportType: event.target.value }))
+							}
+							className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]"
 						>
 							{meta.types.map((item) => (
-								<option key={item.value} value={item.value}>{item.label}</option>
+								<option key={item.value} value={item.value}>
+									{item.label}
+								</option>
 							))}
 						</select>
 					</div>
@@ -254,115 +287,204 @@ export default function ReportCenter() {
 
 				{form.kind === 'complaint' && (
 					<div>
-						<label className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'>Complaint target</label>
+						<label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
+							Complaint target <span className="text-red-500">*</span>
+						</label>
 						<select
 							value={form.targetUserId}
-							onChange={(event) => setForm((previous) => ({ ...previous, targetUserId: event.target.value }))}
-							className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30'
+							onChange={(event) =>
+								setForm((prev) => ({ ...prev, targetUserId: event.target.value }))
+							}
+							aria-required="true"
+							className={`w-full rounded-xl border ${
+								formErrors.targetUserId
+									? 'border-red-500 focus:ring-red-500/30'
+									: 'border-[var(--color-border)] focus:ring-[var(--color-primary)]/30'
+							} bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:ring-2 focus:border-transparent`}
 						>
-							<option value=''>Select target</option>
+							<option value="">Select target</option>
 							{targets.map((target) => (
 								<option key={target.id} value={target.id}>
 									{target.username} ({toLabel(target.role)})
 								</option>
 							))}
 						</select>
+						{formErrors.targetUserId && (
+							<p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+								<AlertCircle size={12} /> {formErrors.targetUserId}
+							</p>
+						)}
 					</div>
 				)}
 
 				<div>
-					<label className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'>Title</label>
+					<label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
+						Title <span className="text-red-500">*</span>
+					</label>
 					<input
 						value={form.title}
-						onChange={(event) => setForm((previous) => ({ ...previous, title: event.target.value }))}
-						placeholder='Brief title'
-						className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30'
+						onChange={(event) =>
+							setForm((prev) => ({ ...prev, title: event.target.value }))
+						}
+						aria-required="true"
+						placeholder="Brief title"
+						className={`w-full rounded-xl border ${
+							formErrors.title
+								? 'border-red-500 focus:ring-red-500/30'
+								: 'border-[var(--color-border)] focus:ring-[var(--color-primary)]/30'
+						} bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:ring-2 focus:border-transparent`}
 					/>
+					{formErrors.title && (
+						<p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+							<AlertCircle size={12} /> {formErrors.title}
+						</p>
+					)}
 				</div>
 
 				<div>
-					<label className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'>Description</label>
+					<label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
+						Description <span className="text-red-500">*</span>
+					</label>
 					<textarea
 						rows={4}
 						value={form.description}
-						onChange={(event) => setForm((previous) => ({ ...previous, description: event.target.value }))}
-						placeholder='Share full details'
-						className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30'
+						onChange={(event) =>
+							setForm((prev) => ({ ...prev, description: event.target.value }))
+						}
+						aria-required="true"
+						placeholder="Share full details"
+						className={`w-full rounded-xl border ${
+							formErrors.description
+								? 'border-red-500 focus:ring-red-500/30'
+								: 'border-[var(--color-border)] focus:ring-[var(--color-primary)]/30'
+						} bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:ring-2 focus:border-transparent`}
 					/>
+					{formErrors.description && (
+						<p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+							<AlertCircle size={12} /> {formErrors.description}
+						</p>
+					)}
 				</div>
 
 				<div>
-					<label className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'>Attachment</label>
+					<label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
+						Attachment (optional)
+					</label>
 					<input
-						type='file'
-						accept='image/*,.pdf'
-						onChange={(event) => setForm((previous) => ({ ...previous, attachment: event.target.files?.[0] || null }))}
-						className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)]'
+						type="file"
+						accept="image/*,.pdf"
+						onChange={(event) =>
+							setForm((prev) => ({ ...prev, attachment: event.target.files?.[0] || null }))
+						}
+						className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] transition-colors focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:outline-none"
 					/>
-					<p className='mt-1 text-xs text-[var(--color-text-muted)]'>Attach screenshot or PDF evidence if needed.</p>
+					<p className="mt-1 text-xs text-[var(--color-text-muted)]">
+						Screenshot or PDF (max 10MB)
+					</p>
 				</div>
 
 				<button
-					type='submit'
+					type="submit"
 					disabled={submitting}
-					className='w-full rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-primary-hover)] disabled:opacity-60'
+					className="w-full rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-[var(--color-primary-hover)] active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50 focus:ring-offset-2 focus:ring-offset-[var(--color-surface)]"
 				>
 					{submitting ? 'Submitting...' : 'Submit'}
 				</button>
 			</form>
 
-			<div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6 space-y-4'>
-				<div className='flex items-center justify-between gap-3'>
-					<h2 className='text-lg font-semibold text-[var(--color-text-primary)]'>My submissions</h2>
+			{/* Reports List */}
+			<div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6 space-y-4 transition-colors">
+				<div className="flex items-center justify-between gap-3">
+					<h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+						My submissions
+					</h2>
 					<button
-						type='button'
+						type="button"
 						onClick={handleManualRefresh}
 						disabled={refreshing || loading}
-						className='inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/40 disabled:opacity-60'
+						aria-label="Refresh reports"
+						className="inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition-all hover:bg-[var(--color-border)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 active:scale-[0.97] disabled:opacity-60 disabled:active:scale-100"
 					>
-						<RefreshCw size={14} className={refreshing || loading ? 'animate-spin' : ''} />
-						{refreshing || loading ? 'Refreshing' : 'Refresh'}
+						<RefreshCw
+							size={14}
+							className={`${refreshing || loading ? 'animate-spin' : ''} transition-transform`}
+						/>
+						<span className="hidden sm:inline">{refreshing || loading ? 'Refreshing' : 'Refresh'}</span>
+						<span className="sm:hidden">{refreshing || loading ? '↻' : '↻'}</span>
 					</button>
 				</div>
+
 				{loading ? (
-					<div className='rounded-xl border border-[var(--color-border)] p-4 text-sm text-[var(--color-text-muted)]'>Loading...</div>
+					<div className="rounded-xl border border-[var(--color-border)] p-8 text-center text-sm text-[var(--color-text-muted)]">
+						<RefreshCw size={24} className="mx-auto mb-2 animate-spin text-[var(--color-primary)]" />
+						Loading reports...
+					</div>
 				) : reports.length ? (
-					<div className='space-y-3'>
+					<div className="space-y-3" aria-live="polite">
 						{reports.map((report) => (
-							<div key={report.id} className='rounded-xl border border-[var(--color-border)] p-4'>
-								<div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+							<div
+								key={report.id}
+								className="group rounded-xl border border-[var(--color-border)] p-4 transition-all hover:shadow-md hover:border-[var(--color-primary)]/30"
+							>
+								<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 									<div>
-										<p className='text-sm font-semibold text-[var(--color-text-primary)]'>{report.title}</p>
-										<p className='text-xs text-[var(--color-text-muted)]'>
-											{toLabel(report.kind)} • {typeMap.get(report.report_type) || toLabel(report.report_type)}
+										<p className="text-sm font-semibold text-[var(--color-text-primary)]">
+											{report.title}
+										</p>
+										<p className="text-xs text-[var(--color-text-muted)]">
+											{toLabel(report.kind)} •{' '}
+											{typeMap.get(report.report_type) || toLabel(report.report_type)}
 										</p>
 									</div>
-									<span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusClass(report.status)}`}>
+									<span
+										className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusClass(
+											report.status
+										)}`}
+									>
 										{toLabel(report.status)}
 									</span>
 								</div>
-								<p className='mt-2 text-sm text-[var(--color-text-secondary)]'>{report.description}</p>
-								<div className='mt-2 flex flex-wrap gap-3 text-xs text-[var(--color-text-muted)]'>
+								<p className="mt-2 text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap">
+									{report.description}
+								</p>
+								<div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-[var(--color-text-muted)]">
 									<span>Created: {new Date(report.created_at).toLocaleString()}</span>
 									{report.target_username && (
-										<span>Target: {report.target_username} ({toLabel(report.target_role)})</span>
+										<span>
+											Target: {report.target_username} ({toLabel(report.target_role)})
+										</span>
 									)}
 									{report.attachment_url && (
-										<a href={report.attachment_url} target='_blank' rel='noreferrer' className='text-[var(--color-primary)] hover:underline'>
+										<a
+											href={report.attachment_url}
+											target="_blank"
+											rel="noreferrer"
+											className="text-[var(--color-primary)] hover:underline"
+										>
+											<FileText size={12} className="inline mr-1" />
 											View attachment
 										</a>
 									)}
 								</div>
 								{report.admin_feedback && (
-									<div className='mt-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-secondary)]'>
-										<span className='font-medium text-[var(--color-text-primary)]'>Admin feedback:</span> {report.admin_feedback}
+									<div className="mt-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-secondary)]">
+										<span className="font-medium text-[var(--color-text-primary)]">
+											Admin feedback:
+										</span>{' '}
+										{report.admin_feedback}
 									</div>
 								)}
 							</div>
 						))}
 					</div>
 				) : (
-					<div className='rounded-xl border border-[var(--color-border)] p-4 text-sm text-[var(--color-text-muted)]'>No reports yet.</div>
+					<div className="rounded-xl border border-[var(--color-border)] p-8 text-center">
+						<FileText size={32} className="mx-auto text-[var(--color-text-muted)] mb-2" />
+						<p className="text-sm text-[var(--color-text-secondary)]">No reports yet</p>
+						<p className="text-xs text-[var(--color-text-muted)] mt-1">
+							Use the form above to submit your first report or complaint.
+						</p>
+					</div>
 				)}
 			</div>
 
@@ -370,7 +492,7 @@ export default function ReportCenter() {
 				type={toast.type}
 				message={toast.message}
 				isOpen={toast.isOpen}
-				onClose={() => setToast((previous) => ({ ...previous, isOpen: false }))}
+				onClose={() => setToast((prev) => ({ ...prev, isOpen: false }))}
 			/>
 		</div>
 	);
