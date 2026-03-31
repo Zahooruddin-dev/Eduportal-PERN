@@ -1,217 +1,126 @@
-# 🎓 Eduportal — PERN Stack Education Portal
+# Mizuka Portal
 
-A full-stack education portal built with the **PERN Stack** (PostgreSQL, Express, React, Node.js), developed as part of **Mizuka's enterprise solutions** for institute partners. Provides end-to-end class management, announcements, and student enrollment in a single platform.
+Mizuka Portal is a full-stack institute management platform built with the PERN stack (PostgreSQL, Express, React, Node.js).
 
-🔗 **Live Demo:** [eduportal-pern.vercel.app](https://eduportal-pern.vercel.app)
+This repository contains:
 
----
+- Backend package: Mizuka Portal Backend (version 7.2.0)
+- Frontend package: Mizuka Portal (version 4.4.0)
 
-## ✨ Features
+## Repository Structure
 
-### 🔐 Authentication & Roles
-- JWT-based auth with **Teacher** and **Student** roles
-- Each role gets a different dashboard on login
-- Forgot password flow with a 6-digit email reset code (15 min expiry)
-- Change password from profile with current password verification
-- Delete account with full credential confirmation — cascades all data
-
-### 🏫 Class Management
-- Teachers create and delete classes with schedule info
-- Students browse the full class directory and enroll/unenroll
-- Duplicate enrollment prevented at both frontend and backend
-
-### 📢 Announcements
-- Teachers post announcements per class with optional expiry dates
-- Expiry badges: active (teal), expiring soon within 3 days (amber), expired (red)
-- Expired announcements automatically filtered out at the database level
-- Students see only announcements from their enrolled classes
-
-### 👤 Profile
-- Update username with live preview
-- Upload profile picture — stored on **Cloudinary**
-- Responsive avatar with fallback to username initial
-
-### ⚡ Performance
-- Pages stay mounted after first visit — no refetch on tab switch
-- Announcement panels cached per class — no repeat API calls on drawer reopen
-- Auth context is reactive — token changes update the UI without page reload
-
----
-
-## 🛠 Tech Stack
-
-| Layer | Technology |
-|---|---|
-| **Frontend** | React 18, React Router, Axios, Lucide React |
-| **Backend** | Node.js, Express.js |
-| **Database** | PostgreSQL (hosted on Neon) |
-| **Auth** | JSON Web Tokens, bcrypt |
-| **File Storage** | Cloudinary + Multer |
-| **Deployment** | Vercel (frontend) |
-
----
-
-## 📂 Project Structure
-
-```
-Eduportal-PERN/
-├── backend/
-│   ├── controllers/       # authControl, announcementControl, etc.
-│   ├── db/                # queryAuth, queryAnnouncements, queryEnrollment
-│   ├── middleware/        # authMiddleware, uploadMiddleware (Cloudinary)
-│   ├── routes/            # authRoutes, classRoutes, enrollRoutes, announcements
-│   └── app.js
-├── frontend/
-│   ├── src/
-│   │   ├── api/           # authApi, api (classes/enrollments/announcements)
-│   │   ├── components/    # Layout, Sidebar, Profile, TeacherClasses, Enrolled, etc.
-│   │   ├── css/           # Per-component stylesheets
-│   │   └── utils/         # AuthContext, auth helpers
-│   └── index.html
-└── README.md
+```text
+Institute-dashboard-PERN/
+|- backend/
+|  |- controllers/
+|  |- db/
+|  |- middleware/
+|  |- routes/
+|  |- socket/
+|  |- app.js
+|  |- package.json
+|- frontend/
+|  |- src/
+|  |- index.html
+|  |- package.json
+|- Readme.MD
 ```
 
----
+## Product Areas
 
-## 📂 Database Schema
+- Role-based dashboards for student, teacher, and admin
+- Class and enrollment workflows
+- Announcements, assignments, attendance, and gradebook
+- Institute-level reports and complaints
+- Real-time student-teacher communication
+- Theme-aware UI with responsive dashboard navigation
 
-```sql
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    role VARCHAR(20) DEFAULT 'student',
-    profile_pic TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+## Package Documentation
 
-CREATE TABLE classes (
-    id SERIAL PRIMARY KEY,
-    class_name VARCHAR(100) NOT NULL,
-    time_in_pakistan INTEGER NOT NULL,
-    teacher_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+- Backend docs: `backend/README.md`
+- Frontend docs: `frontend/README.md`
 
-CREATE TABLE enrollments (
-    id SERIAL PRIMARY KEY,
-    student_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    class_id INTEGER REFERENCES classes(id) ON DELETE CASCADE,
-    enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+## Quick Start
 
-CREATE TABLE announcements (
-    id SERIAL PRIMARY KEY,
-    class_id INTEGER REFERENCES classes(id) ON DELETE CASCADE,
-    teacher_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    title VARCHAR(200) NOT NULL,
-    content TEXT NOT NULL,
-    expires_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+### 1. Install dependencies
 
-CREATE TABLE password_resets (
-    email VARCHAR(100) PRIMARY KEY,
-    code VARCHAR(6) NOT NULL,
-    expires_at TIMESTAMP NOT NULL
-);
-```
-
----
-
-## 🚦 API Reference
-
-### Auth — `/api/auth`
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| POST | `/login` | ❌ | Login, returns JWT |
-| POST | `/register` | ❌ | Register new user |
-| PUT | `/update-profile` | ✅ | Update username and/or profile picture |
-| PUT | `/change-password` | ✅ | Change password (requires current password) |
-| DELETE | `/delete` | ✅ | Delete account with credential verification |
-| POST | `/request-reset` | ❌ | Request 6-digit password reset code |
-| POST | `/reset-password` | ❌ | Reset password using code |
-
-### Classes — `/api/class`
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| GET | `/` | ❌ | All classes |
-| POST | `/` | ✅ Teacher | Create class |
-| GET | `/mine` | ✅ Teacher | Teacher's own classes |
-| GET | `/:id` | ❌ | Single class details |
-| DELETE | `/:id` | ✅ Teacher | Delete class — cascades enrollments and announcements |
-
-### Enrollments — `/api/enroll`
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| POST | `/` | ✅ | Enroll student in class |
-| GET | `/class/:id` | ✅ | Get class roster |
-| GET | `/student/:id` | ✅ | Get student's enrolled classes |
-| DELETE | `/student/:studentId/class/:classId` | ✅ | Unenroll student |
-
-### Announcements — `/api/class/:classId/announcements`
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| POST | `/` | ✅ Teacher | Post announcement with optional expiry |
-| GET | `/` | ✅ | Get active (non-expired) announcements |
-| DELETE | `/:announcementId` | ✅ Teacher | Delete own announcement |
-
----
-
-## 🔧 Local Setup
-
-**1. Clone the repo**
 ```bash
-git clone https://github.com/Zahooruddin-dev/Eduportal-PERN.git
-cd Eduportal-PERN
-```
-
-**2. Install dependencies**
-```bash
-# Backend (from root)
+cd backend
 npm install
 
-# Frontend
-cd frontend && npm install
+cd ../frontend
+npm install
 ```
 
-**3. Create `.env` in the root directory**
+### 2. Configure environment files
+
+Backend: create `backend/.env`
+
 ```env
-DATABASE_URL=your_postgres_connection_string
-PORT=3000
+DATABASE_URL=postgres_connection_string
 JWT_SECRET=your_jwt_secret
+PORT=3000
+FRONTEND_URL=http://localhost:5173
 
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
+
+ADMIN_BOOTSTRAP_SECRET=your_setup_secret
 ```
 
-> ⚠️ Never commit your `.env` — it is already listed in `.gitignore`.
+Frontend: create `frontend/.env`
 
-**4. Run**
+```env
+VITE_BACKEND_URL=http://localhost:3000
+```
+
+### 3. Run locally
+
+Backend terminal:
+
 ```bash
-# Backend
-npm start
-
-# Frontend (separate terminal)
-cd frontend && npm run dev
+cd backend
+npm run server
 ```
 
-Backend: `http://localhost:3000`  
-Frontend: `http://localhost:5173`
+Frontend terminal:
 
----
+```bash
+cd frontend
+npm run dev
+```
 
-## 🌐 Deployment Notes
+## Ports
 
-- **Frontend** deployed on [Vercel](https://vercel.com) — set `VITE_API_URL` env var to your backend URL
-- **Backend** can be deployed on Railway, Render, or any Node.js host
-- **Database** hosted on [Neon](https://neon.tech) — serverless PostgreSQL, free tier works fine
-- **Images** stored on [Cloudinary](https://cloudinary.com) — free tier sufficient for development
+- Backend default: `http://localhost:3000`
+- Frontend default: `http://localhost:5173`
 
----
+If backend port is busy on Windows PowerShell:
 
-## 📬 Contact
+```powershell
+$env:PORT='3001'; npm run server
+```
 
-**Zahooruddin** — [mzkhan886@gmail.com](mailto:mzkhan886@gmail.com) — [@Zahooruddin-dev](https://github.com/Zahooruddin-dev)
+## Build and Lint
+
+Frontend:
+
+```bash
+cd frontend
+npm run lint
+npm run build
+```
+
+Backend:
+
+```bash
+cd backend
+npm run server
+```
+
+## Notes
+
+- The frontend uses route-driven tabs through `/dashboard/:tab?`.
+- Global theme and API error handling are configured in the frontend app shell.
+- Communication endpoints are treated as real-time paths and bypass API caching.

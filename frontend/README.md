@@ -1,16 +1,62 @@
-# React + Vite
+# Mizuka Portal Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Version: 4.4.0
 
-Currently, two official plugins are available:
+This package contains the React client for Mizuka Portal. It provides role-based dashboards, real-time communication, reporting workflows, and institute administration screens.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Stack
 
-## React Compiler
+- React 19 + Vite
+- React Router
+- Axios
+- Tailwind CSS (utility classes) with CSS custom properties for theming
+- Socket.IO client for communication updates
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Key Frontend Architecture
 
-## Expanding the ESLint configuration
+- Route-driven dashboard tabs: `/dashboard/:tab?`
+- Global auth state: `src/context/AuthContext.jsx`
+- Global theme provider: `src/hooks/useTheme.js`
+- Global UI error protection: `src/components/ErrorBoundary.jsx`
+- Global API error notifications and session handling: `src/api/axiosConfig.js`
+- Simple GET caching in API layer with automatic invalidation on write requests
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Folder Guide
+
+- `src/Auth`: authentication screens
+- `src/components/Dashboard`: role-based dashboard shell
+- `src/components/Sidebar/Tabs`: all role tabs and shared modules
+- `src/api`: API clients
+- `src/context`: app-wide providers
+- `src/hooks`: reusable hooks
+- `src/utils`: route guards and helpers
+
+## Environment Variables
+
+Create `frontend/.env`:
+
+```env
+VITE_BACKEND_URL=http://localhost:3000
+```
+
+## Scripts
+
+- `npm run dev`: run local development server
+- `npm run build`: create production build
+- `npm run preview`: preview built output
+- `npm run lint`: run ESLint checks
+
+## Local Run
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Default local URL: `http://localhost:5173`
+
+## Notes
+
+- Theme tokens are defined in `src/index.css` and applied globally through the theme provider.
+- Communication-related API calls intentionally bypass cache to keep inbox and unread counters fresh.
