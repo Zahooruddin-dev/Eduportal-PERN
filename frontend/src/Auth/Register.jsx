@@ -21,6 +21,13 @@ export default function Register() {
     email: '',
     password: '',
     confirm: '',
+    childFullName: '',
+    childGrade: '',
+    relationshipToChild: '',
+    parentPhone: '',
+    alternatePhone: '',
+    address: '',
+    notes: '',
   });
   const [show, setShow] = useState({ password: false, confirm: false });
   const [error, setError] = useState('');
@@ -47,9 +54,14 @@ export default function Register() {
     else if (form.password.length < 8) errs.password = 'At least 8 characters required';
     if (!form.confirm) errs.confirm = 'Please confirm your password';
     else if (form.confirm !== form.password) errs.confirm = 'Passwords do not match';
+
     if (!isAdminInviteSignup && accountType === 'parent') {
-      errs.accountType = 'Parent accounts are not available yet.';
+      if (!form.childFullName.trim()) errs.childFullName = 'Child full name is required';
+      if (!form.childGrade.trim()) errs.childGrade = 'Child grade is required';
+      if (!form.relationshipToChild.trim()) errs.relationshipToChild = 'Relationship is required';
+      if (!form.parentPhone.trim()) errs.parentPhone = 'Primary phone is required';
     }
+
     return errs;
   };
 
@@ -74,6 +86,19 @@ export default function Register() {
             email: form.email,
             password: form.password,
             role: accountType,
+            ...(accountType === 'parent'
+              ? {
+                  parentProfile: {
+                    childFullName: form.childFullName,
+                    childGrade: form.childGrade,
+                    relationshipToChild: form.relationshipToChild,
+                    parentPhone: form.parentPhone,
+                    alternatePhone: form.alternatePhone,
+                    address: form.address,
+                    notes: form.notes,
+                  },
+                }
+              : {}),
           };
       const res = isAdminInviteSignup ? await acceptAdminInvite(payload) : await registerUser(payload);
       login(res.data.token);
@@ -222,7 +247,7 @@ export default function Register() {
                 >
                   <option value='student'>Student</option>
                   <option value='teacher'>Teacher</option>
-                  <option value='parent' disabled>Parent (coming soon)</option>
+                  <option value='parent'>Parent</option>
                   <option value='admin'>Admin</option>
                 </select>
                 {fieldErrors.accountType && (
@@ -231,8 +256,142 @@ export default function Register() {
                   </p>
                 )}
                 <p className='mt-1.5 text-xs text-[var(--color-text-muted)]'>
-                  You can register as student, teacher, or admin from this form. Parent accounts are coming soon.
+                  Parent accounts require child details so your institute can verify guardianship quickly.
                 </p>
+              </div>
+            )}
+
+            {!isAdminInviteSignup && accountType === 'parent' && (
+              <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4 space-y-4'>
+                <h2 className='text-sm font-semibold text-[var(--color-text-primary)]'>Child and Contact Details</h2>
+                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                  <div className='sm:col-span-2'>
+                    <label htmlFor='childFullName' className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'>
+                      Child full name
+                    </label>
+                    <input
+                      id='childFullName'
+                      name='childFullName'
+                      value={form.childFullName}
+                      onChange={handleChange}
+                      placeholder='Ali Khan'
+                      className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:ring-2 ${
+                        fieldErrors.childFullName
+                          ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20'
+                          : 'border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]/20'
+                      }`}
+                    />
+                    {fieldErrors.childFullName && (
+                      <p className='mt-1.5 text-xs text-red-500'>{fieldErrors.childFullName}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor='childGrade' className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'>
+                      Child grade
+                    </label>
+                    <input
+                      id='childGrade'
+                      name='childGrade'
+                      value={form.childGrade}
+                      onChange={handleChange}
+                      placeholder='Grade 8'
+                      className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:ring-2 ${
+                        fieldErrors.childGrade
+                          ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20'
+                          : 'border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]/20'
+                      }`}
+                    />
+                    {fieldErrors.childGrade && (
+                      <p className='mt-1.5 text-xs text-red-500'>{fieldErrors.childGrade}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor='relationshipToChild' className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'>
+                      Relationship
+                    </label>
+                    <input
+                      id='relationshipToChild'
+                      name='relationshipToChild'
+                      value={form.relationshipToChild}
+                      onChange={handleChange}
+                      placeholder='Mother, Father, Guardian'
+                      className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:ring-2 ${
+                        fieldErrors.relationshipToChild
+                          ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20'
+                          : 'border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]/20'
+                      }`}
+                    />
+                    {fieldErrors.relationshipToChild && (
+                      <p className='mt-1.5 text-xs text-red-500'>{fieldErrors.relationshipToChild}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor='parentPhone' className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'>
+                      Primary phone
+                    </label>
+                    <input
+                      id='parentPhone'
+                      name='parentPhone'
+                      value={form.parentPhone}
+                      onChange={handleChange}
+                      placeholder='+92 300 0000000'
+                      className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:ring-2 ${
+                        fieldErrors.parentPhone
+                          ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20'
+                          : 'border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]/20'
+                      }`}
+                    />
+                    {fieldErrors.parentPhone && (
+                      <p className='mt-1.5 text-xs text-red-500'>{fieldErrors.parentPhone}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor='alternatePhone' className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'>
+                      Alternate phone (optional)
+                    </label>
+                    <input
+                      id='alternatePhone'
+                      name='alternatePhone'
+                      value={form.alternatePhone}
+                      onChange={handleChange}
+                      placeholder='+92 301 0000000'
+                      className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
+                    />
+                  </div>
+
+                  <div className='sm:col-span-2'>
+                    <label htmlFor='address' className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'>
+                      Address (optional)
+                    </label>
+                    <input
+                      id='address'
+                      name='address'
+                      value={form.address}
+                      onChange={handleChange}
+                      placeholder='House 22, Street 7, City'
+                      className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
+                    />
+                  </div>
+
+                  <div className='sm:col-span-2'>
+                    <label htmlFor='notes' className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'>
+                      Notes (optional)
+                    </label>
+                    <textarea
+                      id='notes'
+                      name='notes'
+                      rows={2}
+                      value={form.notes}
+                      onChange={handleChange}
+                      placeholder='Any additional details for admin verification'
+                      className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 resize-y'
+                    />
+                  </div>
+                </div>
               </div>
             )}
 

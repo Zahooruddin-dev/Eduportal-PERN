@@ -6,21 +6,61 @@ async function registerQuery(
 	password_hash,
 	role = 'student',
 	institute_id = null,
+	parentProfile = null,
 ) {
-	const { rows } = await pool.query(
-		`
-		INSERT INTO users (username,email,password_hash,role,institute_id)
-		VALUES (
-			$1,
-			$2,
-			$3,
-			$4,
-			COALESCE($5, (SELECT id FROM institutes ORDER BY created_at ASC LIMIT 1))
-		)
-		RETURNING id, username, email, role, profile_pic, created_at, institute_id`,
-		[username, email, password_hash, role, institute_id],
-	);
-	return rows[0];
+	const client = await pool.connect();
+	try {
+		await client.query('BEGIN');
+		const { rows } = await client.query(
+			`
+			INSERT INTO users (username,email,password_hash,role,institute_id)
+			VALUES (
+				$1,
+				$2,
+				$3,
+				$4,
+				COALESCE($5, (SELECT id FROM institutes ORDER BY created_at ASC LIMIT 1))
+			)
+			RETURNING id, username, email, role, profile_pic, created_at, institute_id`,
+			[username, email, password_hash, role, institute_id],
+		);
+
+		const user = rows[0];
+
+		if (role === 'parent') {
+			await client.query(
+				`INSERT INTO parent_profiles (
+					user_id,
+					child_full_name,
+					child_grade,
+					relationship_to_child,
+					parent_phone,
+					alternate_phone,
+					address,
+					notes
+				)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+				[
+					user.id,
+					parentProfile?.childFullName,
+					parentProfile?.childGrade,
+					parentProfile?.relationshipToChild,
+					parentProfile?.parentPhone,
+					parentProfile?.alternatePhone || null,
+					parentProfile?.address || null,
+					parentProfile?.notes || null,
+				],
+			);
+		}
+
+		await client.query('COMMIT');
+		return user;
+	} catch (error) {
+		await client.query('ROLLBACK');
+		throw error;
+	} finally {
+		client.release();
+	}
 }
 async function updateUsername(id, username, profilePic) {
 	const query = profilePic
@@ -61,6 +101,26 @@ async function getUserByEmail(email) {
 	return rows[0] || null;
 }
 
+async function getParentProfileByUserId(userId) {
+	const { rows } = await pool.query(
+		`SELECT
+			user_id,
+			child_full_name,
+			child_grade,
+			relationship_to_child,
+			parent_phone,
+			alternate_phone,
+			address,
+			notes,
+			created_at,
+			updated_at
+		 FROM parent_profiles
+		 WHERE user_id = $1`,
+		[userId],
+	);
+	return rows[0] || null;
+}
+
 async function saveResetCode(email, code, expires) {
 	await pool.query('DELETE FROM password_resets WHERE email =$1', [email]);
 
@@ -98,4 +158,5 @@ module.exports = {
 	deleteResetCode,
 	saveResetCode,
 	updateUserPassword,
+	getParentProfileByUserId,
 };

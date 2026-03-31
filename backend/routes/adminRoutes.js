@@ -1,5 +1,6 @@
 const express = require('express');
 const controller = require('../controllers/adminControl');
+const announcementController = require('../controllers/announcementControl');
 const { verifyToken, isAdmin } = require('../middleware/authMiddleware');
 const { validateUuidParam } = require('../middleware/uuidParamMiddleware');
 
@@ -18,5 +19,8 @@ router.post('/teachers', controller.createTeacher);
 router.post('/students/bulk', controller.bulkCreateStudents);
 router.post('/invites', controller.createAdminInvite);
 router.post('/users/:userId/reset-password', controller.resetUserPasswordByAdmin);
+router.get('/announcements', announcementController.listAdminAnnouncements);
+router.post('/announcements', announcementController.createAdminAnnouncement);
+router.delete('/announcements/:announcementId', announcementController.deleteAdminAnnouncement);
 
 module.exports = router;

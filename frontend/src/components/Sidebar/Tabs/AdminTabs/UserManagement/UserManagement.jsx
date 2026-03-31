@@ -287,8 +287,8 @@ export default function UserManagement() {
 		<div className='p-4 sm:p-6 lg:p-8 space-y-6'>
 			<div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6'>
 				<h1 className='text-2xl font-semibold text-[var(--color-text-primary)]'>User Management</h1>
-				<p className='mt-1 text-sm text-[var(--color-text-muted)]'>Manage teacher, student, and admin accounts in your institute.</p>
-				<div className='mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4'>
+				<p className='mt-1 text-sm text-[var(--color-text-muted)]'>Manage teacher, student, parent, and admin accounts in your institute.</p>
+				<div className='mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5'>
 					<div className='rounded-xl border border-[var(--color-border)] p-3'>
 						<p className='text-xs text-[var(--color-text-muted)]'>Total</p>
 						<p className='text-lg font-semibold text-[var(--color-text-primary)]'>{summary.total}</p>
@@ -304,6 +304,10 @@ export default function UserManagement() {
 					<div className='rounded-xl border border-[var(--color-border)] p-3'>
 						<p className='text-xs text-[var(--color-text-muted)]'>Students</p>
 						<p className='text-lg font-semibold text-[var(--color-text-primary)]'>{summary.student}</p>
+					</div>
+					<div className='rounded-xl border border-[var(--color-border)] p-3'>
+						<p className='text-xs text-[var(--color-text-muted)]'>Parents</p>
+						<p className='text-lg font-semibold text-[var(--color-text-primary)]'>{summary.parent}</p>
 					</div>
 				</div>
 			</div>
@@ -432,6 +436,7 @@ export default function UserManagement() {
 							<option value='admin'>Admins</option>
 							<option value='teacher'>Teachers</option>
 							<option value='student'>Students</option>
+							<option value='parent'>Parents</option>
 						</select>
 						<input
 							value={filters.search}
@@ -460,6 +465,20 @@ export default function UserManagement() {
 										<p className='text-sm font-medium text-[var(--color-text-primary)]'>{user.username}</p>
 										<p className='text-sm text-[var(--color-text-secondary)]'>{user.email}</p>
 										<p className='text-xs capitalize text-[var(--color-text-muted)]'>{user.role}</p>
+										{user.role === 'parent' && (
+											<div className='mt-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-xs text-[var(--color-text-secondary)] space-y-1'>
+												<p><span className='font-medium text-[var(--color-text-primary)]'>Child:</span> {user.child_full_name || 'Not provided'}</p>
+												<p><span className='font-medium text-[var(--color-text-primary)]'>Grade:</span> {user.child_grade || 'Not provided'}</p>
+												<p><span className='font-medium text-[var(--color-text-primary)]'>Relationship:</span> {user.relationship_to_child || 'Not provided'}</p>
+												<p><span className='font-medium text-[var(--color-text-primary)]'>Primary phone:</span> {user.parent_phone || 'Not provided'}</p>
+												{user.alternate_phone && (
+													<p><span className='font-medium text-[var(--color-text-primary)]'>Alternate phone:</span> {user.alternate_phone}</p>
+												)}
+												{user.address && (
+													<p><span className='font-medium text-[var(--color-text-primary)]'>Address:</span> {user.address}</p>
+												)}
+											</div>
+										)}
 									</div>
 									<div className='flex flex-wrap gap-2'>
 										<button

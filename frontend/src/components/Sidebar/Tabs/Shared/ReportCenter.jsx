@@ -28,7 +28,14 @@ function toLabel(value) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-export default function ReportCenter() {
+export default function ReportCenter({
+  presetKind = null,
+  lockKind = false,
+  defaultTargetRole = null,
+  heading = 'Reports & Complaints',
+  subheading = 'Submit issues or complaints and track their status in real time.',
+  submitLabel = '',
+}) {
   const { user } = useAuth();
   const [meta, setMeta] = useState({ kinds: [], types: [], statuses: [] });
   const [targets, setTargets] = useState([]);
@@ -39,7 +46,7 @@ export default function ReportCenter() {
   const reportSnapshotRef = useRef(new Map());
   const hasInitialSnapshotRef = useRef(false);
   const [form, setForm] = useState({
-    kind: 'report',
+    kind: presetKind || 'report',
     reportType: 'technical_issue',
     title: '',
     description: '',
@@ -100,14 +107,25 @@ export default function ReportCenter() {
   }, [openToast]);
 
   const loadTargets = useCallback(async () => {
-    const defaultRoleFilter = user?.role === 'student' ? 'teacher' : 'all';
+    const defaultRoleFilter =
+      defaultTargetRole
+      || ((user?.role === 'student' || user?.role === 'parent') ? 'teacher' : 'all');
     try {
       const response = await getReportTargets({ role: defaultRoleFilter });
       setTargets(response.data || []);
     } catch (error) {
       openToast('error', error?.response?.data?.message || 'Failed to load complaint targets.');
     }
-  }, [openToast, user?.role]);
+  }, [defaultTargetRole, openToast, user?.role]);
+
+  useEffect(() => {
+    if (!presetKind) return;
+    setForm((previous) => ({
+      ...previous,
+      kind: presetKind,
+      targetUserId: presetKind === 'complaint' ? previous.targetUserId : '',
+    }));
+  }, [presetKind]);
 
   const loadReports = useCallback(async ({ silent = false } = {}) => {
     if (!silent) {
@@ -226,10 +244,10 @@ export default function ReportCenter() {
         <div className="space-y-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-5xl">
-              Reports & Complaints
+              {heading}
             </h1>
             <p className="mt-2 text-lg text-[var(--color-text-muted)]">
-              Submit issues or complaints and track their status in real time.
+              {subheading}
             </p>
           </div>
 
@@ -331,15 +349,21 @@ export default function ReportCenter() {
                       <label className="block text-sm font-medium text-[var(--color-text-secondary)]">
                         Kind
                       </label>
-                      <select
-                        value={form.kind}
-                        onChange={(e) => setForm(prev => ({ ...prev, kind: e.target.value, targetUserId: '' }))}
-                        className="mt-1 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-[var(--color-text-primary)] shadow-sm focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
-                      >
-                        {meta.kinds.map(item => (
-                          <option key={item.value} value={item.value}>{item.label}</option>
-                        ))}
-                      </select>
+                      {lockKind ? (
+                        <div className='mt-1 flex h-[42px] items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 text-sm font-medium text-[var(--color-text-primary)]'>
+                          {toLabel(form.kind)}
+                        </div>
+                      ) : (
+                        <select
+                          value={form.kind}
+                          onChange={(e) => setForm(prev => ({ ...prev, kind: e.target.value, targetUserId: '' }))}
+                          className="mt-1 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-[var(--color-text-primary)] shadow-sm focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+                        >
+                          {meta.kinds.map(item => (
+                            <option key={item.value} value={item.value}>{item.label}</option>
+                          ))}
+                        </select>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-[var(--color-text-secondary)]">
@@ -456,7 +480,13 @@ export default function ReportCenter() {
                     disabled={submitting}
                     className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {submitting ? 'Submitting...' : 'Submit Report'}
+                    {submitting
+                      ? 'Submitting...'
+                      : (submitLabel || (form.kind === 'complaint'
+                        ? 'Submit Complaint'
+                        : form.kind === 'suggestion'
+                          ? 'Submit Suggestion'
+                          : 'Submit Report'))}
                   </button>
                 </form>
               </div>

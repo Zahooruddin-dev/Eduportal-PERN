@@ -7,6 +7,19 @@ function normalizeEmail(value) {
 	return String(value || '').trim().toLowerCase();
 }
 
+function normalizeParentProfile(rawProfile) {
+	const profile = rawProfile || {};
+	return {
+		childFullName: String(profile.childFullName || '').trim(),
+		childGrade: String(profile.childGrade || '').trim(),
+		relationshipToChild: String(profile.relationshipToChild || '').trim(),
+		parentPhone: String(profile.parentPhone || '').trim(),
+		alternatePhone: String(profile.alternatePhone || '').trim(),
+		address: String(profile.address || '').trim(),
+		notes: String(profile.notes || '').trim(),
+	};
+}
+
 async function login(req, res) {
 	const email = normalizeEmail(req.body?.email);
 	const password = String(req.body?.password || '');
@@ -23,6 +36,11 @@ async function login(req, res) {
 		const actualMatch = await bcrypt.compare(password, user.password_hash);
 		if (!actualMatch)
 			return res.status(401).json({ message: 'Invalid Email or Password' });
+
+		const parentProfile =
+			user.role === 'parent'
+				? await db.getParentProfileByUserId(user.id)
+				: null;
 
 		const token = jwt.sign(
 			{
@@ -49,6 +67,7 @@ async function login(req, res) {
 				profile: user.profile_pic,
 				createdAt: user.created_at,
 				instituteId: user.institute_id,
+				parentProfile,
 			},
 		});
 	} catch (error) {
@@ -61,16 +80,37 @@ async function register(req, res) {
 	const normalizedRole = String(role || 'student').trim().toLowerCase();
 	const normalizedUsername = String(username || '').trim();
 	const normalizedEmail = normalizeEmail(email);
-	if (!['student', 'teacher', 'admin'].includes(normalizedRole)) {
+	if (!['student', 'teacher', 'admin', 'parent'].includes(normalizedRole)) {
 		return res
 			.status(403)
-			.json({ message: 'Supported account types are student, teacher, and admin.' });
+			.json({ message: 'Supported account types are student, teacher, parent, and admin.' });
 	}
 	if (!normalizedUsername || !normalizedEmail || !password) {
 		return res
 			.status(400)
 			.json({ message: 'Username, email, and password are required.' });
 	}
+
+	const parentProfile =
+		normalizedRole === 'parent'
+			? normalizeParentProfile(req.body?.parentProfile)
+			: null;
+
+	if (normalizedRole === 'parent') {
+		if (!parentProfile.childFullName) {
+			return res.status(400).json({ message: 'Child full name is required for parent accounts.' });
+		}
+		if (!parentProfile.childGrade) {
+			return res.status(400).json({ message: 'Child grade is required for parent accounts.' });
+		}
+		if (!parentProfile.relationshipToChild) {
+			return res.status(400).json({ message: 'Relationship to child is required for parent accounts.' });
+		}
+		if (!parentProfile.parentPhone) {
+			return res.status(400).json({ message: 'Parent phone is required for parent accounts.' });
+		}
+	}
+
 	if (password.length < 8) {
 		return res
 			.status(400)
@@ -78,7 +118,18 @@ async function register(req, res) {
 	}
 	try {
 		const password_hash = await bcrypt.hash(password, 10);
-		const newUser = await db.registerQuery(normalizedUsername, normalizedEmail, password_hash, normalizedRole);
+		const newUser = await db.registerQuery(
+			normalizedUsername,
+			normalizedEmail,
+			password_hash,
+			normalizedRole,
+			null,
+			parentProfile,
+		);
+		const savedParentProfile =
+			normalizedRole === 'parent'
+				? await db.getParentProfileByUserId(newUser.id)
+				: null;
 
 		const token = jwt.sign(
 			{
@@ -103,6 +154,7 @@ async function register(req, res) {
 				profile: newUser.profile_pic,
 				createdAt: newUser.created_at,
 				instituteId: newUser.institute_id,
+				parentProfile: savedParentProfile,
 			} });
 	} catch (error) {
 		if (error.code === '23505')

@@ -1,7 +1,7 @@
 const db = require('../db/queryReports');
 const { isUuid } = require('../middleware/uuidParamMiddleware');
 
-const REPORT_KINDS = ['report', 'complaint'];
+const REPORT_KINDS = ['report', 'complaint', 'suggestion'];
 const REPORT_TYPES = [
 	'technical_issue',
 	'teacher_conduct',
@@ -20,7 +20,7 @@ const REPORT_STATUSES = [
 	'rejected',
 	'closed',
 ];
-const TARGET_ROLES = ['all', 'admin', 'teacher', 'student'];
+const TARGET_ROLES = ['all', 'admin', 'teacher', 'student', 'parent'];
 const MAX_TITLE_LENGTH = 200;
 const MAX_DESCRIPTION_LENGTH = 5000;
 const MAX_SEARCH_LENGTH = 120;
@@ -81,6 +81,7 @@ function kindMeta() {
 	return [
 		{ value: 'report', label: 'Report' },
 		{ value: 'complaint', label: 'Complaint' },
+		{ value: 'suggestion', label: 'Suggestion' },
 	];
 }
 
@@ -102,7 +103,7 @@ async function listReportTargets(req, res) {
 	}
 
 	const role =
-		scope.role === 'student' && requestedRole === 'all'
+		requestedRole === 'all' && (scope.role === 'student' || scope.role === 'parent')
 			? 'teacher'
 			: requestedRole;
 
@@ -134,6 +135,9 @@ async function createReport(req, res) {
 	}
 	if (!REPORT_TYPES.includes(reportType)) {
 		return res.status(400).json({ message: 'Invalid report type.' });
+	}
+	if (kind === 'complaint' && !targetUserId) {
+		return res.status(400).json({ message: 'Complaint target is required.' });
 	}
 	if (!title) {
 		return res.status(400).json({ message: 'Title is required.' });

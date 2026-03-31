@@ -191,6 +191,7 @@ export default function AdminReports() {
 						<option value='student'>Students</option>
 						<option value='teacher'>Teachers</option>
 						<option value='admin'>Admins</option>
+						<option value='parent'>Parents</option>
 					</select>
 					<input value={filters.search} onChange={(event) => setFilters((prev) => ({ ...prev, search: event.target.value }))} placeholder='Search text/user' className='rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)]' />
 				</div>

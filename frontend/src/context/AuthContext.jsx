@@ -31,20 +31,30 @@ const parseToken = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => parseToken());
 
+  const clearAnnouncementPopupSession = useCallback(() => {
+    Object.keys(sessionStorage).forEach((key) => {
+      if (key.startsWith('admin-announcement-popup:')) {
+        sessionStorage.removeItem(key);
+      }
+    });
+  }, []);
+
   const refreshUser = useCallback(() => {
     setUser(parseToken());
   }, []);
 
   const login = useCallback((token) => {
+    clearAnnouncementPopupSession();
     localStorage.setItem(TOKEN_KEY, token);
     refreshUser();
-  }, [refreshUser]);
+  }, [clearAnnouncementPopupSession, refreshUser]);
 
   const logout = useCallback(() => {
+    clearAnnouncementPopupSession();
     localStorage.removeItem(TOKEN_KEY);
     setUser(null);
     window.location.href = '/login';
-  }, []);
+  }, [clearAnnouncementPopupSession]);
 
   const isAuthenticated = user !== null;
 

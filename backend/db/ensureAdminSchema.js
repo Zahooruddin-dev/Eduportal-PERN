@@ -64,7 +64,7 @@ async function ensureAdminSchema() {
 			reporter_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 			reporter_role VARCHAR(20) NOT NULL CHECK (reporter_role IN ('admin', 'teacher', 'student', 'parent')),
 			target_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-			kind VARCHAR(20) NOT NULL DEFAULT 'report' CHECK (kind IN ('report', 'complaint')),
+			kind VARCHAR(20) NOT NULL DEFAULT 'report' CHECK (kind IN ('report', 'complaint', 'suggestion')),
 			report_type VARCHAR(50) NOT NULL CHECK (report_type IN (
 				'technical_issue',
 				'teacher_conduct',
@@ -84,6 +84,45 @@ async function ensureAdminSchema() {
 			updated_by_admin_id UUID REFERENCES users(id) ON DELETE SET NULL,
 			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+		);
+
+		CREATE TABLE IF NOT EXISTS parent_profiles (
+			user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+			child_full_name VARCHAR(160) NOT NULL,
+			child_grade VARCHAR(80) NOT NULL,
+			relationship_to_child VARCHAR(80) NOT NULL,
+			parent_phone VARCHAR(40) NOT NULL,
+			alternate_phone VARCHAR(40),
+			address TEXT,
+			notes TEXT,
+			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+		);
+
+		CREATE TABLE IF NOT EXISTS admin_announcements (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			institute_id UUID NOT NULL REFERENCES institutes(id) ON DELETE CASCADE,
+			created_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			title VARCHAR(255) NOT NULL,
+			content TEXT NOT NULL,
+			audience_scope VARCHAR(40) NOT NULL CHECK (audience_scope IN (
+				'all',
+				'students',
+				'teachers',
+				'parents',
+				'students_teachers',
+				'students_parents',
+				'teachers_parents'
+			)),
+			expires_at TIMESTAMP WITH TIME ZONE,
+			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+		);
+
+		CREATE TABLE IF NOT EXISTS admin_announcement_reads (
+			announcement_id UUID NOT NULL REFERENCES admin_announcements(id) ON DELETE CASCADE,
+			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			read_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+			PRIMARY KEY (announcement_id, user_id)
 		);
 
 		CREATE TABLE IF NOT EXISTS conversations (
@@ -123,10 +162,73 @@ async function ensureAdminSchema() {
 		CREATE INDEX IF NOT EXISTS idx_reports_reporter_id ON reports(reporter_id);
 		CREATE INDEX IF NOT EXISTS idx_reports_target_user_id ON reports(target_user_id);
 		CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at DESC);
+		CREATE INDEX IF NOT EXISTS idx_parent_profiles_child_grade ON parent_profiles(child_grade);
+		CREATE INDEX IF NOT EXISTS idx_admin_announcements_institute_created ON admin_announcements(institute_id, created_at DESC);
+		CREATE INDEX IF NOT EXISTS idx_admin_announcements_audience_scope ON admin_announcements(audience_scope);
+		CREATE INDEX IF NOT EXISTS idx_admin_announcement_reads_user_read ON admin_announcement_reads(user_id, read_at DESC);
 		CREATE INDEX IF NOT EXISTS idx_conversations_institute_last_message ON conversations(institute_id, last_message_at DESC);
 		CREATE INDEX IF NOT EXISTS idx_conversation_participants_user ON conversation_participants(user_id, last_read_at);
 		CREATE INDEX IF NOT EXISTS idx_messages_conversation_created ON messages(conversation_id, created_at DESC);
 		CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id, created_at DESC);
+	`);
+
+	await pool.query(`
+		DO $$
+		DECLARE users_role_constraint RECORD;
+		BEGIN
+			FOR users_role_constraint IN
+				SELECT conname
+				FROM pg_constraint
+				WHERE conrelid = 'users'::regclass
+				AND contype = 'c'
+				AND pg_get_constraintdef(oid) ILIKE '%role%'
+			LOOP
+				EXECUTE format('ALTER TABLE users DROP CONSTRAINT IF EXISTS %I', users_role_constraint.conname);
+			END LOOP;
+
+			ALTER TABLE users
+			ADD CONSTRAINT users_role_check
+			CHECK (role IN ('admin', 'teacher', 'student', 'parent'));
+		END
+		$$;
+
+		DO $$
+		DECLARE reports_kind_constraint RECORD;
+		BEGIN
+			FOR reports_kind_constraint IN
+				SELECT conname
+				FROM pg_constraint
+				WHERE conrelid = 'reports'::regclass
+				AND contype = 'c'
+				AND pg_get_constraintdef(oid) ILIKE '%kind%'
+			LOOP
+				EXECUTE format('ALTER TABLE reports DROP CONSTRAINT IF EXISTS %I', reports_kind_constraint.conname);
+			END LOOP;
+
+			ALTER TABLE reports
+			ADD CONSTRAINT reports_kind_check
+			CHECK (kind IN ('report', 'complaint', 'suggestion'));
+		END
+		$$;
+
+		DO $$
+		DECLARE reports_reporter_role_constraint RECORD;
+		BEGIN
+			FOR reports_reporter_role_constraint IN
+				SELECT conname
+				FROM pg_constraint
+				WHERE conrelid = 'reports'::regclass
+				AND contype = 'c'
+				AND pg_get_constraintdef(oid) ILIKE '%reporter_role%'
+			LOOP
+				EXECUTE format('ALTER TABLE reports DROP CONSTRAINT IF EXISTS %I', reports_reporter_role_constraint.conname);
+			END LOOP;
+
+			ALTER TABLE reports
+			ADD CONSTRAINT reports_reporter_role_check
+			CHECK (reporter_role IN ('admin', 'teacher', 'student', 'parent'));
+		END
+		$$;
 	`);
 
 	const { rows } = await pool.query(`

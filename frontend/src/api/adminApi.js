@@ -35,3 +35,15 @@ export const createAdminInvite = (payload) => {
 export const resetUserPasswordAsAdmin = (userId, payload) => {
 	return api.post(`/api/admin/users/${userId}/reset-password`, payload);
 };
+
+export const listAdminAnnouncements = () => {
+	return api.get('/api/admin/announcements');
+};
+
+export const createAdminAnnouncement = (payload) => {
+	return api.post('/api/admin/announcements', payload);
+};
+
+export const deleteAdminAnnouncement = (announcementId) => {
+	return api.delete(`/api/admin/announcements/${announcementId}`);
+};

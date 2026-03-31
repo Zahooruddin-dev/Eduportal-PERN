@@ -5,6 +5,7 @@ import {
   Menu,
   ChevronLeft,
   ChevronRight,
+  Bell,
   Calendar,
   BookOpen,
   FileText,
@@ -22,11 +23,12 @@ import {
 import Toast from '../Toast';
 import ConfirmModal from '../ConfirmModal';
 import logo from '../../assets/logo.png';
-import { getCommunicationUnreadCount } from '../../api/api';
+import { getAdminNotificationUnreadSummary, getCommunicationUnreadCount } from '../../api/api';
 import { io } from 'socket.io-client';
 
 const studentNavItems = [
   { id: 'enrolled-classes', label: 'Enrolled Classes', icon: GraduationCap },
+  { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'announcements', label: 'Announcements', icon: Megaphone },
   { id: 'teacher-communication', label: 'Teacher Communication', icon: MessageSquare },
   { id: 'academic-calendar', label: 'Academic Calendar', icon: Calendar },
@@ -38,6 +40,7 @@ const studentNavItems = [
 
 const teacherNavItems = [
   { id: 'teacher-class', label: 'Classes', icon: GraduationCap },
+  { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'teacher-calendar', label: 'Calendar', icon: Calendar },
   { id: 'gradebook-teacher', label: 'Gradebook', icon: BarChart },
   { id: 'course-material', label: 'Course Material', icon: BookOpen },
@@ -47,8 +50,16 @@ const teacherNavItems = [
   { id: 'report', label: 'Report', icon: FileText },
 ];
 
+const parentNavItems = [
+  { id: 'parent-announcements', label: 'Announcements', icon: Megaphone },
+  { id: 'parent-teacher-complaint', label: 'Teacher Complaint', icon: MessageSquare },
+  { id: 'parent-suggestions', label: 'Suggestions', icon: FileText },
+  { id: 'parent-report', label: 'Report', icon: FileText },
+];
+
 const adminNavItems = [
   { id: 'admin-user-management', label: 'User Management', icon: Users },
+  { id: 'admin-announcements', label: 'Announcements', icon: Megaphone },
   { id: 'admin-reports', label: 'Reports', icon: FileText },
 ];
 
@@ -355,6 +366,7 @@ export default function Sidebar({
 }) {
   const { user, logout } = useAuth();
   const [communicationUnreadCount, setCommunicationUnreadCount] = useState(0);
+  const [adminNotificationUnreadCount, setAdminNotificationUnreadCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileClosing, setMobileClosing] = useState(false);
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
@@ -419,16 +431,55 @@ export default function Sidebar({
     };
   }, [user?.role]);
 
+  useEffect(() => {
+    const supportsNotifications = user?.role === 'student' || user?.role === 'teacher' || user?.role === 'parent';
+    if (!supportsNotifications) {
+      return undefined;
+    }
+
+    let mounted = true;
+
+    const loadUnreadCount = async () => {
+      try {
+        const response = await getAdminNotificationUnreadSummary({ limit: 1 });
+        const unread = Number(response.data?.unreadCount || 0);
+        if (mounted) {
+          setAdminNotificationUnreadCount(unread);
+        }
+      } catch {
+        return null;
+      }
+    };
+
+    loadUnreadCount();
+    const intervalId = window.setInterval(loadUnreadCount, 15000);
+    const onFocus = () => loadUnreadCount();
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [user?.role]);
+
   const navItems = (user?.role === 'student'
     ? studentNavItems
     : user?.role === 'admin'
       ? adminNavItems
-      : teacherNavItems
+      : user?.role === 'parent'
+        ? parentNavItems
+        : teacherNavItems
   ).map((item) => {
     const isCommunication = item.id === 'teacher-communication' || item.id === 'student-communication';
+    const isNotification = item.id === 'notifications' || item.id === 'parent-announcements';
     return {
       ...item,
-      badgeCount: isCommunication ? communicationUnreadCount : 0,
+      badgeCount: isCommunication
+        ? communicationUnreadCount
+        : isNotification
+          ? adminNotificationUnreadCount
+          : 0,
     };
   });
 

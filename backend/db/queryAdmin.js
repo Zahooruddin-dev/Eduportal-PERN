@@ -43,26 +43,44 @@ async function getInstituteByUserIdQuery(userId) {
 }
 
 async function listInstituteUsersQuery({ instituteId, role, search }) {
-	const clauses = ['institute_id = $1'];
+	const clauses = ['u.institute_id = $1'];
 	const values = [instituteId];
 	let paramIndex = 2;
 
 	if (role && role !== 'all') {
-		clauses.push(`role = $${paramIndex}`);
+		clauses.push(`u.role = $${paramIndex}`);
 		values.push(role);
 		paramIndex += 1;
 	}
 
 	if (search) {
-		clauses.push(`(username ILIKE $${paramIndex} OR email ILIKE $${paramIndex})`);
+		clauses.push(`(
+			u.username ILIKE $${paramIndex}
+			OR u.email ILIKE $${paramIndex}
+			OR COALESCE(pp.child_full_name, '') ILIKE $${paramIndex}
+		)`);
 		values.push(`%${search}%`);
 	}
 
 	const { rows } = await pool.query(
-		`SELECT id, username, email, role, profile_pic, created_at
-		 FROM users
+		`SELECT
+			u.id,
+			u.username,
+			u.email,
+			u.role,
+			u.profile_pic,
+			u.created_at,
+			pp.child_full_name,
+			pp.child_grade,
+			pp.relationship_to_child,
+			pp.parent_phone,
+			pp.alternate_phone,
+			pp.address,
+			pp.notes
+		 FROM users u
+		 LEFT JOIN parent_profiles pp ON pp.user_id = u.id
 		 WHERE ${clauses.join(' AND ')}
-		 ORDER BY created_at DESC`,
+		 ORDER BY u.created_at DESC`,
 		values,
 	);
 	return rows;

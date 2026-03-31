@@ -61,6 +61,17 @@ export const deleteAnnouncement = (classId, announcementId) => {
   return api.delete(`/api/class/${classId}/announcements/${announcementId}`);
 };
 export const getMyAnnouncements = () => api.get('/api/announcements/my');
+export const getAdminNotifications = (params = {}) =>
+  api.get('/api/announcements/notifications/my', { params });
+
+export const getAdminNotificationUnreadSummary = (params = {}) =>
+  api.get('/api/announcements/notifications/unread-summary', { params, cache: false });
+
+export const markAdminNotificationRead = (announcementId) =>
+  api.patch(`/api/announcements/notifications/${announcementId}/read`);
+
+export const markAllAdminNotificationsRead = () =>
+  api.post('/api/announcements/notifications/read-all');
 
 export const unenrollStudent = (studentId, classId) => {
 	return api.delete(`/api/enroll/student/${studentId}/class/${classId}`);
