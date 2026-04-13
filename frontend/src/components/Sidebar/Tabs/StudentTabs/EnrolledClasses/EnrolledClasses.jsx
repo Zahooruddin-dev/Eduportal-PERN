@@ -177,6 +177,36 @@ export default function EnrolledClasses() {
 		setLoadingAnnouncements(false);
 	};
 
+	const cardGridClasses =
+		'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5';
+
+	const SectionHeader = ({ title, subtitle, count, tone = 'primary' }) => {
+		const dotClass =
+			tone === 'success'
+				? 'bg-[var(--color-success)] ring-[var(--color-success)]/15'
+				: 'bg-[var(--color-primary)] ring-[var(--color-primary)]/15';
+
+		return (
+			<div className='mb-4 flex items-start justify-between gap-3 border-b border-[var(--color-border)] pb-3 sm:items-center'>
+				<div className='min-w-0'>
+					<h2 className='flex items-center gap-2 text-lg font-semibold text-[var(--color-text-primary)]'>
+						<span
+							className={`inline-block h-2.5 w-2.5 rounded-full ring-4 ${dotClass}`}
+							aria-hidden='true'
+						/>
+						{title}
+					</h2>
+					<p className='mt-1 text-xs sm:text-sm text-[var(--color-text-muted)]'>
+						{subtitle}
+					</p>
+				</div>
+				<span className='inline-flex min-w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-1 text-sm font-semibold text-[var(--color-text-secondary)]'>
+					{count}
+				</span>
+			</div>
+		);
+	};
+
 	const CardSkeleton = () => (
 		<div className='animate-pulse overflow-hidden bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-sm'>
 			<div className='h-[3px] w-full bg-[var(--color-primary)]/30' />
@@ -328,34 +358,29 @@ export default function EnrolledClasses() {
 
 	if (loadingEnrolled) {
 		return (
-			<div className='p-4 sm:p-6'>
-				<header className='mb-6'>
-					<h1 className='text-2xl font-semibold text-[var(--color-text-primary)]'>
-						My Enrolled Classes
-					</h1>
-					<p className='mt-1 text-sm text-[var(--color-text-muted)]'>
-						Track your active classes and discover new ones to join.
-					</p>
-				</header>
-				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
+			<div className='space-y-5 p-4 sm:p-6'>
+				<section className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-6'>
+					<div className='mb-4 h-5 w-52 animate-pulse rounded bg-[var(--color-border)]' />
+					<div className={cardGridClasses}>
+						{[1, 2, 3, 4].map((i) => (
+							<CardSkeleton key={`enrolled-${i}`} />
+						))}
+					</div>
+				</section>
+				<section className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-6'>
+					<div className='mb-4 h-5 w-48 animate-pulse rounded bg-[var(--color-border)]' />
+					<div className={cardGridClasses}>
 					{[1, 2, 3].map((i) => (
-						<CardSkeleton key={i} />
+							<CardSkeleton key={`available-${i}`} />
 					))}
 				</div>
+				</section>
 			</div>
 		);
 	}
 
 	return (
-		<div className='space-y-8 p-4 sm:p-6'>
-			<header>
-				<h1 className='text-2xl font-semibold text-[var(--color-text-primary)]'>
-					My Enrolled Classes
-				</h1>
-				<p className='mt-1 text-sm text-[var(--color-text-muted)]'>
-					Manage your current classes and enroll in upcoming ones.
-				</p>
-			</header>
+		<div className='space-y-5 p-4 sm:p-6'>
 
 			<Toast
 				type={toast.type}
@@ -364,20 +389,12 @@ export default function EnrolledClasses() {
 				onClose={() => setToast((t) => ({ ...t, isOpen: false }))}
 			/>
 
-			<section className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5'>
-				<div className='mb-5 flex items-center justify-between gap-3'>
-					<div>
-						<h2 className='text-lg font-semibold text-[var(--color-text-primary)]'>
-							Enrolled Classes
-						</h2>
-						<p className='mt-0.5 text-xs sm:text-sm text-[var(--color-text-muted)]'>
-							Your currently active classes.
-						</p>
-					</div>
-					<span className='inline-flex min-w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-1 text-sm font-semibold text-[var(--color-text-secondary)]'>
-						{enrolledClasses.length}
-					</span>
-				</div>
+			<section className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-6'>
+				<SectionHeader
+					title='Enrolled Classes'
+					subtitle='Active enrollments with quick access to announcements and class links.'
+					count={enrolledClasses.length}
+				/>
 				{enrolledClasses.length === 0 ? (
 					<div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-bg)]/40 px-4 py-14 text-center'>
 						<div
@@ -403,7 +420,7 @@ export default function EnrolledClasses() {
 						</p>
 					</div>
 				) : (
-					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
+					<div className={cardGridClasses}>
 						{enrolledClasses.map((cls) => (
 							<ClassCard key={cls.class_id ?? cls.id} cls={cls} enrolled />
 						))}
@@ -411,22 +428,15 @@ export default function EnrolledClasses() {
 				)}
 			</section>
 
-			<section className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5'>
-				<div className='mb-5 flex items-center justify-between gap-3'>
-					<div>
-						<h2 className='text-lg font-semibold text-[var(--color-text-primary)]'>
-							Available Classes
-						</h2>
-						<p className='mt-0.5 text-xs sm:text-sm text-[var(--color-text-muted)]'>
-							Classes you can enroll in right now.
-						</p>
-					</div>
-					<span className='inline-flex min-w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-1 text-sm font-semibold text-[var(--color-text-secondary)]'>
-						{availableClasses.length}
-					</span>
-				</div>
+			<section className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-6'>
+				<SectionHeader
+					title='Available Classes'
+					subtitle='Open classes ready for enrollment based on your current schedule.'
+					count={availableClasses.length}
+					tone='success'
+				/>
 				{loadingAvailable ? (
-					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
+					<div className={cardGridClasses}>
 						{[1, 2, 3].map((i) => (
 							<CardSkeleton key={i} />
 						))}
@@ -456,7 +466,7 @@ export default function EnrolledClasses() {
 						</p>
 					</div>
 				) : (
-					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
+					<div className={cardGridClasses}>
 						{availableClasses.map((cls) => (
 							<ClassCard key={cls.id} cls={cls} enrolled={false} />
 						))}
