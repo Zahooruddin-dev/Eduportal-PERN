@@ -178,11 +178,14 @@ export default function EnrolledClasses() {
 	};
 
 	const CardSkeleton = () => (
-		<div className='animate-pulse bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-sm'>
-			<div className='h-5 bg-[var(--color-border)] rounded w-1/2 mb-3' />
-			<div className='h-4 bg-[var(--color-border)] rounded w-3/4 mb-2' />
-			<div className='h-4 bg-[var(--color-border)] rounded w-2/3 mb-4' />
-			<div className='h-20 bg-[var(--color-border)] rounded mt-auto' />
+		<div className='animate-pulse overflow-hidden bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-sm'>
+			<div className='h-[3px] w-full bg-[var(--color-primary)]/30' />
+			<div className='p-5'>
+				<div className='h-5 bg-[var(--color-border)] rounded w-1/2 mb-3' />
+				<div className='h-4 bg-[var(--color-border)] rounded w-3/4 mb-2' />
+				<div className='h-4 bg-[var(--color-border)] rounded w-2/3 mb-4' />
+				<div className='h-9 bg-[var(--color-border)] rounded-xl mt-5' />
+			</div>
 		</div>
 	);
 
@@ -193,136 +196,147 @@ export default function EnrolledClasses() {
 		const scheduleBlocks = getScheduleBlocksFromClass(cls);
 
 		return (
-			<div className='flex flex-col h-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-[var(--color-border-hover)]'>
-				<div className='flex justify-between items-start gap-2'>
-					<h3 className='text-lg font-semibold text-[var(--color-text-primary)] truncate'>
-						{cls.class_name}
-					</h3>
-					{enrolled && (
-						<span className='shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--color-primary-soft)] text-[var(--color-primary)] border border-[var(--color-primary)]/20'>
-							Enrolled
-						</span>
-					)}
-				</div>
-
-				<div className='mt-2 space-y-1 text-sm text-[var(--color-text-secondary)]'>
-					{scheduleBlocks.length > 0 ? (
-						<>
-							{scheduleBlocks.slice(0, 2).map((block, index) => (
-								<p
-									key={`${block.day}-${block.start_time}-${index}`}
-									className='flex items-center gap-1.5'
-								>
-									<span className='w-12 text-xs font-medium text-[var(--color-text-muted)]'>
-										{block.day}
-									</span>
-									<span>
-										{formatTimeRange(block.start_time, block.end_time)}
-									</span>
-								</p>
-							))}
-							{scheduleBlocks.length > 2 && (
-								<p className='text-xs text-[var(--color-text-muted)] pl-14'>
-									+ {scheduleBlocks.length - 2} more
-								</p>
-							)}
-						</>
-					) : (
-						<p className='text-[var(--color-text-muted)] italic'>
-							No schedule listed
-						</p>
-					)}
-					{cls.room_number && (
-						<p className='flex items-center gap-1.5'>
-							<span className='w-12 text-xs font-medium text-[var(--color-text-muted)]'>
-								Room
+			<article className='group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm transition-[border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:border-[var(--color-primary)]/35 hover:shadow-md'>
+				<div className='h-[3px] w-full bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)] opacity-45 transition-opacity duration-200 group-hover:opacity-100' />
+				<div className='flex h-full flex-col p-5'>
+					<div className='flex items-start justify-between gap-2'>
+						<h3 className='truncate text-base sm:text-lg font-semibold text-[var(--color-text-primary)]'>
+							{cls.class_name}
+						</h3>
+						{enrolled && (
+							<span className='shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20'>
+								Enrolled
 							</span>
-							<span>{cls.room_number}</span>
+						)}
+					</div>
+
+					<div className='mt-3 rounded-xl border border-[var(--color-border)]/80 bg-[var(--color-bg)]/40 p-3 space-y-1.5 text-sm text-[var(--color-text-secondary)]'>
+						{scheduleBlocks.length > 0 ? (
+							<>
+								{scheduleBlocks.slice(0, 2).map((block, index) => (
+									<p
+										key={`${block.day}-${block.start_time}-${index}`}
+										className='flex items-center gap-1.5'
+									>
+										<span className='w-14 text-xs font-semibold text-[var(--color-text-muted)]'>
+											{block.day}
+										</span>
+										<span>
+											{formatTimeRange(block.start_time, block.end_time)}
+										</span>
+									</p>
+								))}
+								{scheduleBlocks.length > 2 && (
+									<p className='pl-[3.8rem] text-xs text-[var(--color-text-muted)]'>
+										+ {scheduleBlocks.length - 2} more sessions
+									</p>
+								)}
+							</>
+						) : (
+							<p className='italic text-[var(--color-text-muted)]'>
+								No schedule listed
+							</p>
+						)}
+						{cls.room_number && (
+							<p className='flex items-center gap-1.5'>
+								<span className='w-14 text-xs font-semibold text-[var(--color-text-muted)]'>
+									Room
+								</span>
+								<span>{cls.room_number}</span>
+							</p>
+						)}
+					</div>
+
+					{!enrolled && cls.description && (
+						<p className='mt-3 text-sm leading-relaxed text-[var(--color-text-muted)] line-clamp-2'>
+							{cls.description}
 						</p>
 					)}
-				</div>
 
-				{!enrolled && cls.description && (
-					<p className='mt-3 text-sm text-[var(--color-text-muted)] line-clamp-2'>
-						{cls.description}
-					</p>
-				)}
-
-				{cls.meeting_link && (
-					<a
-						href={cls.meeting_link}
-						target='_blank'
-						rel='noreferrer'
-						className='mt-3 inline-flex items-center text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] transition-colors'
-					>
-						<svg
-							className='w-4 h-4 mr-1'
-							fill='none'
-							stroke='currentColor'
-							viewBox='0 0 24 24'
+					{cls.meeting_link && (
+						<a
+							href={cls.meeting_link}
+							target='_blank'
+							rel='noreferrer'
+							className='mt-3 inline-flex w-fit items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-xs font-semibold text-[var(--color-primary)] transition-[color,border-color,background-color] duration-200 ease-out hover:border-[var(--color-primary)]/35 hover:bg-[var(--color-primary-soft)]/60 hover:text-[var(--color-primary-hover)]'
 						>
-							<path
-								strokeLinecap='round'
-								strokeLinejoin='round'
-								strokeWidth='2'
-								d='M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z'
-							/>
-						</svg>
-						Join meeting
-					</a>
-				)}
-
-				{enrolled && cls.enrollment_date && (
-					<p className='mt-3 text-xs text-[var(--color-text-muted)]'>
-						Enrolled {new Date(cls.enrollment_date).toLocaleDateString()}
-					</p>
-				)}
-
-				<div className='mt-auto pt-4 flex gap-2'>
-					{enrolled ? (
-						<>
-							<button
-								onClick={() => handleShowAnnouncements(cls)}
-								className='flex-1 px-3 py-2 text-sm font-medium text-[var(--color-primary)] bg-transparent border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-primary-soft)] hover:border-[var(--color-primary)]/30 transition-all focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2'
+							<svg
+								className='h-4 w-4'
+								fill='none'
+								stroke='currentColor'
+								viewBox='0 0 24 24'
 							>
-								Announcements
-							</button>
+								<path
+									strokeLinecap='round'
+									strokeLinejoin='round'
+									strokeWidth='2'
+									d='M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z'
+								/>
+							</svg>
+							Join meeting
+						</a>
+					)}
+
+					{enrolled && cls.enrollment_date && (
+						<p className='mt-3 border-t border-[var(--color-border)] pt-3 text-xs text-[var(--color-text-muted)]'>
+							Enrolled {new Date(cls.enrollment_date).toLocaleDateString()}
+						</p>
+					)}
+
+					<div className='mt-auto flex gap-2 pt-4'>
+						{enrolled ? (
+							<>
+								<button
+									type='button'
+									onClick={() => handleShowAnnouncements(cls)}
+									className='flex-1 rounded-xl border border-[var(--color-border)] bg-transparent px-3 py-2 text-sm font-semibold text-[var(--color-primary)] transition-[background-color,border-color,color,box-shadow] duration-200 ease-out hover:border-[var(--color-primary)]/35 hover:bg-[var(--color-primary-soft)]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]'
+								>
+									Announcements
+								</button>
+								<button
+									type='button'
+									onClick={() => requestUnenroll(id)}
+									disabled={isLoadingUnenroll}
+									className='flex-1 rounded-xl border border-[var(--color-border)] bg-transparent px-3 py-2 text-sm font-semibold text-[var(--color-danger)] transition-[background-color,border-color,color,box-shadow] duration-200 ease-out hover:border-[var(--color-danger)]/35 hover:bg-[var(--color-danger-soft)]/70 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-danger)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]'
+								>
+									{isLoadingUnenroll ? (
+										<SpinnerIcon className='mx-auto h-4 w-4 animate-spin' />
+									) : (
+										'Unenroll'
+									)}
+								</button>
+							</>
+						) : (
 							<button
-								onClick={() => requestUnenroll(id)}
-								disabled={isLoadingUnenroll}
-								className='flex-1 px-3 py-2 text-sm font-medium text-[var(--color-danger)] bg-transparent border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-danger-soft)] hover:border-[var(--color-danger)]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--color-danger)] focus:ring-offset-2'
+								type='button'
+								onClick={() => requestEnroll(id)}
+								disabled={isLoadingEnroll}
+								className='w-full rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-[background-color,transform,box-shadow] duration-200 ease-out hover:-translate-y-px hover:bg-[var(--color-primary-hover)] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]'
 							>
-								{isLoadingUnenroll ? (
-									<SpinnerIcon className='w-4 h-4 animate-spin mx-auto' />
+								{isLoadingEnroll ? (
+									<SpinnerIcon className='mx-auto h-4 w-4 animate-spin' />
 								) : (
-									'Unenroll'
+									'Enroll now'
 								)}
 							</button>
-						</>
-					) : (
-						<button
-							onClick={() => requestEnroll(id)}
-							disabled={isLoadingEnroll}
-							className='w-full px-4 py-2 text-sm font-medium text-white bg-[var(--color-primary)] rounded-xl hover:bg-[var(--color-primary-hover)] transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2'
-						>
-							{isLoadingEnroll ? (
-								<SpinnerIcon className='w-4 h-4 animate-spin mx-auto' />
-							) : (
-								'Enroll now'
-							)}
-						</button>
-					)}
+						)}
+					</div>
 				</div>
-			</div>
+			</article>
 		);
 	};
 
 	if (loadingEnrolled) {
 		return (
 			<div className='p-4 sm:p-6'>
-				<h1 className='text-2xl font-semibold text-[var(--color-text-primary)] mb-6'>
-					My Enrolled Classes
-				</h1>
+				<header className='mb-6'>
+					<h1 className='text-2xl font-semibold text-[var(--color-text-primary)]'>
+						My Enrolled Classes
+					</h1>
+					<p className='mt-1 text-sm text-[var(--color-text-muted)]'>
+						Track your active classes and discover new ones to join.
+					</p>
+				</header>
 				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
 					{[1, 2, 3].map((i) => (
 						<CardSkeleton key={i} />
@@ -333,10 +347,15 @@ export default function EnrolledClasses() {
 	}
 
 	return (
-		<div className='p-4 sm:p-6'>
-			<h1 className='text-2xl font-semibold text-[var(--color-text-primary)] mb-6'>
-				My Enrolled Classes
-			</h1>
+		<div className='space-y-8 p-4 sm:p-6'>
+			<header>
+				<h1 className='text-2xl font-semibold text-[var(--color-text-primary)]'>
+					My Enrolled Classes
+				</h1>
+				<p className='mt-1 text-sm text-[var(--color-text-muted)]'>
+					Manage your current classes and enroll in upcoming ones.
+				</p>
+			</header>
 
 			<Toast
 				type={toast.type}
@@ -345,18 +364,41 @@ export default function EnrolledClasses() {
 				onClose={() => setToast((t) => ({ ...t, isOpen: false }))}
 			/>
 
-			<div className='mb-10'>
-				<div className='flex items-center justify-between mb-4'>
-					<h2 className='text-lg font-medium text-[var(--color-text-primary)]'>
-						Enrolled Classes
-					</h2>
-					<span className='text-sm text-[var(--color-text-muted)] bg-[var(--color-surface)] px-3 py-1 rounded-full border border-[var(--color-border)]'>
+			<section className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5'>
+				<div className='mb-5 flex items-center justify-between gap-3'>
+					<div>
+						<h2 className='text-lg font-semibold text-[var(--color-text-primary)]'>
+							Enrolled Classes
+						</h2>
+						<p className='mt-0.5 text-xs sm:text-sm text-[var(--color-text-muted)]'>
+							Your currently active classes.
+						</p>
+					</div>
+					<span className='inline-flex min-w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-1 text-sm font-semibold text-[var(--color-text-secondary)]'>
 						{enrolledClasses.length}
 					</span>
 				</div>
 				{enrolledClasses.length === 0 ? (
-					<div className='text-center py-16 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl'>
-						<p className='text-[var(--color-text-muted)]'>
+					<div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-bg)]/40 px-4 py-14 text-center'>
+						<div
+							className='mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
+							aria-hidden='true'
+						>
+							<svg
+								className='h-6 w-6'
+								fill='none'
+								stroke='currentColor'
+								viewBox='0 0 24 24'
+							>
+								<path
+									strokeLinecap='round'
+									strokeLinejoin='round'
+									strokeWidth='2'
+									d='M12 6.253v13m0-13C10.832 5.483 9.246 5 7.5 5S4.168 5.483 3 6.253v13C4.168 18.483 5.754 18 7.5 18s3.332.483 4.5 1.253m0-13C13.168 5.483 14.754 5 16.5 5s3.332.483 4.5 1.253v13C19.832 18.483 18.246 18 16.5 18s-3.332.483-4.5 1.253'
+								/>
+							</svg>
+						</div>
+						<p className='text-sm text-[var(--color-text-muted)]'>
 							You are not enrolled in any classes yet.
 						</p>
 					</div>
@@ -367,14 +409,19 @@ export default function EnrolledClasses() {
 						))}
 					</div>
 				)}
-			</div>
+			</section>
 
-			<div>
-				<div className='flex items-center justify-between mb-4'>
-					<h2 className='text-lg font-medium text-[var(--color-text-primary)]'>
-						Available Classes
-					</h2>
-					<span className='text-sm text-[var(--color-text-muted)] bg-[var(--color-surface)] px-3 py-1 rounded-full border border-[var(--color-border)]'>
+			<section className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5'>
+				<div className='mb-5 flex items-center justify-between gap-3'>
+					<div>
+						<h2 className='text-lg font-semibold text-[var(--color-text-primary)]'>
+							Available Classes
+						</h2>
+						<p className='mt-0.5 text-xs sm:text-sm text-[var(--color-text-muted)]'>
+							Classes you can enroll in right now.
+						</p>
+					</div>
+					<span className='inline-flex min-w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-1 text-sm font-semibold text-[var(--color-text-secondary)]'>
 						{availableClasses.length}
 					</span>
 				</div>
@@ -385,8 +432,26 @@ export default function EnrolledClasses() {
 						))}
 					</div>
 				) : availableClasses.length === 0 ? (
-					<div className='text-center py-16 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl'>
-						<p className='text-[var(--color-text-muted)]'>
+					<div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-bg)]/40 px-4 py-14 text-center'>
+						<div
+							className='mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
+							aria-hidden='true'
+						>
+							<svg
+								className='h-6 w-6'
+								fill='none'
+								stroke='currentColor'
+								viewBox='0 0 24 24'
+							>
+								<path
+									strokeLinecap='round'
+									strokeLinejoin='round'
+									strokeWidth='2'
+									d='M12 4v16m8-8H4'
+								/>
+							</svg>
+						</div>
+						<p className='text-sm text-[var(--color-text-muted)]'>
 							No classes available to enroll.
 						</p>
 					</div>
@@ -397,12 +462,12 @@ export default function EnrolledClasses() {
 						))}
 					</div>
 				)}
-			</div>
+			</section>
 
 			{showAnnouncementsModal && selectedClass && (
-				<div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
+				<div className='fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4'>
 					<div
-						className='absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity'
+						className='overlay-fade absolute inset-0 bg-black/55 backdrop-blur-[2px]'
 						onClick={closeAnnouncementsModal}
 						aria-hidden='true'
 					/>
@@ -410,7 +475,7 @@ export default function EnrolledClasses() {
 						role='dialog'
 						aria-modal='true'
 						aria-labelledby='announcements-title'
-						className='relative z-10 w-full max-w-3xl mx-auto bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-xl overflow-hidden transform transition-all duration-200'
+						className='fade-scale-in relative z-10 mx-auto w-full overflow-hidden rounded-t-3xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl sm:max-w-3xl sm:rounded-2xl'
 					>
 						<div className='px-4 py-4 sm:px-6 sm:py-5 border-b border-[var(--color-border)]'>
 							<div className='flex items-start sm:items-center justify-between gap-4'>
@@ -423,12 +488,16 @@ export default function EnrolledClasses() {
 									</h2>
 									<p className='mt-0.5 text-sm text-[var(--color-text-muted)]'>
 										Class announcements
+										{!loadingAnnouncements && announcements.length > 0
+											? ` (${announcements.length})`
+											: ''}
 									</p>
 								</div>
 								<button
+									type='button'
 									onClick={closeAnnouncementsModal}
 									aria-label='Close announcements'
-									className='shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]'
+									className='shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-[var(--color-text-muted)] transition-[background-color,color,border-color] duration-200 ease-out hover:border-[var(--color-border)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]'
 								>
 									<svg
 										className='w-5 h-5'
@@ -446,19 +515,19 @@ export default function EnrolledClasses() {
 								</button>
 							</div>
 						</div>
-						<div className='max-h-[70vh] overflow-y-auto p-4 sm:p-6'>
+						<div className='max-h-[78vh] overflow-y-auto bg-[var(--color-bg)]/30 p-4 sm:p-6'>
 							{loadingAnnouncements ? (
 								<div className='space-y-3'>
 									{[1, 2, 3].map((i) => (
 										<div
 											key={i}
-											className='animate-pulse bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4 h-24'
+											className='h-24 animate-pulse rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4'
 										/>
 									))}
 								</div>
 							) : announcements.length === 0 ? (
-								<div className='py-12 text-center'>
-									<p className='text-[var(--color-text-muted)]'>
+								<div className='rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] py-12 text-center'>
+									<p className='text-sm text-[var(--color-text-muted)]'>
 										No announcements yet.
 									</p>
 								</div>
@@ -467,13 +536,13 @@ export default function EnrolledClasses() {
 									{announcements.map((ann) => (
 										<li
 											key={ann.id}
-											className='bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5'
+											className='group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition-[border-color,box-shadow] duration-200 ease-out hover:border-[var(--color-primary)]/30 hover:shadow-sm'
 										>
 											<div className='flex flex-col sm:flex-row sm:items-start justify-between gap-2'>
 												<h3 className='text-base font-semibold text-[var(--color-text-primary)]'>
 													{ann.title}
 												</h3>
-												<span className='text-xs text-[var(--color-text-muted)] whitespace-nowrap'>
+												<span className='whitespace-nowrap rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 py-1 text-xs text-[var(--color-text-muted)]'>
 													{new Date(ann.created_at).toLocaleDateString()}
 													{ann.expires_at &&
 														` · Expires ${new Date(ann.expires_at).toLocaleDateString()}`}
