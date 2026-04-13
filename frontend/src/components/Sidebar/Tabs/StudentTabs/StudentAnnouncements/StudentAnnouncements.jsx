@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { getMyAnnouncements } from '../../../../../api/api';
 
 const BellIcon = () => (
@@ -55,10 +56,10 @@ const AlertIcon = () => (
 	</svg>
 );
 
-const ChevronIcon = ({ expanded }) => (
+const XIcon = () => (
 	<svg
-		width='14'
-		height='14'
+		width='18'
+		height='18'
 		viewBox='0 0 24 24'
 		fill='none'
 		stroke='currentColor'
@@ -66,12 +67,45 @@ const ChevronIcon = ({ expanded }) => (
 		strokeLinecap='round'
 		strokeLinejoin='round'
 		aria-hidden='true'
-		style={{
-			transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-			transition: 'transform 200ms ease',
-		}}
 	>
-		<path d='m6 9 6 6 6-6' />
+		<path d='M18 6 6 18' />
+		<path d='m6 6 12 12' />
+	</svg>
+);
+
+const CalendarIcon = () => (
+	<svg
+		width='13'
+		height='13'
+		viewBox='0 0 24 24'
+		fill='none'
+		stroke='currentColor'
+		strokeWidth='2'
+		strokeLinecap='round'
+		strokeLinejoin='round'
+		aria-hidden='true'
+	>
+		<rect width='18' height='18' x='3' y='4' rx='2' ry='2' />
+		<line x1='16' x2='16' y1='2' y2='6' />
+		<line x1='8' x2='8' y1='2' y2='6' />
+		<line x1='3' x2='21' y1='10' y2='10' />
+	</svg>
+);
+
+const ArrowIcon = () => (
+	<svg
+		width='13'
+		height='13'
+		viewBox='0 0 24 24'
+		fill='none'
+		stroke='currentColor'
+		strokeWidth='2.5'
+		strokeLinecap='round'
+		strokeLinejoin='round'
+		aria-hidden='true'
+	>
+		<path d='M5 12h14' />
+		<path d='m12 5 7 7-7 7' />
 	</svg>
 );
 
@@ -104,14 +138,28 @@ function formatDate(dateStr) {
 	});
 }
 
-const CONTENT_LIMIT = 240;
-
-function AnnouncementCard({ ann }) {
-	const [expanded, setExpanded] = useState(false);
-	const isLong = ann.content?.length > CONTENT_LIMIT;
-
+function formatDateFull(dateStr) {
+	const date = new Date(dateStr);
 	return (
-		<article className='group flex flex-col bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden transition-all duration-200 hover:shadow-md hover:border-[var(--color-primary)]/50 focus-within:ring-2 focus-within:ring-[var(--color-primary)]/30'>
+		date.toLocaleDateString([], {
+			weekday: 'long',
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
+		}) +
+		' at ' +
+		date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+	);
+}
+
+function AnnouncementCard({ ann, onOpen }) {
+	return (
+		<button
+			type='button'
+			onClick={() => onOpen(ann)}
+			aria-label={`Open announcement: ${ann.title}`}
+			className='group text-left w-full flex flex-col bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden transition-all duration-200 hover:shadow-md hover:border-[var(--color-primary)]/50 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]'
+		>
 			<div
 				className='h-[3px] w-full bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)] opacity-60 group-hover:opacity-100 transition-opacity duration-200'
 				aria-hidden='true'
@@ -148,26 +196,160 @@ function AnnouncementCard({ ann }) {
 				</div>
 
 				<div className='flex-1'>
-					<div
-						id={`ann-body-${ann.id}`}
-						className={`text-sm text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap ${!expanded && isLong ? 'line-clamp-4' : ''}`}
-					>
+					<p className='text-sm text-[var(--color-text-secondary)] leading-relaxed line-clamp-3'>
 						{ann.content}
-					</div>
-					{isLong && (
-						<button
-							onClick={() => setExpanded((v) => !v)}
-							aria-expanded={expanded}
-							aria-controls={`ann-body-${ann.id}`}
-							className='mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] rounded-sm transition-colors'
-						>
-							{expanded ? 'Show less' : 'Read more'}
-							<ChevronIcon expanded={expanded} />
-						</button>
-					)}
+					</p>
+				</div>
+
+				<div className='pt-2 border-t border-[var(--color-border)] flex items-center justify-between'>
+					<span className='text-xs text-[var(--color-text-muted)]'>
+						Click to view full announcement
+					</span>
+					<span className='text-[var(--color-primary)] opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-150'>
+						<ArrowIcon />
+					</span>
 				</div>
 			</div>
-		</article>
+		</button>
+	);
+}
+
+function AnnouncementModal({ ann, onClose }) {
+	const closeBtnRef = useRef(null);
+	const overlayRef = useRef(null);
+
+	useEffect(() => {
+		closeBtnRef.current?.focus();
+		const prev = document.body.style.overflow;
+		document.body.style.overflow = 'hidden';
+		return () => {
+			document.body.style.overflow = prev;
+		};
+	}, []);
+
+	useEffect(() => {
+		const onKey = (e) => {
+			if (e.key === 'Escape') onClose();
+			if (e.key === 'Tab') {
+				const modal = overlayRef.current?.querySelector('[role="dialog"]');
+				if (!modal) return;
+				const focusable = modal.querySelectorAll(
+					'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+				);
+				const first = focusable[0];
+				const last = focusable[focusable.length - 1];
+				if (e.shiftKey) {
+					if (document.activeElement === first) {
+						e.preventDefault();
+						last.focus();
+					}
+				} else {
+					if (document.activeElement === last) {
+						e.preventDefault();
+						first.focus();
+					}
+				}
+			}
+		};
+		document.addEventListener('keydown', onKey);
+		return () => document.removeEventListener('keydown', onKey);
+	}, [onClose]);
+
+	const handleOverlayClick = useCallback(
+		(e) => {
+			if (e.target === overlayRef.current) onClose();
+		},
+		[onClose],
+	);
+
+	return createPortal(
+		<div
+			ref={overlayRef}
+			onClick={handleOverlayClick}
+			className='overlay-fade fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4'
+			style={{
+				backgroundColor: 'rgba(0,0,0,0.55)',
+				backdropFilter: 'blur(3px)',
+			}}
+			aria-hidden='false'
+		>
+			<div
+				role='dialog'
+				aria-modal='true'
+				aria-labelledby='ann-modal-title'
+				className='fade-scale-in relative w-full sm:max-w-xl bg-[var(--color-surface)] border border-[var(--color-border)] rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[90dvh] sm:max-h-[80vh] overflow-hidden'
+			>
+				<div
+					className='h-[3px] w-full bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)] flex-shrink-0'
+					aria-hidden='true'
+				/>
+
+				<div className='flex items-start justify-between gap-3 px-5 pt-5 pb-4 border-b border-[var(--color-border)] flex-shrink-0'>
+					<div className='flex items-start gap-3 min-w-0'>
+						<div
+							className='flex-shrink-0 w-11 h-11 rounded-xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 flex items-center justify-center text-sm font-bold text-[var(--color-primary)] select-none'
+							aria-hidden='true'
+						>
+							{getInitials(ann.teacher_name)}
+						</div>
+						<div className='min-w-0'>
+							<p className='text-sm font-bold text-[var(--color-text-primary)] truncate'>
+								{ann.teacher_name}
+							</p>
+							<span className='inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20'>
+								{ann.class_name}
+							</span>
+						</div>
+					</div>
+					<button
+						ref={closeBtnRef}
+						onClick={onClose}
+						aria-label='Close announcement'
+						className='flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-[var(--color-text-muted)] bg-[var(--color-bg)] border border-[var(--color-border)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]'
+					>
+						<XIcon />
+					</button>
+				</div>
+
+				<div className='flex-1 overflow-y-auto px-5 py-5 space-y-4'>
+					<h2
+						id='ann-modal-title'
+						className='text-lg sm:text-xl font-bold text-[var(--color-text-primary)] leading-snug'
+					>
+						{ann.title}
+					</h2>
+
+					<div className='flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]'>
+						<CalendarIcon />
+						<time dateTime={ann.created_at}>
+							{formatDateFull(ann.created_at)}
+						</time>
+					</div>
+
+					<div className='h-px bg-[var(--color-border)]' aria-hidden='true' />
+
+					<div className='text-sm text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap'>
+						{ann.content}
+					</div>
+				</div>
+
+				<div className='flex-shrink-0 px-5 py-4 border-t border-[var(--color-border)] flex items-center justify-between bg-[var(--color-bg)]/60'>
+					<p className='text-xs text-[var(--color-text-muted)]'>
+						Posted in{' '}
+						<span className='font-semibold text-[var(--color-text-secondary)]'>
+							{ann.class_name}
+						</span>
+					</p>
+					<button
+						onClick={onClose}
+						className='px-4 py-2 text-sm font-semibold rounded-lg bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]'
+					>
+						Close
+					</button>
+				</div>
+			</div>
+		</div>,
+		document.body,
 	);
 }
 
@@ -206,6 +388,18 @@ export default function StudentAnnouncements() {
 	const [error, setError] = useState('');
 	const [activeClass, setActiveClass] = useState('all');
 	const [refreshing, setRefreshing] = useState(false);
+	const [selectedAnn, setSelectedAnn] = useState(null);
+	const lastFocusedRef = useRef(null);
+
+	const openModal = useCallback((ann) => {
+		lastFocusedRef.current = document.activeElement;
+		setSelectedAnn(ann);
+	}, []);
+
+	const closeModal = useCallback(() => {
+		setSelectedAnn(null);
+		lastFocusedRef.current?.focus();
+	}, []);
 
 	const fetchAnnouncements = async (isRefresh = false) => {
 		if (isRefresh) setRefreshing(true);
@@ -378,12 +572,16 @@ export default function StudentAnnouncements() {
 					<section aria-label='Announcement cards'>
 						<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5'>
 							{filtered.map((ann) => (
-								<AnnouncementCard key={ann.id} ann={ann} />
+								<AnnouncementCard key={ann.id} ann={ann} onOpen={openModal} />
 							))}
 						</div>
 					</section>
 				)}
 			</div>
+
+			{selectedAnn && (
+				<AnnouncementModal ann={selectedAnn} onClose={closeModal} />
+			)}
 
 			<style>{`
         @keyframes spin {
