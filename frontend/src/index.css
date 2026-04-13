@@ -1,71 +1,157 @@
 @import "tailwindcss";
 
+/* =============================================
+   GLOBAL THEME: EDUCATIONAL PORTAL
+   ============================================= */
+
+/* ----- Light Mode (Default) ----- */
 :root {
-  --color-bg: #f7f7f8;
+  /* ✦✦✦ TEAL ACCENT SYSTEM ✦✦✦
+     Used for primary actions, focus rings, active states,
+     and subtle branding moments. */
+  --color-primary: #0f766e;           /* Deep teal — confident, calm */
+  --color-primary-hover: #0e5e58;     /* Darker for hover states */
+  --color-primary-soft: #ccfbf1;      /* Teal 100 — backgrounds, badges */
+  --color-primary-muted: #f0fdfa;     /* Teal 50 — very light wash */
+  --color-primary-subtle: #5eead4;    /* Brighter teal for accents/links */
+
+  /* 🌫️ NEUTRAL FOUNDATION
+     Warm grays that feel academic rather than corporate. */
+  --color-bg: #f9f7f5;                /* Soft parchment white */
   --color-surface: #ffffff;
-  --color-input-bg: #fafafa;
-  --color-border: #e4e4e7;
-  --color-primary: #14b89c;
-  --color-primary-hover: #0e9f86;
-  --color-text-primary: #09090b;
-  --color-text-secondary: #3f3f46;
-  --color-text-muted: #71717a;
-  --color-success: #16a34a;
-  --color-success-hover: #15803d;
-  --color-success-soft: #dcfce7;
-  --color-danger: #dc2626;
+  --color-surface-raised: #fdfdfd;
+  --color-input-bg: #ffffff;
+  --color-border: #e2dfdb;            /* Gentle warm border */
+  --color-border-light: #f0ede9;
+  --color-border-hover: #c9c4be;
+
+  /* 📝 TYPOGRAPHY COLORS
+     Strict adherence to WCAG AAA for primary text. */
+  --color-text-primary: #1e1b1a;      /* Almost black, slight warmth */
+  --color-text-secondary: #4a4642;    /* Readable gray-brown */
+  --color-text-muted: #6f6862;        /* Still accessible (4.8:1) */
+  --color-text-placeholder: #9a928b;
+  --color-text-inverse: #ffffff;
+
+  /* 🟢 SEMANTIC STATES
+     Familiar colors but tuned for harmony with teal. */
+  --color-success: #0d9488;           /* Teal-green success (feels on-brand) */
+  --color-success-hover: #0f766e;
+  --color-success-soft: #ccfbf1;
+
+  --color-danger: #dc2626;            /* Red stays red — unambiguous */
   --color-danger-hover: #b91c1c;
   --color-danger-soft: #fee2e2;
-  --color-warning: #d97706;
+
+  --color-warning: #d97706;           /* Amber — warm caution */
   --color-warning-hover: #b45309;
   --color-warning-soft: #fef3c7;
-  --color-info: #0284c7;
+
+  --color-info: #0284c7;              /* Sky blue — clean information */
   --color-info-hover: #0369a1;
   --color-info-soft: #e0f2fe;
+
+  /* 🏛️ ACADEMIC SECONDARY ACCENT (Optional)
+     A soft indigo for "academic" vibes — use for secondary buttons,
+     course categories, or non-primary actions. */
+  --color-secondary: #4f46e5;         /* Indigo 600 */
+  --color-secondary-hover: #4338ca;
+  --color-secondary-soft: #e0e7ff;
+
+  /* 📦 ELEVATION & DEPTH
+     Shadows that feel modern and soft. */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -2px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
+  --shadow-lg: 0 12px 16px -4px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.03);
+  --shadow-xl: 0 20px 24px -4px rgb(0 0 0 / 0.08), 0 8px 8px -4px rgb(0 0 0 / 0.02);
+  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--color-primary) 40%, transparent);
+  --shadow-focus-error: 0 0 0 3px color-mix(in srgb, var(--color-danger) 30%, transparent);
+
+  /* 🔘 BORDER RADIUS
+     Consistent rounding across components. */
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+
+  /* ⏱️ TRANSITIONS
+     Standardized timing functions. */
+  --transition-fast: 120ms;
+  --transition-base: 200ms;
+  --transition-slow: 300ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0, 0, 0, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Animations for modals */
-@keyframes overlayFade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes fadeScaleIn {
-  from { opacity: 0; transform: translateY(6px) scale(0.99); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.overlay-fade {
-  animation: overlayFade 200ms ease-out forwards;
-}
-
-.fade-scale-in {
-  animation: fadeScaleIn 220ms cubic-bezier(.2,.8,.2,1) forwards;
-}
-
+/* ----- Dark Mode (Carefully Tuned) ----- */
 .dark {
-  --color-bg: #09090b;
-  --color-surface: #111113;
-  --color-input-bg: #18181b;
-  --color-border: #27272a;
-  --color-primary: #2dd4bf;
-  --color-primary-hover: #5eead4;
-  --color-text-primary: #fafafa;
-  --color-text-secondary: #d4d4d8;
-  --color-text-muted: #71717a;
-  --color-success: #22c55e;
-  --color-success-hover: #16a34a;
-  --color-success-soft: #052e16;
-  --color-danger: #f87171;
-  --color-danger-hover: #ef4444;
+  /* Deep, inky backgrounds with teal that glows softly */
+  --color-primary: #2dd4bf;           /* Teal 400 — visible on dark */
+  --color-primary-hover: #5eead4;     /* Teal 300 */
+  --color-primary-soft: #0f766e;      /* Teal 700 — for dark backgrounds */
+  --color-primary-muted: #134e4a;     /* Teal 900 */
+  --color-primary-subtle: #99f6e4;    /* Teal 200 */
+
+  --color-bg: #0a0a0c;                /* Deepest gray-blue, not pure black */
+  --color-surface: #141517;           /* Card background */
+  --color-surface-raised: #1a1c1e;
+  --color-input-bg: #1e1f22;
+  --color-border: #2a2c30;
+  --color-border-light: #35383d;
+  --color-border-hover: #4b4f56;
+
+  --color-text-primary: #f2f2f3;      /* Slightly off-white for comfort */
+  --color-text-secondary: #c9c9ce;
+  --color-text-muted: #9a9ca3;
+  --color-text-placeholder: #6b6e77;
+  --color-text-inverse: #1e1b1a;      /* Used on primary buttons */
+
+  --color-success: #2dd4bf;           /* Teal success for dark */
+  --color-success-hover: #5eead4;
+  --color-success-soft: #134e4a;
+
+  --color-danger: #f87171;            /* Red 400 */
+  --color-danger-hover: #fca5a5;
   --color-danger-soft: #450a0a;
-  --color-warning: #f59e0b;
-  --color-warning-hover: #fbbf24;
+
+  --color-warning: #fbbf24;           /* Amber 400 */
+  --color-warning-hover: #fcd34d;
   --color-warning-soft: #3f2a04;
-  --color-info: #38bdf8;
+
+  --color-info: #38bdf8;              /* Sky 400 */
   --color-info-hover: #7dd3fc;
   --color-info-soft: #082f49;
+
+  --color-secondary: #818cf8;         /* Indigo 400 */
+  --color-secondary-hover: #a5b4fc;
+  --color-secondary-soft: #1e1b4b;
+
+  /* Dark mode shadows are softer, with less opacity */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.15);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.2);
+  --shadow-md: 0 4px 6px -2px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 12px 16px -4px rgb(0 0 0 / 0.25), 0 4px 6px -4px rgb(0 0 0 / 0.15);
+  --shadow-xl: 0 20px 24px -4px rgb(0 0 0 / 0.3), 0 8px 8px -4px rgb(0 0 0 / 0.2);
+  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--color-primary) 50%, transparent);
+  --shadow-focus-error: 0 0 0 3px color-mix(in srgb, var(--color-danger) 40%, transparent);
 }
+
+/* =============================================
+   BASE ELEMENT STYLING
+   ============================================= */
+
+/* Ensure smooth theme switching */
+* {
+  transition: background-color var(--transition-base) var(--ease-standard),
+              border-color var(--transition-base) var(--ease-standard),
+              color var(--transition-fast) var(--ease-out);
+}
+
+/* Disable transitions when user prefers reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -76,20 +162,84 @@
     scroll-behavior: auto !important;
   }
 }
+
 html,
 body,
 #root {
   min-height: 100%;
-}
-
-* {
-  box-sizing: border-box;
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text-primary);
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  transition: background-color 180ms ease, color 180ms ease;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+}
+
+/* Improve default focus styles for accessibility */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+  border-radius: var(--radius-sm);
+}
+
+/* Selection color matches teal theme */
+::selection {
+  background-color: var(--color-primary-soft);
+  color: var(--color-text-primary);
+}
+.dark ::selection {
+  background-color: var(--color-primary-muted);
+  color: var(--color-text-primary);
+}
+
+/* Headings inherit weight and spacing naturally */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-text-primary);
+  margin-top: 0;
+}
+
+/* Links styled with teal */
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast) var(--ease-out);
+}
+a:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* Smooth scroll for anchor links */
+html {
+  scroll-padding-top: 2rem;
+}
+
+/* =============================================
+   ANIMATIONS (Preserved & Enhanced)
+   ============================================= */
+@keyframes overlayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeScaleIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.overlay-fade {
+  animation: overlayFade var(--transition-base) var(--ease-out) forwards;
+}
+
+.fade-scale-in {
+  animation: fadeScaleIn var(--transition-base) var(--ease-in-out) forwards;
 }
