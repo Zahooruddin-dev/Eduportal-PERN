@@ -38,6 +38,7 @@ export default function EnrolledClasses() {
 	const [enrollingId, setEnrollingId] = useState(null);
 	const [unenrollingId, setUnenrollingId] = useState(null);
 	const [bannedClassIds, setBannedClassIds] = useState([]);
+	const [searchQuery, setSearchQuery] = useState('');
 
 	const fetchEnrolled = useCallback(async () => {
 		if (!user?.id) return;
@@ -86,6 +87,22 @@ export default function EnrolledClasses() {
 			setBannedClassIds([]);
 		}
 	}, [user?.id]);
+
+	// Filter enrolled classes based on search query
+	const filteredEnrolledClasses = enrolledClasses.filter((cls) => {
+		const query = searchQuery.toLowerCase();
+		const className = cls.class_name?.toLowerCase() || '';
+		const teacherName = cls.teacher_name?.toLowerCase() || '';
+		return className.includes(query) || teacherName.includes(query);
+	});
+
+	// Filter available classes based on search query
+	const filteredAvailableClasses = availableClasses.filter((cls) => {
+		const query = searchQuery.toLowerCase();
+		const className = cls.class_name?.toLowerCase() || '';
+		const teacherName = cls.teacher_name?.toLowerCase() || '';
+		return className.includes(query) || teacherName.includes(query);
+	});
 
 	useEffect(() => {
 		if (user) {
@@ -240,6 +257,12 @@ export default function EnrolledClasses() {
 						)}
 					</div>
 
+					{cls.teacher_name && (
+						<p className='mt-2 text-sm text-[var(--color-text-muted)] font-medium'>
+							<span className='text-xs font-semibold text-[var(--color-text-muted)]'>Teacher:</span> {cls.teacher_name}
+						</p>
+					)}
+
 					<div className='mt-3 rounded-xl border border-[var(--color-border)]/80 bg-[var(--color-bg)]/40 p-3 space-y-1.5 text-sm text-[var(--color-text-secondary)]'>
 						{scheduleBlocks.length > 0 ? (
 							<>
@@ -389,13 +412,59 @@ export default function EnrolledClasses() {
 				onClose={() => setToast((t) => ({ ...t, isOpen: false }))}
 			/>
 
+			<div className='sticky top-0 z-10 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-6 shadow-sm'>
+				<div className='relative'>
+					<svg
+						className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--color-text-muted)] pointer-events-none'
+						fill='none'
+						stroke='currentColor'
+						viewBox='0 0 24 24'
+					>
+						<path
+							strokeLinecap='round'
+							strokeLinejoin='round'
+							strokeWidth='2'
+							d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
+						/>
+					</svg>
+					<input
+						type='text'
+						placeholder='Search classes by name or teacher...'
+						value={searchQuery}
+						onChange={(e) => setSearchQuery(e.target.value)}
+						className='w-full pl-12 pr-4 py-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] transition-[border-color,box-shadow] duration-200 ease-out focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]'
+					/>
+					{searchQuery && (
+						<button
+							type='button'
+							onClick={() => setSearchQuery('')}
+							className='absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors'
+							aria-label='Clear search'
+						>
+							<svg
+								fill='none'
+								stroke='currentColor'
+								viewBox='0 0 24 24'
+							>
+								<path
+									strokeLinecap='round'
+									strokeLinejoin='round'
+									strokeWidth='2'
+									d='M6 18L18 6M6 6l12 12'
+								/>
+							</svg>
+						</button>
+					)}
+				</div>
+			</div>
+
 			<section className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-6'>
 				<SectionHeader
 					title='Enrolled Classes'
 					subtitle='Active enrollments with quick access to announcements and class links.'
-					count={enrolledClasses.length}
+					count={filteredEnrolledClasses.length}
 				/>
-				{enrolledClasses.length === 0 ? (
+				{filteredEnrolledClasses.length === 0 ? (
 					<div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-bg)]/40 px-4 py-14 text-center'>
 						<div
 							className='mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
@@ -416,12 +485,12 @@ export default function EnrolledClasses() {
 							</svg>
 						</div>
 						<p className='text-sm text-[var(--color-text-muted)]'>
-							You are not enrolled in any classes yet.
+						{searchQuery ? 'No enrolled classes match your search.' : 'You are not enrolled in any classes yet.'}
 						</p>
 					</div>
 				) : (
 					<div className={cardGridClasses}>
-						{enrolledClasses.map((cls) => (
+						{filteredEnrolledClasses.map((cls) => (
 							<ClassCard key={cls.class_id ?? cls.id} cls={cls} enrolled />
 						))}
 					</div>
@@ -432,7 +501,7 @@ export default function EnrolledClasses() {
 				<SectionHeader
 					title='Available Classes'
 					subtitle='Open classes ready for enrollment based on your current schedule.'
-					count={availableClasses.length}
+					count={filteredAvailableClasses.length}
 					tone='success'
 				/>
 				{loadingAvailable ? (
@@ -441,7 +510,7 @@ export default function EnrolledClasses() {
 							<CardSkeleton key={i} />
 						))}
 					</div>
-				) : availableClasses.length === 0 ? (
+				) : filteredAvailableClasses.length === 0 ? (
 					<div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-bg)]/40 px-4 py-14 text-center'>
 						<div
 							className='mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
@@ -462,12 +531,12 @@ export default function EnrolledClasses() {
 							</svg>
 						</div>
 						<p className='text-sm text-[var(--color-text-muted)]'>
-							No classes available to enroll.
+							{searchQuery ? 'No available classes match your search.' : 'No classes available to enroll.'}
 						</p>
 					</div>
 				) : (
 					<div className={cardGridClasses}>
-						{availableClasses.map((cls) => (
+						{filteredAvailableClasses.map((cls) => (
 							<ClassCard key={cls.id} cls={cls} enrolled={false} />
 						))}
 					</div>
