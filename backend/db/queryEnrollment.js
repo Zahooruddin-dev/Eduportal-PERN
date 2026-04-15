@@ -124,7 +124,7 @@ async function getStudentScheduleQuery(studentId) {
         classes.room_number,
         classes.grade_level,
         teacher.username AS teacher_name,
-        teacher.profile AS teacher_profile_pic,
+        teacher.profile_pic AS teacher_profile_pic,
         enrollments.enrollment_date
      FROM users
      JOIN enrollments ON users.id = enrollments.student_id

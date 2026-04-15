@@ -44,6 +44,8 @@ export default function EnrolledClasses() {
 	const [unenrollingId, setUnenrollingId] = useState(null);
 	const [bannedClassIds, setBannedClassIds] = useState([]);
 	const [searchQuery, setSearchQuery] = useState('');
+	const [showScheduleModal, setShowScheduleModal] = useState(false);
+	const [selectedClassForSchedule, setSelectedClassForSchedule] = useState(null);
 
 	const fetchEnrolled = useCallback(async () => {
 		if (!user?.id) return;
@@ -199,6 +201,16 @@ export default function EnrolledClasses() {
 		setLoadingAnnouncements(false);
 	};
 
+	const handleShowSchedule = (cls) => {
+		setSelectedClassForSchedule(cls);
+		setShowScheduleModal(true);
+	};
+
+	const closeScheduleModal = () => {
+		setShowScheduleModal(false);
+		setSelectedClassForSchedule(null);
+	};
+
 	const cardGridClasses =
 		'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5';
 
@@ -288,7 +300,10 @@ export default function EnrolledClasses() {
 					</div>
 				)}
 
-				<div className='mt-3 rounded-xl border border-[var(--color-border)]/80 bg-[var(--color-bg)]/40 p-3 space-y-1.5 text-sm text-[var(--color-text-secondary)]'>
+				<div 
+					className='mt-3 rounded-xl border border-[var(--color-border)]/80 bg-[var(--color-bg)]/40 p-3 space-y-1.5 text-sm text-[var(--color-text-secondary)] cursor-pointer transition-all duration-200 hover:border-[var(--color-border)] hover:bg-[var(--color-bg)]/60 md:cursor-default md:hover:border-[var(--color-border)]/80 md:hover:bg-[var(--color-bg)]/40'
+					onClick={() => scheduleBlocks.length > 0 && handleShowSchedule(cls)}
+				>
 					{scheduleBlocks.length > 0 ? (
 						<>
 							{scheduleBlocks.slice(0, 2).map((block, index) => (
@@ -305,9 +320,16 @@ export default function EnrolledClasses() {
 								</p>
 							))}
 							{scheduleBlocks.length > 2 && (
-								<p className='pl-[3.8rem] text-xs text-[var(--color-text-muted)]'>
+								<button
+									type='button'
+									onClick={(e) => {
+										e.stopPropagation();
+										handleShowSchedule(cls);
+									}}
+									className='pl-[3.8rem] text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors focus:outline-none md:pointer-events-none'
+								>
 									+ {scheduleBlocks.length - 2} more sessions
-								</p>
+								</button>
 							)}
 						</>
 					) : (
@@ -356,52 +378,52 @@ export default function EnrolledClasses() {
 				)}
 
 
-					{enrolled && cls.enrollment_date && (
-						<p className='mt-3 border-t border-[var(--color-border)] pt-3 text-xs text-[var(--color-text-muted)]'>
-							Enrolled {new Date(cls.enrollment_date).toLocaleDateString()}
-						</p>
-					)}
+			{enrolled && cls.enrollment_date && (
+				<p className='mt-3 border-t border-[var(--color-border)] pt-3 text-xs text-[var(--color-text-muted)]'>
+					Enrolled {new Date(cls.enrollment_date).toLocaleDateString()}
+				</p>
+			)}
 
-					<div className='mt-auto flex gap-2 pt-4'>
-						{enrolled ? (
-							<>
-								<button
-									type='button'
-									onClick={() => handleShowAnnouncements(cls)}
-									className='flex-1 rounded-xl border border-[var(--color-border)] bg-transparent px-3 py-2 text-sm font-semibold text-[var(--color-primary)] transition-[background-color,border-color,color,box-shadow] duration-200 ease-out hover:border-[var(--color-primary)]/35 hover:bg-[var(--color-primary-soft)]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]'
-								>
-									Announcements
-								</button>
-								<button
-									type='button'
-									onClick={() => requestUnenroll(id)}
-									disabled={isLoadingUnenroll}
-									className='flex-1 rounded-xl border border-[var(--color-border)] bg-transparent px-3 py-2 text-sm font-semibold text-[var(--color-danger)] transition-[background-color,border-color,color,box-shadow] duration-200 ease-out hover:border-[var(--color-danger)]/35 hover:bg-[var(--color-danger-soft)]/70 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-danger)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]'
-								>
-									{isLoadingUnenroll ? (
-										<SpinnerIcon className='mx-auto h-4 w-4 animate-spin' />
-									) : (
-										'Unenroll'
-									)}
-								</button>
-							</>
+			<div className='mt-auto flex gap-2 pt-4'>
+				{enrolled ? (
+					<>
+						<button
+							type='button'
+							onClick={() => handleShowAnnouncements(cls)}
+							className='flex-1 rounded-xl border border-[var(--color-border)] bg-transparent px-3 py-2 text-sm font-semibold text-[var(--color-primary)] transition-[background-color,border-color,color,box-shadow] duration-200 ease-out hover:border-[var(--color-primary)]/35 hover:bg-[var(--color-primary-soft)]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]'
+						>
+							Announcements
+						</button>
+						<button
+							type='button'
+							onClick={() => requestUnenroll(id)}
+							disabled={isLoadingUnenroll}
+							className='flex-1 rounded-xl border border-[var(--color-border)] bg-transparent px-3 py-2 text-sm font-semibold text-[var(--color-danger)] transition-[background-color,border-color,color,box-shadow] duration-200 ease-out hover:border-[var(--color-danger)]/35 hover:bg-[var(--color-danger-soft)]/70 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-danger)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]'
+						>
+							{isLoadingUnenroll ? (
+								<SpinnerIcon className='mx-auto h-4 w-4 animate-spin' />
+							) : (
+								'Unenroll'
+							)}
+						</button>
+					</>
+				) : (
+					<button
+						type='button'
+						onClick={() => requestEnroll(id)}
+						disabled={isLoadingEnroll}
+						className='w-full rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-[background-color,transform,box-shadow] duration-200 ease-out hover:-translate-y-px hover:bg-[var(--color-primary-hover)] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]'
+					>
+						{isLoadingEnroll ? (
+							<SpinnerIcon className='mx-auto h-4 w-4 animate-spin' />
 						) : (
-							<button
-								type='button'
-								onClick={() => requestEnroll(id)}
-								disabled={isLoadingEnroll}
-								className='w-full rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-[background-color,transform,box-shadow] duration-200 ease-out hover:-translate-y-px hover:bg-[var(--color-primary-hover)] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]'
-							>
-								{isLoadingEnroll ? (
-									<SpinnerIcon className='mx-auto h-4 w-4 animate-spin' />
-								) : (
-									'Enroll now'
-								)}
-							</button>
+							'Enroll now'
 						)}
-					</div>
-				</div>
-			</article>
+					</button>
+				)}
+			</div>
+		</div>
+	</article>
 		);
 	};
 
@@ -659,6 +681,112 @@ export default function EnrolledClasses() {
 										</li>
 									))}
 								</ul>
+							)}
+						</div>
+					</section>
+				</div>
+			)}
+
+			{showScheduleModal && selectedClassForSchedule && (
+				<div className='fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4'>
+					<div
+						className='overlay-fade absolute inset-0 bg-black/55 backdrop-blur-[2px]'
+						onClick={closeScheduleModal}
+						aria-hidden='true'
+					/>
+					<section
+						role='dialog'
+						aria-modal='true'
+						aria-labelledby='schedule-title'
+						className='fade-scale-in relative z-10 mx-auto w-full overflow-hidden rounded-t-3xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl sm:max-w-2xl sm:rounded-2xl'
+					>
+						<div className='px-4 py-4 sm:px-6 sm:py-5 border-b border-[var(--color-border)]'>
+							<div className='flex items-start sm:items-center justify-between gap-4'>
+								<div className='min-w-0'>
+									<h2
+										id='schedule-title'
+										className='text-lg sm:text-xl font-semibold text-[var(--color-text-primary)] truncate'
+									>
+										{selectedClassForSchedule.class_name}
+									</h2>
+									<p className='mt-0.5 text-sm text-[var(--color-text-muted)]'>
+										Full schedule
+									</p>
+								</div>
+								<button
+									type='button'
+									onClick={closeScheduleModal}
+									aria-label='Close schedule'
+									className='shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-[var(--color-text-muted)] transition-[background-color,color,border-color] duration-200 ease-out hover:border-[var(--color-border)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]'
+								>
+									<svg
+										className='w-5 h-5'
+										fill='none'
+										stroke='currentColor'
+										viewBox='0 0 24 24'
+									>
+										<path
+											strokeLinecap='round'
+											strokeLinejoin='round'
+											strokeWidth='2'
+											d='M6 18L18 6M6 6l12 12'
+										/>
+									</svg>
+								</button>
+							</div>
+						</div>
+						<div className='max-h-[78vh] overflow-y-auto bg-[var(--color-bg)]/30 p-4 sm:p-6'>
+							{getScheduleBlocksFromClass(selectedClassForSchedule).length === 0 ? (
+								<div className='rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] py-12 text-center'>
+									<p className='text-sm text-[var(--color-text-muted)]'>
+										No schedule listed.
+									</p>
+								</div>
+							) : (
+								<div className='space-y-3'>
+									{getScheduleBlocksFromClass(selectedClassForSchedule).map((block, index) => (
+										<div
+											key={`${block.day}-${block.start_time}-${index}`}
+											className='group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-[border-color,box-shadow] duration-200 ease-out hover:border-[var(--color-primary)]/30 hover:shadow-sm'
+										>
+											<div className='flex items-center justify-between gap-3'>
+												<div className='flex-1'>
+													<p className='text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide'>
+														{block.day}
+													</p>
+													<p className='mt-2 text-base font-semibold text-[var(--color-text-primary)]'>
+														{formatTimeRange(block.start_time, block.end_time)}
+													</p>
+												</div>
+												<div className='flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)]'>
+													<svg
+														className='h-5 w-5'
+														fill='none'
+														stroke='currentColor'
+														viewBox='0 0 24 24'
+													>
+														<path
+															strokeLinecap='round'
+															strokeLinejoin='round'
+															strokeWidth='2'
+															d='M12 8v4l3 2m6-11a9 9 0 11-18 0 9 9 0 0118 0z'
+														/>
+													</svg>
+												</div>
+											</div>
+										</div>
+									))}
+									{selectedClassForSchedule.room_number && (
+										<div className='mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4'>
+											<p className='text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide'>
+												Room
+											</p>
+											<p className='mt-2 text-base font-semibold text-[var(--color-text-primary)]'>
+												{selectedClassForSchedule.room_number}
+											</p>
+										</div>
+									)}
+								</div>
 							)}
 						</div>
 					</section>
