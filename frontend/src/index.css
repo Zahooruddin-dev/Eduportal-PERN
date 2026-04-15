@@ -87,57 +87,85 @@
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ----- Dark Mode (Carefully Tuned) ----- */
+/* ----- Dark Mode: "Deep Ocean Slate" ----- */
+/*
+  Design philosophy: The light theme is warm parchment — a scholar's desk
+  by day. The dark theme mirrors it as a scholar's study at night: deep
+  ocean navy with blue-slate layering, NOT black. Every surface has visible
+  tonal depth. Teal glows softly, like bioluminescence in deep water.
+
+  Palette logic:
+  ┌────────────────────────────────────────────────────────┐
+  │  bg            #0d1520   ← deepest navy, the "floor"   │
+  │  surface       #121e2e   ← card/panel layer            │
+  │  surface-raised #182539  ← elevated modals, popovers   │
+  │  input-bg      #1a2a3e   ← form fields, slightly warm  │
+  │  border        #1e3048   ← visible but subtle          │
+  │  border-light  #162740   ← faintest structural line    │
+  │  border-hover  #2a4a6a   ← interactive hover           │
+  └────────────────────────────────────────────────────────┘
+  Each step is ~10-15% lighter in perceived luminance, creating
+  clear visual hierarchy without any step feeling "black".
+*/
 .dark {
-  /* Deep, inky backgrounds with teal that glows softly */
-  --color-primary: #2dd4bf;           /* Teal 400 — visible on dark */
-  --color-primary-hover: #5eead4;     /* Teal 300 */
-  --color-primary-soft: #0f766e;      /* Teal 700 — for dark backgrounds */
-  --color-primary-muted: #134e4a;     /* Teal 900 */
-  --color-primary-subtle: #99f6e4;    /* Teal 200 */
+  /* ✦✦✦ TEAL ON NAVY — luminous, not loud ✦✦✦ */
+  --color-primary: #34d9c3;           /* Teal 400 — warm aqua, pops on navy */
+  --color-primary-hover: #5ee8d4;     /* Slightly lighter on hover */
+  --color-primary-soft: #0a3d38;      /* Deep teal surface for badges/chips */
+  --color-primary-muted: #06272380;   /* Semi-transparent teal wash */
+  --color-primary-subtle: #a7f3e8;    /* Near-white teal for fine details */
 
-  --color-bg: #0a0a0c;                /* Deepest gray-blue, not pure black */
-  --color-surface: #141517;           /* Card background */
-  --color-surface-raised: #1a1c1e;
-  --color-input-bg: #1e1f22;
-  --color-border: #2a2c30;
-  --color-border-light: #35383d;
-  --color-border-hover: #4b4f56;
+  /* 🌊 DEEP OCEAN NAVY BACKGROUNDS
+     Layered blue-slates — no surface reads as black at normal brightness. */
+  --color-bg: #0d1520;                /* Deepest base — rich navy, not black */
+  --color-surface: #111d2e;           /* Cards, panels — clearly a step up */
+  --color-surface-raised: #172438;    /* Modals, dropdowns — another step up */
+  --color-input-bg: #1a2b3f;          /* Form fields — slightly warmer */
+  --color-border: #1e3350;            /* Visible slate-blue borders */
+  --color-border-light: #152840;      /* Faint structural separator */
+  --color-border-hover: #2d5070;      /* Active/hover border — clearly brighter */
 
-  --color-text-primary: #f2f2f3;      /* Slightly off-white for comfort */
-  --color-text-secondary: #c9c9ce;
-  --color-text-muted: #9a9ca3;
-  --color-text-placeholder: #6b6e77;
-  --color-text-inverse: #1e1b1a;      /* Used on primary buttons */
+  /* 📝 TYPOGRAPHY — cold-white on navy for crisp contrast */
+  --color-text-primary: #e8edf5;      /* Cool off-white — comfortable on navy */
+  --color-text-secondary: #a8b8cf;    /* Muted blue-gray — secondary labels */
+  --color-text-muted: #6a84a0;        /* Accessible (5.2:1 on bg) */
+  --color-text-placeholder: #445e78;
+  --color-text-inverse: #0d1520;      /* Used on teal buttons */
 
-  --color-success: #2dd4bf;           /* Teal success for dark */
-  --color-success-hover: #5eead4;
-  --color-success-soft: #134e4a;
+  /* 🟢 SEMANTIC — tuned to glow against navy */
+  --color-success: #2dd4bf;           /* Teal success — on-brand, luminous */
+  --color-success-hover: #5ee8d6;
+  --color-success-soft: #0a3530;      /* Deep teal surface */
 
-  --color-danger: #f87171;            /* Red 400 */
-  --color-danger-hover: #fca5a5;
-  --color-danger-soft: #450a0a;
+  --color-danger: #ff6b6b;            /* Warm coral-red — friendlier than harsh red */
+  --color-danger-hover: #ff8e8e;
+  --color-danger-soft: #3d1010;       /* Deep red surface */
 
-  --color-warning: #fbbf24;           /* Amber 400 */
-  --color-warning-hover: #fcd34d;
-  --color-warning-soft: #3f2a04;
+  --color-warning: #f5c542;           /* Golden amber — warm against cool navy */
+  --color-warning-hover: #f9d86a;
+  --color-warning-soft: #332a05;      /* Deep amber surface */
 
-  --color-info: #38bdf8;              /* Sky 400 */
-  --color-info-hover: #7dd3fc;
-  --color-info-soft: #082f49;
+  --color-info: #52b8f5;              /* Sky blue — clear against navy */
+  --color-info-hover: #7ecef8;
+  --color-info-soft: #082e4a;         /* Deep info surface */
 
-  --color-secondary: #818cf8;         /* Indigo 400 */
-  --color-secondary-hover: #a5b4fc;
-  --color-secondary-soft: #1e1b4b;
+  /* 🏛️ SECONDARY ACCENT — indigo shifts to periwinkle on navy */
+  --color-secondary: #7b82f0;         /* Indigo 400 — softer, works on dark */
+  --color-secondary-hover: #9da3f5;
+  --color-secondary-soft: #181a40;    /* Deep indigo surface */
 
-  /* Dark mode shadows are softer, with less opacity */
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.15);
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.2);
-  --shadow-md: 0 4px 6px -2px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 12px 16px -4px rgb(0 0 0 / 0.25), 0 4px 6px -4px rgb(0 0 0 / 0.15);
-  --shadow-xl: 0 20px 24px -4px rgb(0 0 0 / 0.3), 0 8px 8px -4px rgb(0 0 0 / 0.2);
-  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--color-primary) 50%, transparent);
-  --shadow-focus-error: 0 0 0 3px color-mix(in srgb, var(--color-danger) 40%, transparent);
+  /* 📦 ELEVATION — navy shadows have a cool blue tint */
+  --shadow-xs: 0 1px 2px 0 rgb(3 10 25 / 0.5);
+  --shadow-sm: 0 1px 3px 0 rgb(3 10 25 / 0.5), 0 1px 2px -1px rgb(3 10 25 / 0.4);
+  --shadow-md: 0 4px 6px -2px rgb(3 10 25 / 0.5), 0 2px 4px -2px rgb(3 10 25 / 0.3);
+  --shadow-lg: 0 12px 16px -4px rgb(3 10 25 / 0.6), 0 4px 6px -4px rgb(3 10 25 / 0.4);
+  --shadow-xl: 0 20px 24px -4px rgb(3 10 25 / 0.7), 0 8px 8px -4px rgb(3 10 25 / 0.5);
+
+  /* Teal glow focus ring — unmistakably beautiful */
+  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--color-primary) 45%, transparent),
+                  0 0 12px 1px color-mix(in srgb, var(--color-primary) 15%, transparent);
+  --shadow-focus-error: 0 0 0 3px color-mix(in srgb, var(--color-danger) 40%, transparent),
+                        0 0 10px 1px color-mix(in srgb, var(--color-danger) 15%, transparent);
 }
 
 /* =============================================
@@ -194,7 +222,7 @@ body {
   color: var(--color-text-primary);
 }
 .dark ::selection {
-  background-color: var(--color-primary-muted);
+  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
   color: var(--color-text-primary);
 }
 
