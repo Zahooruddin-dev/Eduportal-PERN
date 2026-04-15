@@ -1,96 +1,87 @@
 @import "tailwindcss";
 
 /* =============================================
-   FONTS
-   ============================================= */
+   FONTS — Modern, expressive, non-academic
+   =============================================
 
-/*
-  Font pairing rationale:
-  ┌─────────────────────────────────────────────────────────────────┐
-  │  Fraunces       → Headings   — Variable optical-size serif.     │
-  │                               Scholarly warmth, strong italics. │
-  │                               Feels like a premium textbook.    │
-  │                                                                  │
-  │  Plus Jakarta   → Body       — Modern grotesque. Friendly,      │
-  │  Sans                         readable at all sizes. Not Inter.  │
-  │                                                                  │
-  │  JetBrains Mono → Code       — Purpose-built for readability    │
-  │                               in technical content & education. │
-  └─────────────────────────────────────────────────────────────────┘
+   Font pairing rationale:
+   ┌─────────────────────────────────────────────────────────────────┐
+   │  Bricolage Grotesque → Headings — Variable grotesque with      │
+   │                          distinctive personality. Feels fresh,  │
+   │                          editorial, not institutional.          │
+   │                                                                  │
+   │  DM Sans              → Body     — Clean, geometric, highly    │
+   │                          legible. Neutral but not sterile.       │
+   │                                                                  │
+   │  Fira Code            → Code     — Developer favorite, clear    │
+   │                          and functional without being academic. │
+   └─────────────────────────────────────────────────────────────────┘
 */
 
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fira+Code:wght@400;500;600&display=swap');
 
 /* =============================================
-   GLOBAL THEME: EDUCATIONAL PORTAL
+   GLOBAL THEME: MODERN EDITORIAL PORTAL
    ============================================= */
 
 /* ----- Light Mode (Default) ----- */
 :root {
-  /* ✦✦✦ TEAL ACCENT SYSTEM ✦✦✦
-     Used for primary actions, focus rings, active states,
-     and subtle branding moments. */
-  --color-primary: #0f766e;           /* Deep teal — confident, calm */
-  --color-primary-hover: #0e5e58;     /* Darker for hover states */
-  --color-primary-soft: #ccfbf1;      /* Teal 100 — backgrounds, badges */
-  --color-primary-muted: #f0fdfa;     /* Teal 50 — very light wash */
-  --color-primary-subtle: #5eead4;    /* Brighter teal for accents/links */
+  /* ✦✦✦ PRIMARY BLUE SYSTEM ✦✦✦
+     Fresh, trustworthy, and energetic — not the typical navy or teal. */
+  --color-primary: #3395bc;           /* Bold azure blue */
+  --color-primary-hover: #2a7ca0;     /* Slightly deeper for hover */
+  --color-primary-soft: #e6f4f9;      /* Soft blue wash for backgrounds */
+  --color-primary-muted: #f0f8fc;     /* Very light mist */
+  --color-primary-subtle: #7eb9d2;    /* Muted blue for subtle accents */
 
-  /* 🌫️ NEUTRAL FOUNDATION
-     Warm grays that feel academic rather than corporate. */
-  --color-bg: #f9f7f5;                /* Soft parchment white */
-  --color-surface: #ffffff;
-  --color-surface-raised: #fdfdfd;
-  --color-input-bg: #ffffff;
-  --color-border: #e2dfdb;            /* Gentle warm border */
-  --color-border-light: #f0ede9;
-  --color-border-hover: #c9c4be;
+  /* 🌫️ NEUTRAL FOUNDATION — Clean, modern grays */
+  --color-bg: #ffffff;                /* Pure white background */
+  --color-surface: #f9fafb;           /* Off-white for cards */
+  --color-surface-raised: #ffffff;    /* Pure white for elevated elements */
+  --color-input-bg: #ffffff;          /* White inputs */
+  --color-border: #e5e7eb;            /* Light gray border */
+  --color-border-light: #f3f4f6;      /* Faintest separator */
+  --color-border-hover: #d1d5db;      /* Slightly darker on hover */
 
-  /* 📝 TYPOGRAPHY COLORS
-     Strict adherence to WCAG AAA for primary text. */
-  --color-text-primary: #1e1b1a;      /* Almost black, slight warmth */
-  --color-text-secondary: #4a4642;    /* Readable gray-brown */
-  --color-text-muted: #6f6862;        /* Still accessible (4.8:1) */
-  --color-text-placeholder: #9a928b;
+  /* 📝 TYPOGRAPHY COLORS — High contrast, warm grays */
+  --color-text-primary: #11181c;      /* Almost black, slightly cool */
+  --color-text-secondary: #4b5563;    /* Accessible gray */
+  --color-text-muted: #6b7280;        /* Softer but readable */
+  --color-text-placeholder: #9ca3af;
   --color-text-inverse: #ffffff;
 
-  /* 🟢 SEMANTIC STATES
-     Familiar colors but tuned for harmony with teal. */
-  --color-success: #0d9488;           /* Teal-green success (feels on-brand) */
-  --color-success-hover: #0f766e;
-  --color-success-soft: #ccfbf1;
+  /* 🟢 SEMANTIC STATES — Based on user's palette */
+  --color-success: #22946e;           /* Deep green */
+  --color-success-hover: #1a7557;
+  --color-success-soft: #e0f2ea;
 
-  --color-danger: #dc2626;            /* Red stays red — unambiguous */
-  --color-danger-hover: #b91c1c;
-  --color-danger-soft: #fee2e2;
+  --color-danger: #9c2121;            /* Deep red */
+  --color-danger-hover: #7a1a1a;
+  --color-danger-soft: #fae6e6;
 
-  --color-warning: #d97706;           /* Amber — warm caution */
-  --color-warning-hover: #b45309;
-  --color-warning-soft: #fef3c7;
+  --color-warning: #a87a2a;           /* Warm amber */
+  --color-warning-hover: #8a631f;
+  --color-warning-soft: #fef2e0;
 
-  --color-info: #0284c7;              /* Sky blue — clean information */
-  --color-info-hover: #0369a1;
-  --color-info-soft: #e0f2fe;
+  --color-info: #21498a;              /* Deep indigo-blue */
+  --color-info-hover: #1a3a6e;
+  --color-info-soft: #e6edf7;
 
-  /* 🏛️ ACADEMIC SECONDARY ACCENT (Optional)
-     A soft indigo for "academic" vibes — use for secondary buttons,
-     course categories, or non-primary actions. */
-  --color-secondary: #4f46e5;         /* Indigo 600 */
-  --color-secondary-hover: #4338ca;
-  --color-secondary-soft: #e0e7ff;
+  /* 🏛️ SECONDARY ACCENT — Soft violet for variety */
+  --color-secondary: #8b5cf6;         /* Vivid purple */
+  --color-secondary-hover: #7c3aed;
+  --color-secondary-soft: #ede9fe;
 
-  /* 📦 ELEVATION & DEPTH
-     Shadows that feel modern and soft. */
+  /* 📦 ELEVATION & DEPTH — Soft shadows */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.03);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -2px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
   --shadow-lg: 0 12px 16px -4px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.03);
   --shadow-xl: 0 20px 24px -4px rgb(0 0 0 / 0.08), 0 8px 8px -4px rgb(0 0 0 / 0.02);
-  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--color-primary) 40%, transparent);
+  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--color-primary) 35%, transparent);
   --shadow-focus-error: 0 0 0 3px color-mix(in srgb, var(--color-danger) 30%, transparent);
 
-  /* 🔘 BORDER RADIUS
-     Consistent rounding across components. */
+  /* 🔘 BORDER RADIUS */
   --radius-xs: 0.125rem;
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
@@ -98,22 +89,21 @@
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
 
-  /* 🔤 TYPOGRAPHY SCALE
-     Use these variables everywhere — never hardcode font-family strings. */
-  --font-display:  "Fraunces", Georgia, "Times New Roman", serif;
-  --font-body:     "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono:     "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace;
+  /* 🔤 TYPOGRAPHY — Modern, non-academic fonts */
+  --font-display: "Bricolage Grotesque", system-ui, -apple-system, sans-serif;
+  --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Fira Code", "Fira Mono", "Cascadia Code", ui-monospace, monospace;
 
-  /* Font size scale — fluid-friendly, named semantically */
-  --text-xs:   0.75rem;     /* 12px — captions, labels */
-  --text-sm:   0.875rem;    /* 14px — secondary text, metadata */
-  --text-base: 1rem;        /* 16px — body copy */
-  --text-lg:   1.125rem;    /* 18px — lead paragraphs */
-  --text-xl:   1.25rem;     /* 20px — card headings */
-  --text-2xl:  1.5rem;      /* 24px — section titles */
-  --text-3xl:  1.875rem;    /* 30px — page headings */
-  --text-4xl:  2.25rem;     /* 36px — hero headings */
-  --text-5xl:  3rem;        /* 48px — display / marketing */
+  /* Font size scale */
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.25rem;
+  --text-2xl:  1.5rem;
+  --text-3xl:  1.875rem;
+  --text-4xl:  2.25rem;
+  --text-5xl:  3rem;
 
   /* Font weights */
   --weight-light:   300;
@@ -123,20 +113,19 @@
   --weight-bold:    700;
 
   /* Line heights */
-  --leading-tight:   1.2;   /* Headings */
-  --leading-snug:    1.35;  /* Sub-headings, card titles */
-  --leading-normal:  1.5;   /* Body text */
-  --leading-relaxed: 1.65;  /* Long-form reading */
-  --leading-loose:   1.8;   /* Legibility-first contexts */
+  --leading-tight:   1.2;
+  --leading-snug:    1.35;
+  --leading-normal:  1.5;
+  --leading-relaxed: 1.65;
+  --leading-loose:   1.8;
 
   /* Letter spacing */
-  --tracking-tight:  -0.02em;  /* Large display headings */
+  --tracking-tight:  -0.02em;
   --tracking-normal:  0em;
-  --tracking-wide:    0.03em;  /* Small caps, labels */
-  --tracking-wider:   0.07em;  /* Eyebrow text */
+  --tracking-wide:    0.03em;
+  --tracking-wider:   0.07em;
 
-  /* ⏱️ TRANSITIONS
-     Standardized timing functions. */
+  /* ⏱️ TRANSITIONS */
   --transition-fast: 120ms;
   --transition-base: 200ms;
   --transition-slow: 300ms;
@@ -145,83 +134,63 @@
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ----- Dark Mode: "Deep Ocean Slate" ----- */
-/*
-  Design philosophy: The light theme is warm parchment — a scholar's desk
-  by day. The dark theme mirrors it as a scholar's study at night: deep
-  ocean navy with blue-slate layering, NOT black. Every surface has visible
-  tonal depth. Teal glows softly, like bioluminescence in deep water.
-
-  Palette logic:
-  ┌────────────────────────────────────────────────────────┐
-  │  bg            #0d1520   ← deepest navy, the "floor"   │
-  │  surface       #121e2e   ← card/panel layer            │
-  │  surface-raised #182539  ← elevated modals, popovers   │
-  │  input-bg      #1a2a3e   ← form fields, slightly warm  │
-  │  border        #1e3048   ← visible but subtle          │
-  │  border-light  #162740   ← faintest structural line    │
-  │  border-hover  #2a4a6a   ← interactive hover           │
-  └────────────────────────────────────────────────────────┘
-  Each step is ~10-15% lighter in perceived luminance, creating
-  clear visual hierarchy without any step feeling "black".
-*/
+/* ----- Dark Mode: "Deep Slate" with blue undertones ----- */
 .dark {
-  /* ✦✦✦ TEAL ON NAVY — luminous, not loud ✦✦✦ */
-  --color-primary: #34d9c3;           /* Teal 400 — warm aqua, pops on navy */
-  --color-primary-hover: #5ee8d4;     /* Slightly lighter on hover */
-  --color-primary-soft: #0a3d38;      /* Deep teal surface for badges/chips */
-  --color-primary-muted: #06272380;   /* Semi-transparent teal wash */
-  --color-primary-subtle: #a7f3e8;    /* Near-white teal for fine details */
+  /* ✦✦✦ PRIMARY — Brighter blue for dark backgrounds */
+  --color-primary: #6caccb;           /* Lively medium blue (clr-primary-a20) */
+  --color-primary-hover: #83b7d2;     /* Softer hover */
+  --color-primary-soft: #1e3a4a;      /* Deep blue surface for badges */
+  --color-primary-muted: #142d3a80;   /* Semi-transparent wash */
+  --color-primary-subtle: #98c3da;    /* Muted light blue */
 
-  /* 🌊 DEEP OCEAN NAVY BACKGROUNDS
-     Layered blue-slates — no surface reads as black at normal brightness. */
-  --color-bg: #0d1520;                /* Deepest base — rich navy, not black */
-  --color-surface: #111d2e;           /* Cards, panels — clearly a step up */
-  --color-surface-raised: #172438;    /* Modals, dropdowns — another step up */
-  --color-input-bg: #1a2b3f;          /* Form fields — slightly warmer */
-  --color-border: #1e3350;            /* Visible slate-blue borders */
-  --color-border-light: #152840;      /* Faint structural separator */
-  --color-border-hover: #2d5070;      /* Active/hover border — clearly brighter */
+  /* 🌑 DARK SURFACES — Based on user's surface palette */
+  --color-bg: #121212;                /* Deepest base (clr-surface-a0) */
+  --color-surface: #282828;           /* Cards (clr-surface-a10) */
+  --color-surface-raised: #3f3f3f;    /* Modals, popovers (clr-surface-a20) */
+  --color-input-bg: #282828;          /* Form fields match surface */
+  --color-border: #3f3f3f;            /* Visible borders (clr-surface-a20) */
+  --color-border-light: #2a2a2a;      /* Faint structural lines */
+  --color-border-hover: #575757;      /* Interactive hover (clr-surface-a30) */
 
-  /* 📝 TYPOGRAPHY — cold-white on navy for crisp contrast */
-  --color-text-primary: #e8edf5;      /* Cool off-white — comfortable on navy */
-  --color-text-secondary: #a8b8cf;    /* Muted blue-gray — secondary labels */
-  --color-text-muted: #6a84a0;        /* Accessible (5.2:1 on bg) */
-  --color-text-placeholder: #445e78;
-  --color-text-inverse: #0d1520;      /* Used on teal buttons */
+  /* 📝 TYPOGRAPHY — Cool white on dark */
+  --color-text-primary: #eceff4;      /* Off-white, comfortable */
+  --color-text-secondary: #cbd5e1;    /* Muted blue-gray */
+  --color-text-muted: #94a3b8;        /* Accessible gray */
+  --color-text-placeholder: #64748b;
+  --color-text-inverse: #121212;      /* Used on light buttons */
 
-  /* 🟢 SEMANTIC — tuned to glow against navy */
-  --color-success: #2dd4bf;           /* Teal success — on-brand, luminous */
-  --color-success-hover: #5ee8d6;
-  --color-success-soft: #0a3530;      /* Deep teal surface */
+  /* 🟢 SEMANTIC — Brighter variants for dark background */
+  --color-success: #47d5a6;           /* Vibrant mint-green (clr-success-a10) */
+  --color-success-hover: #9ae8ce;     /* Very light hover */
+  --color-success-soft: #1a3a2e;      /* Deep green surface */
 
-  --color-danger: #ff6b6b;            /* Warm coral-red — friendlier than harsh red */
-  --color-danger-hover: #ff8e8e;
-  --color-danger-soft: #3d1010;       /* Deep red surface */
+  --color-danger: #d94a4a;            /* Coral-red (clr-danger-a10) */
+  --color-danger-hover: #eb9e9e;      /* Light red-pink */
+  --color-danger-soft: #3d1515;       /* Deep red surface */
 
-  --color-warning: #f5c542;           /* Golden amber — warm against cool navy */
-  --color-warning-hover: #f9d86a;
-  --color-warning-soft: #332a05;      /* Deep amber surface */
+  --color-warning: #d7ac61;           /* Golden amber (clr-warning-a10) */
+  --color-warning-hover: #ecd7b2;     /* Pale gold */
+  --color-warning-soft: #332a14;      /* Deep amber surface */
 
-  --color-info: #52b8f5;              /* Sky blue — clear against navy */
-  --color-info-hover: #7ecef8;
-  --color-info-soft: #082e4a;         /* Deep info surface */
+  --color-info: #4077d1;              /* Bright sky blue (clr-info-a10) */
+  --color-info-hover: #92b2e5;        /* Light blue */
+  --color-info-soft: #0a1a35;         /* Deep navy surface */
 
-  /* 🏛️ SECONDARY ACCENT — indigo shifts to periwinkle on navy */
-  --color-secondary: #7b82f0;         /* Indigo 400 — softer, works on dark */
-  --color-secondary-hover: #9da3f5;
-  --color-secondary-soft: #181a40;    /* Deep indigo surface */
+  /* 🏛️ SECONDARY — Periwinkle purple for dark mode */
+  --color-secondary: #a78bfa;         /* Soft purple */
+  --color-secondary-hover: #c4b5fd;   /* Lighter hover */
+  --color-secondary-soft: #2d1b4e;    /* Deep purple surface */
 
-  /* 📦 ELEVATION — navy shadows have a cool blue tint */
-  --shadow-xs: 0 1px 2px 0 rgb(3 10 25 / 0.5);
-  --shadow-sm: 0 1px 3px 0 rgb(3 10 25 / 0.5), 0 1px 2px -1px rgb(3 10 25 / 0.4);
-  --shadow-md: 0 4px 6px -2px rgb(3 10 25 / 0.5), 0 2px 4px -2px rgb(3 10 25 / 0.3);
-  --shadow-lg: 0 12px 16px -4px rgb(3 10 25 / 0.6), 0 4px 6px -4px rgb(3 10 25 / 0.4);
-  --shadow-xl: 0 20px 24px -4px rgb(3 10 25 / 0.7), 0 8px 8px -4px rgb(3 10 25 / 0.5);
+  /* 📦 ELEVATION — Darker, moody shadows */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 6px -2px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 12px 16px -4px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-xl: 0 20px 24px -4px rgb(0 0 0 / 0.7), 0 8px 8px -4px rgb(0 0 0 / 0.5);
 
-  /* Teal glow focus ring — unmistakably beautiful */
+  /* Focus rings glow on dark */
   --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--color-primary) 45%, transparent),
-                  0 0 12px 1px color-mix(in srgb, var(--color-primary) 15%, transparent);
+                  0 0 12px 1px color-mix(in srgb, var(--color-primary) 20%, transparent);
   --shadow-focus-error: 0 0 0 3px color-mix(in srgb, var(--color-danger) 40%, transparent),
                         0 0 10px 1px color-mix(in srgb, var(--color-danger) 15%, transparent);
 }
@@ -230,14 +199,13 @@
    BASE ELEMENT STYLING
    ============================================= */
 
-/* Ensure smooth theme switching */
+/* Smooth theme transitions */
 * {
   transition: background-color var(--transition-base) var(--ease-standard),
               border-color var(--transition-base) var(--ease-standard),
               color var(--transition-fast) var(--ease-out);
 }
 
-/* Disable transitions when user prefers reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -263,41 +231,36 @@ body {
   font-family: var(--font-body);
   font-size: var(--text-base);
   font-weight: var(--weight-regular);
-  font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "ss01" 1;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: var(--leading-normal);
 }
 
 /* =============================================
-   TYPOGRAPHY SYSTEM
+   TYPOGRAPHY SYSTEM — Fresh & editorial
    ============================================= */
 
-/* Display headings — Fraunces at optical size for crisp rendering */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
   color: var(--color-text-primary);
   margin-top: 0;
-  font-optical-sizing: auto;     /* Activates Fraunces' optical-size axis */
+  letter-spacing: var(--tracking-tight);
 }
 
 h1 {
   font-size: var(--text-4xl);
   font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-tight);
 }
 
 h2 {
   font-size: var(--text-3xl);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-tight);
 }
 
 h3 {
   font-size: var(--text-2xl);
-  font-weight: var(--weight-semibold);
 }
 
 h4 {
@@ -310,7 +273,6 @@ h5, h6 {
   font-weight: var(--weight-medium);
 }
 
-/* Body copy — relaxed leading for comfortable reading */
 p {
   font-family: var(--font-body);
   line-height: var(--leading-relaxed);
@@ -318,7 +280,6 @@ p {
   margin-bottom: 1em;
 }
 
-/* Lead paragraph — slightly larger, for introductory text */
 .lead {
   font-size: var(--text-lg);
   line-height: var(--leading-relaxed);
@@ -326,7 +287,6 @@ p {
   font-weight: var(--weight-light);
 }
 
-/* Eyebrow / overline text — small caps feel */
 .eyebrow {
   font-family: var(--font-body);
   font-size: var(--text-xs);
@@ -336,7 +296,6 @@ p {
   color: var(--color-primary);
 }
 
-/* Labels and metadata */
 .label-sm {
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
@@ -344,10 +303,10 @@ p {
   line-height: var(--leading-tight);
 }
 
-/* Code and technical content */
+/* Code & technical — Fira Code shines */
 code, kbd, samp, pre {
   font-family: var(--font-mono);
-  font-size: 0.9em;            /* Mono fonts read large — optically correct */
+  font-size: 0.9em;
 }
 
 code {
@@ -377,7 +336,6 @@ pre code {
   color: inherit;
 }
 
-/* Blockquote — Fraunces italic shines here */
 blockquote {
   font-family: var(--font-display);
   font-style: italic;
@@ -390,24 +348,24 @@ blockquote {
   padding: 0.5rem 0 0.5rem 1.5rem;
 }
 
-/* Improve default focus styles for accessibility */
+/* Focus states */
 :focus-visible {
   outline: none;
   box-shadow: var(--shadow-focus);
   border-radius: var(--radius-sm);
 }
 
-/* Selection color matches teal theme */
+/* Selection */
 ::selection {
   background-color: var(--color-primary-soft);
   color: var(--color-text-primary);
 }
 .dark ::selection {
-  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  background-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
   color: var(--color-text-primary);
 }
 
-/* Links styled with teal */
+/* Links */
 a {
   color: var(--color-primary);
   text-decoration: none;
@@ -419,13 +377,12 @@ a:hover {
   text-underline-offset: 0.2em;
 }
 
-/* Smooth scroll for anchor links */
 html {
   scroll-padding-top: 2rem;
 }
 
 /* =============================================
-   ANIMATIONS (Preserved & Enhanced)
+   ANIMATIONS (Preserved)
    ============================================= */
 @keyframes overlayFade {
   from { opacity: 0; }
