@@ -1,12 +1,12 @@
 import { useCallback, useState } from 'react';
-import { useAuth } from '../../../../context/AuthContext';
-import { useCommunication } from './hooks/useCommunication';
-import { InboxPanel } from './components/InboxPanel';
-import { DirectoryPanel } from './components/DirectoryPanel';
-import { ConversationView } from './components/ConversationView';
-import { TeacherProfileModal } from './components/TeacherProfileModal';
-import { MobileTabBar } from './components/MobileTabBar';
-import Toast from '../../../Toast';
+import { useAuth } from '../../../../../context/AuthContext';
+import { useCommunication } from './utils/useCommunication';
+import { InboxPanel } from './InboxPanel';
+import { DirectoryPanel } from './DirectoryPanel';
+import { ConversationView } from './ConversationView';
+import { TeacherProfileModal } from './TeacherProfileModal';
+import { MobileTabBar } from './MobileTabBar';
+import Toast from '../../../../Toast';
 
 export default function CommunicationCenter() {
 	const { user } = useAuth();

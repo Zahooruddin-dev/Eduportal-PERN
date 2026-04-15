@@ -10,7 +10,7 @@ import {
 	sendCommunicationMessage,
 	editCommunicationMessage,
 	deleteCommunicationMessage,
-} from '../../../../../api/api';
+} from '../../../../../../api/api';
 import { useSocket } from './useSocket';
 
 export function useCommunication({ user, openToast }) {

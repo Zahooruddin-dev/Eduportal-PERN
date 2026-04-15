@@ -3,29 +3,76 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Sidebar from '../Sidebar/Sidebar';
-import { getAdminNotificationUnreadSummary, markAllAdminNotificationsRead } from '../../api/api';
+import {
+	getAdminNotificationUnreadSummary,
+	markAllAdminNotificationsRead,
+} from '../../api/api';
 
 const Profile = lazy(() => import('../Sidebar/Profile/Profile'));
-const EnrolledClasses = lazy(() => import('../Sidebar/Tabs/StudentTabs/EnrolledClasses/EnrolledClasses'));
-const ScheduleManagement = lazy(() => import('../Sidebar/Tabs/TeacherTabs/ScheduleManagement/ScheduleManagement'));
-const StudentAnnouncements = lazy(() => import('../Sidebar/Tabs/StudentTabs/StudentAnnouncements/StudentAnnouncements'));
-const CourseMaterial = lazy(() => import('../Sidebar/Tabs/TeacherTabs/CourseMaterial/CourseMaterial'));
-const StudentCourseMaterial = lazy(() => import('../Sidebar/Tabs/StudentTabs/CourseMaterial/StudentCourseMaterial'));
-const TeacherAttendance = lazy(() => import('../Sidebar/Tabs/TeacherTabs/TeacherAttendance/TeacherAttendance'));
-const TeacherAssignments = lazy(() => import('../Sidebar/Tabs/TeacherTabs/Assignments/Assignments'));
-const StudentAssignments = lazy(() => import('../Sidebar/Tabs/StudentTabs/StudentAssignments/StudentAssignments'));
-const Gradebook = lazy(() => import('../Sidebar/Tabs/TeacherTabs/Gradebook/Gradebook'));
-const StudentGradebook = lazy(() => import('../Sidebar/Tabs/StudentTabs/Gradebook/StudentGradebook'));
-const AcademicCalender = lazy(() => import('../Sidebar/Tabs/StudentTabs/AcademicCalender/AcademicCalender'));
-const TeacherCalender = lazy(() => import('../Sidebar/Tabs/TeacherTabs/TeacherCalender/TeacherCalender'));
-const UserManagement = lazy(() => import('../Sidebar/Tabs/AdminTabs/UserManagement/UserManagement'));
-const AdminReports = lazy(() => import('../Sidebar/Tabs/AdminTabs/Reports/AdminReports'));
-const AdminRiskOverview = lazy(() => import('../Sidebar/Tabs/AdminTabs/RiskOverview/AdminRiskOverview'));
+const EnrolledClasses = lazy(
+	() => import('../Sidebar/Tabs/StudentTabs/EnrolledClasses/EnrolledClasses'),
+);
+const ScheduleManagement = lazy(
+	() =>
+		import('../Sidebar/Tabs/TeacherTabs/ScheduleManagement/ScheduleManagement'),
+);
+const StudentAnnouncements = lazy(
+	() =>
+		import('../Sidebar/Tabs/StudentTabs/StudentAnnouncements/StudentAnnouncements'),
+);
+const CourseMaterial = lazy(
+	() => import('../Sidebar/Tabs/TeacherTabs/CourseMaterial/CourseMaterial'),
+);
+const StudentCourseMaterial = lazy(
+	() =>
+		import('../Sidebar/Tabs/StudentTabs/CourseMaterial/StudentCourseMaterial'),
+);
+const TeacherAttendance = lazy(
+	() =>
+		import('../Sidebar/Tabs/TeacherTabs/TeacherAttendance/TeacherAttendance'),
+);
+const TeacherAssignments = lazy(
+	() => import('../Sidebar/Tabs/TeacherTabs/Assignments/Assignments'),
+);
+const StudentAssignments = lazy(
+	() =>
+		import('../Sidebar/Tabs/StudentTabs/StudentAssignments/StudentAssignments'),
+);
+const Gradebook = lazy(
+	() => import('../Sidebar/Tabs/TeacherTabs/Gradebook/Gradebook'),
+);
+const StudentGradebook = lazy(
+	() => import('../Sidebar/Tabs/StudentTabs/Gradebook/StudentGradebook'),
+);
+const AcademicCalender = lazy(
+	() => import('../Sidebar/Tabs/StudentTabs/AcademicCalender/AcademicCalender'),
+);
+const TeacherCalender = lazy(
+	() => import('../Sidebar/Tabs/TeacherTabs/TeacherCalender/TeacherCalender'),
+);
+const UserManagement = lazy(
+	() => import('../Sidebar/Tabs/AdminTabs/UserManagement/UserManagement'),
+);
+const AdminReports = lazy(
+	() => import('../Sidebar/Tabs/AdminTabs/Reports/AdminReports'),
+);
+const AdminRiskOverview = lazy(
+	() => import('../Sidebar/Tabs/AdminTabs/RiskOverview/AdminRiskOverview'),
+);
 const ReportCenter = lazy(() => import('../Sidebar/Tabs/Shared/ReportCenter'));
-const CommunicationCenter = lazy(() => import('../Sidebar/Tabs/Shared/CommunicationCenter'));
-const AdminAnnouncements = lazy(() => import('../Sidebar/Tabs/AdminTabs/Announcements/AdminAnnouncements'));
-const AdminNotificationsCenter = lazy(() => import('../Sidebar/Tabs/Shared/AdminNotificationsCenter'));
-const ParentProfileCenter = lazy(() => import('../Sidebar/Tabs/ParentTabs/ParentProfileCenter'));
+/* const CommunicationCenter = lazy(() => import('../Sidebar/Tabs/Shared/CommunicationCenter'));
+ */ const CommunicationCenter = lazy(
+	() => import('../Sidebar/Tabs/Shared/CommunicationCenter/Index'),
+);
+const AdminAnnouncements = lazy(
+	() => import('../Sidebar/Tabs/AdminTabs/Announcements/AdminAnnouncements'),
+);
+const AdminNotificationsCenter = lazy(
+	() => import('../Sidebar/Tabs/Shared/AdminNotificationsCenter'),
+);
+const ParentProfileCenter = lazy(
+	() => import('../Sidebar/Tabs/ParentTabs/ParentProfileCenter'),
+);
 
 function TabLoadingFallback() {
 	return (
@@ -40,7 +87,13 @@ function TabLoadingFallback() {
 const ROLE_TAB_CONFIG = {
 	admin: {
 		defaultTab: 'admin-user-management',
-		allowed: new Set(['admin-user-management', 'admin-risk-overview', 'admin-announcements', 'admin-reports', 'profile']),
+		allowed: new Set([
+			'admin-user-management',
+			'admin-risk-overview',
+			'admin-announcements',
+			'admin-reports',
+			'profile',
+		]),
 	},
 	student: {
 		defaultTab: 'enrolled-classes',
@@ -105,7 +158,9 @@ export default function Dashboard() {
 
 	const activeTab = useMemo(() => {
 		if (!roleConfig) return null;
-		const requested = String(tab || '').trim().toLowerCase();
+		const requested = String(tab || '')
+			.trim()
+			.toLowerCase();
 		if (roleConfig.allowed.has(requested)) {
 			return requested;
 		}
@@ -114,14 +169,19 @@ export default function Dashboard() {
 
 	useEffect(() => {
 		if (!roleConfig) return;
-		const requested = String(tab || '').trim().toLowerCase();
+		const requested = String(tab || '')
+			.trim()
+			.toLowerCase();
 		if (!requested || !roleConfig.allowed.has(requested)) {
 			navigate(`/dashboard/${roleConfig.defaultTab}`, { replace: true });
 		}
 	}, [navigate, roleConfig, tab]);
 
 	useEffect(() => {
-		const supportsPopupRole = user?.role === 'student' || user?.role === 'teacher' || user?.role === 'parent';
+		const supportsPopupRole =
+			user?.role === 'student' ||
+			user?.role === 'teacher' ||
+			user?.role === 'parent';
 		if (!supportsPopupRole || !user?.id) return;
 
 		const sessionKey = `admin-announcement-popup:${user.id}`;
@@ -160,7 +220,9 @@ export default function Dashboard() {
 
 	const setActiveTab = (nextTab) => {
 		if (!roleConfig) return;
-		const normalized = String(nextTab || '').trim().toLowerCase();
+		const normalized = String(nextTab || '')
+			.trim()
+			.toLowerCase();
 		if (!roleConfig.allowed.has(normalized)) {
 			navigate(`/dashboard/${roleConfig.defaultTab}`);
 			return;
@@ -332,7 +394,12 @@ export default function Dashboard() {
 		setPopupState((previous) => ({ ...previous, markingAll: true }));
 		try {
 			await markAllAdminNotificationsRead();
-			setPopupState({ isOpen: false, items: [], unreadCount: 0, markingAll: false });
+			setPopupState({
+				isOpen: false,
+				items: [],
+				unreadCount: 0,
+				markingAll: false,
+			});
 		} catch {
 			setPopupState((previous) => ({ ...previous, markingAll: false }));
 		}
@@ -357,16 +424,26 @@ export default function Dashboard() {
 			{popupState.isOpen && (
 				<div className='overlay-fade fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'>
 					<div className='fade-scale-in w-full max-w-xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-2xl'>
-						<h2 className='text-xl font-semibold text-[var(--color-text-primary)]'>Unread announcements</h2>
+						<h2 className='text-xl font-semibold text-[var(--color-text-primary)]'>
+							Unread announcements
+						</h2>
 						<p className='mt-1 text-sm text-[var(--color-text-muted)]'>
-							You have {popupState.unreadCount} unread admin announcement{popupState.unreadCount > 1 ? 's' : ''}.
+							You have {popupState.unreadCount} unread admin announcement
+							{popupState.unreadCount > 1 ? 's' : ''}.
 						</p>
 
 						<div className='mt-4 max-h-72 space-y-3 overflow-auto pr-1'>
 							{popupState.items.map((item) => (
-								<article key={item.id} className='rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-3'>
-									<h3 className='text-sm font-semibold text-[var(--color-text-primary)]'>{item.title}</h3>
-									<p className='mt-1 line-clamp-3 whitespace-pre-wrap text-sm text-[var(--color-text-secondary)]'>{item.content}</p>
+								<article
+									key={item.id}
+									className='rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-3'
+								>
+									<h3 className='text-sm font-semibold text-[var(--color-text-primary)]'>
+										{item.title}
+									</h3>
+									<p className='mt-1 line-clamp-3 whitespace-pre-wrap text-sm text-[var(--color-text-secondary)]'>
+										{item.content}
+									</p>
 								</article>
 							))}
 						</div>
@@ -374,7 +451,9 @@ export default function Dashboard() {
 						<div className='mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end'>
 							<button
 								type='button'
-								onClick={() => setPopupState((previous) => ({ ...previous, isOpen: false }))}
+								onClick={() =>
+									setPopupState((previous) => ({ ...previous, isOpen: false }))
+								}
 								className='rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/40'
 							>
 								View later
