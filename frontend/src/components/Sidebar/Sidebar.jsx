@@ -19,7 +19,7 @@ import {
 	Megaphone,
 	X,
 	Users,
-  Moon,
+	Moon,
 } from 'lucide-react';
 import Toast from '../Toast';
 import ConfirmModal from '../ConfirmModal';
@@ -168,107 +168,144 @@ function NavItem({ item, active, collapsed, onClick, onMobileClose }) {
 }
 
 function SidebarBody({
-  collapsed,
-  isMobile,
-  activeTab,
-  setActiveTab,
-  navItems,
-  user,
-  theme,
-  toggle,
-  onClose,
-  onLogout,
-  showCloseX = false,
+	collapsed,
+	isMobile,
+	activeTab,
+	setActiveTab,
+	navItems,
+	user,
+	theme,
+	toggle,
+	onClose,
+	onLogout,
+	showCloseX = false,
 }) {
-  const isCollapsed = collapsed && !isMobile;
+	const isCollapsed = collapsed && !isMobile;
 
-  return (
-    <aside className="flex flex-col h-full bg-[var(--color-surface)] border-r border-[var(--color-border)]">
-      {/* Header (unchanged) */}
-      <div className={`flex items-center border-b border-[var(--color-border)] h-16 shrink-0 px-3 gap-2 transition-all duration-300`}>
-        <div className="flex items-center gap-2.5 flex-1 min-w-0">
-          <img
-            src={logo}
-            alt="Mizuka Portal logo"
-            className={`shrink-0 object-contain transition-all duration-300 ${isCollapsed ? 'h-9 w-9' : 'h-10 w-10'}`}
-          />
-          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'}`}>
-            <p className="text-sm font-semibold text-[var(--color-text-primary)] whitespace-nowrap leading-tight">Mizuka Portal</p>
-            <p className="text-[10px] text-[var(--color-text-muted)] capitalize whitespace-nowrap leading-tight">{user?.role} dashboard</p>
-          </div>
-        </div>
-        {(isMobile || showCloseX) ? (
-          <button onClick={onClose} aria-label="Close navigation" className="p-1.5 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 transition-colors duration-150 shrink-0 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]">
-            <X size={18} />
-          </button>
-        ) : (
-          !collapsed && (
-            <button onClick={() => onClose()} aria-label="Collapse sidebar" className="p-1.5 rounded-lg relative z-10 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 transition-all duration-150 shrink-0 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]">
-              <ChevronLeft size={18} />
-            </button>
-          )
-        )}
-      </div>
+	return (
+		<aside className='flex flex-col h-full bg-[var(--color-surface)] border-r border-[var(--color-border)]'>
+			{/* Header (unchanged) */}
+			<div
+				className={`flex items-center border-b border-[var(--color-border)] h-16 shrink-0 px-3 gap-2 transition-all duration-300`}
+			>
+				<div className='flex items-center gap-2.5 flex-1 min-w-0'>
+					<img
+						src={logo}
+						alt='Mizuka Portal logo'
+						className={`shrink-0 object-contain transition-all duration-300 ${isCollapsed ? 'h-9 w-9' : 'h-10 w-10'}`}
+					/>
+					<div
+						className={`overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'}`}
+					>
+						<p className='text-sm font-semibold text-[var(--color-text-primary)] whitespace-nowrap leading-tight'>
+							Mizuka Portal
+						</p>
+						<p className='text-[10px] text-[var(--color-text-muted)] capitalize whitespace-nowrap leading-tight'>
+							{user?.role} dashboard
+						</p>
+					</div>
+				</div>
+				{isMobile || showCloseX ? (
+					<button
+						onClick={onClose}
+						aria-label='Close navigation'
+						className='p-1.5 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 transition-colors duration-150 shrink-0 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]'
+					>
+						<X size={18} />
+					</button>
+				) : (
+					!collapsed && (
+						<button
+							onClick={() => onClose()}
+							aria-label='Collapse sidebar'
+							className='p-1.5 rounded-lg relative z-10 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 transition-all duration-150 shrink-0 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]'
+						>
+							<ChevronLeft size={18} />
+						</button>
+					)
+				)}
+			</div>
 
-      {/* Menu label (unchanged) */}
-      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? 'max-h-0 opacity-0 pt-0 px-0' : 'max-h-10 opacity-100 pt-4 px-4 pb-1'}`}>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">Menu</p>
-      </div>
+			{/* Menu label (unchanged) */}
+			<div
+				className={`overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? 'max-h-0 opacity-0 pt-0 px-0' : 'max-h-10 opacity-100 pt-4 px-4 pb-1'}`}
+			>
+				<p className='text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]'>
+					Menu
+				</p>
+			</div>
 
-      {/* Navigation (unchanged) */}
-      <nav className="flex-1 py-2 overflow-y-auto overflow-x-hidden">
-        {navItems.map((item) => (
-          <NavItem key={item.id} item={item} active={activeTab === item.id} collapsed={isCollapsed} onClick={setActiveTab} onMobileClose={isMobile ? onClose : undefined} />
-        ))}
-      </nav>
+			{/* Navigation (unchanged) */}
+			<nav className='flex-1 py-2 overflow-y-auto overflow-x-hidden'>
+				{navItems.map((item) => (
+					<NavItem
+						key={item.id}
+						item={item}
+						active={activeTab === item.id}
+						collapsed={isCollapsed}
+						onClick={setActiveTab}
+						onMobileClose={isMobile ? onClose : undefined}
+					/>
+				))}
+			</nav>
 
-      {/* ========== IMPROVED FOOTER ========== */}
-      <div className="border-t border-[var(--color-border)] bg-[var(--color-surface)]/50 backdrop-blur-sm p-4 shrink-0 space-y-3 shadow-[0_-4px_6px_-2px_rgba(0,0,0,0.03)]">
-        {/* Profile button - enhanced */}
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('profile');
-            isMobile && onClose();
-          }}
-          className={`
+			{/* ========== IMPROVED FOOTER ========== */}
+			<div className='border-t border-[var(--color-border)] bg-[var(--color-surface)]/50 backdrop-blur-sm p-4 shrink-0 space-y-3 shadow-[0_-4px_6px_-2px_rgba(0,0,0,0.03)]'>
+				{/* Profile button - enhanced */}
+				<button
+					type='button'
+					onClick={() => {
+						setActiveTab('profile');
+						isMobile && onClose();
+					}}
+					className={`
             w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
             focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2
-            ${activeTab === 'profile'
-              ? 'bg-gradient-to-r from-[var(--color-primary)]/15 to-transparent ring-1 ring-[var(--color-primary)]/30 shadow-sm'
-              : 'hover:bg-[var(--color-border)]/50 hover:shadow-md hover:scale-[1.01]'
-            }
+            ${
+							activeTab === 'profile'
+								? 'bg-gradient-to-r from-[var(--color-primary)]/15 to-transparent ring-1 ring-[var(--color-primary)]/30 shadow-sm'
+								: 'hover:bg-[var(--color-border)]/50 hover:shadow-md hover:scale-[1.01]'
+						}
             ${isCollapsed ? 'justify-center' : ''}
           `}
-        >
-          {user?.profile ? (
-            <img
-              src={user.profile}
-              alt=""
-              className="w-9 h-9 rounded-full object-cover ring-2 ring-[var(--color-primary)]/40 shrink-0 transition-all duration-200 group-hover:ring-[var(--color-primary)]"
-            />
-          ) : (
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-hover)] flex items-center justify-center text-white text-base font-bold shadow-md shrink-0">
-              {user?.username?.charAt(0).toUpperCase()}
-            </div>
-          )}
-          <div className={`overflow-hidden transition-all duration-300 ease-in-out text-left ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'}`}>
-            <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate leading-tight whitespace-nowrap">
-              {user?.username}
-            </p>
-            <p className="text-[11px] font-medium text-[var(--color-primary)] capitalize truncate leading-tight whitespace-nowrap">
-              {user?.role}
-            </p>
-          </div>
-        </button>
+				>
+					{user?.profile ? (
+						<img
+							src={user.profile}
+							alt=''
+							className='w-9 h-9 rounded-full object-cover ring-2 ring-[var(--color-primary)]/40 shrink-0 transition-all duration-200 group-hover:ring-[var(--color-primary)]'
+						/>
+					) : (
+						<div className='w-9 h-9 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-hover)] flex items-center justify-center text-white text-base font-bold shadow-md shrink-0'>
+							{user?.username?.charAt(0).toUpperCase()}
+						</div>
+					)}
+					<div
+						className={`overflow-hidden transition-all duration-300 ease-in-out text-left ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[180px] opacity-100'}`}
+					>
+						<p className='text-sm font-semibold text-[var(--color-text-primary)] truncate leading-tight whitespace-nowrap'>
+							{user?.username}
+						</p>
+						<p className='text-[11px] font-medium text-[var(--color-primary)] capitalize truncate leading-tight whitespace-nowrap'>
+							{user?.role}
+						</p>
+						<p className='text-[10px] text-[var(--color-text-muted)] truncate leading-tight whitespace-nowrap mt-0.5'>
+							{user?.email}
+						</p>
+					</div>
+				</button>
 
-        {/* Action buttons - redesigned as pill-shaped icons with labels */}
-        <div className={`flex gap-2 transition-all duration-300 ${isCollapsed ? 'flex-col items-center' : ''}`}>
-          <button
-            type="button"
-            onClick={toggle}
-            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            className={`
+				{/* Action buttons - redesigned as pill-shaped icons with labels */}
+				<div
+					className={`flex gap-2 transition-all duration-300 ${isCollapsed ? 'flex-col items-center' : ''}`}
+				>
+					<button
+						type='button'
+						onClick={toggle}
+						aria-label={
+							theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
+						}
+						className={`
               flex items-center justify-center gap-2 px-3 py-2 rounded-full
               bg-[var(--color-border)]/30 hover:bg-[var(--color-border)]/80
               text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]
@@ -276,20 +313,22 @@ function SidebarBody({
               focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
               ${isCollapsed ? 'w-full' : 'flex-1'}
             `}
-          >
-            <span className="transition-transform duration-300">
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-            </span>
-            <span className={`text-xs font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[60px] opacity-100'}`}>
-              {theme === 'dark' ? 'Light' : 'Dark'}
-            </span>
-          </button>
+					>
+						<span className='transition-transform duration-300'>
+							{theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+						</span>
+						<span
+							className={`text-xs font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[60px] opacity-100'}`}
+						>
+							{theme === 'dark' ? 'Light' : 'Dark'}
+						</span>
+					</button>
 
-          <button
-            type="button"
-            onClick={onLogout}
-            aria-label="Log out"
-            className={`
+					<button
+						type='button'
+						onClick={onLogout}
+						aria-label='Log out'
+						className={`
               flex items-center justify-center gap-2 px-3 py-2 rounded-full
               bg-red-500/5 hover:bg-red-500/15
               text-red-500 hover:text-red-600
@@ -297,16 +336,18 @@ function SidebarBody({
               focus:outline-none focus:ring-2 focus:ring-red-500
               ${isCollapsed ? 'w-full' : 'flex-1'}
             `}
-          >
-            <LogOut size={16} />
-            <span className={`text-xs font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[60px] opacity-100'}`}>
-              Log out
-            </span>
-          </button>
-        </div>
-      </div>
-    </aside>
-  );
+					>
+						<LogOut size={16} />
+						<span
+							className={`text-xs font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[60px] opacity-100'}`}
+						>
+							Log out
+						</span>
+					</button>
+				</div>
+			</div>
+		</aside>
+	);
 }
 
 export default function Sidebar({
