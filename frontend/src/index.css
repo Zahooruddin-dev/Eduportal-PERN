@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* =============================================
    FONTS — Modern, expressive, non-academic
@@ -26,173 +26,183 @@
 
 /* ----- Light Mode (Default) ----- */
 :root {
-  /* ✦✦✦ PRIMARY BLUE SYSTEM ✦✦✦
+	/* ✦✦✦ PRIMARY BLUE SYSTEM ✦✦✦
      Fresh, trustworthy, and energetic — not the typical navy or teal. */
-  --color-primary: #3395bc;           /* Bold azure blue */
-  --color-primary-hover: #2a7ca0;     /* Slightly deeper for hover */
-  --color-primary-soft: #e6f4f9;      /* Soft blue wash for backgrounds */
-  --color-primary-muted: #f0f8fc;     /* Very light mist */
-  --color-primary-subtle: #7eb9d2;    /* Muted blue for subtle accents */
+	--color-primary: #3395bc; /* Bold azure blue */
+	--color-primary-hover: #2a7ca0; /* Slightly deeper for hover */
+	--color-primary-soft: #e6f4f9; /* Soft blue wash for backgrounds */
+	--color-primary-muted: #f0f8fc; /* Very light mist */
+	--color-primary-subtle: #7eb9d2; /* Muted blue for subtle accents */
 
-  /* 🌫️ NEUTRAL FOUNDATION — Clean, modern grays */
-  --color-bg: #ffffff;                /* Pure white background */
-  --color-surface: #f9fafb;           /* Off-white for cards */
-  --color-surface-raised: #ffffff;    /* Pure white for elevated elements */
-  --color-input-bg: #ffffff;          /* White inputs */
-  --color-border: #e5e7eb;            /* Light gray border */
-  --color-border-light: #f3f4f6;      /* Faintest separator */
-  --color-border-hover: #d1d5db;      /* Slightly darker on hover */
+	/* 🌫️ NEUTRAL FOUNDATION — Clean, modern grays */
+	--color-bg: #ffffff; /* Pure white background */
+	--color-surface: #f9fafb; /* Off-white for cards */
+	--color-surface-raised: #ffffff; /* Pure white for elevated elements */
+	--color-input-bg: #ffffff; /* White inputs */
+	--color-border: #e5e7eb; /* Light gray border */
+	--color-border-light: #f3f4f6; /* Faintest separator */
+	--color-border-hover: #d1d5db; /* Slightly darker on hover */
 
-  /* 📝 TYPOGRAPHY COLORS — High contrast, warm grays */
-  --color-text-primary: #11181c;      /* Almost black, slightly cool */
-  --color-text-secondary: #4b5563;    /* Accessible gray */
-  --color-text-muted: #6b7280;        /* Softer but readable */
-  --color-text-placeholder: #9ca3af;
-  --color-text-inverse: #ffffff;
+	/* 📝 TYPOGRAPHY COLORS — High contrast, warm grays */
+	--color-text-primary: #11181c; /* Almost black, slightly cool */
+	--color-text-secondary: #4b5563; /* Accessible gray */
+	--color-text-muted: #6b7280; /* Softer but readable */
+	--color-text-placeholder: #9ca3af;
+	--color-text-inverse: #ffffff;
 
-  /* 🟢 SEMANTIC STATES — Based on user's palette */
-  --color-success: #22946e;           /* Deep green */
-  --color-success-hover: #1a7557;
-  --color-success-soft: #e0f2ea;
+	/* 🟢 SEMANTIC STATES — Based on user's palette */
+	--color-success: #22946e; /* Deep green */
+	--color-success-hover: #1a7557;
+	--color-success-soft: #e0f2ea;
 
-  --color-danger: #9c2121;            /* Deep red */
-  --color-danger-hover: #7a1a1a;
-  --color-danger-soft: #fae6e6;
+	--color-danger: #9c2121; /* Deep red */
+	--color-danger-hover: #7a1a1a;
+	--color-danger-soft: #fae6e6;
 
-  --color-warning: #a87a2a;           /* Warm amber */
-  --color-warning-hover: #8a631f;
-  --color-warning-soft: #fef2e0;
+	--color-warning: #a87a2a; /* Warm amber */
+	--color-warning-hover: #8a631f;
+	--color-warning-soft: #fef2e0;
 
-  --color-info: #21498a;              /* Deep indigo-blue */
-  --color-info-hover: #1a3a6e;
-  --color-info-soft: #e6edf7;
+	--color-info: #21498a; /* Deep indigo-blue */
+	--color-info-hover: #1a3a6e;
+	--color-info-soft: #e6edf7;
 
-  /* 🏛️ SECONDARY ACCENT — Soft violet for variety */
-  --color-secondary: #8b5cf6;         /* Vivid purple */
-  --color-secondary-hover: #7c3aed;
-  --color-secondary-soft: #ede9fe;
+	/* 🏛️ SECONDARY ACCENT — Soft violet for variety */
+	--color-secondary: #8b5cf6; /* Vivid purple */
+	--color-secondary-hover: #7c3aed;
+	--color-secondary-soft: #ede9fe;
 
-  /* 📦 ELEVATION & DEPTH — Soft shadows */
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.03);
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -2px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
-  --shadow-lg: 0 12px 16px -4px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.03);
-  --shadow-xl: 0 20px 24px -4px rgb(0 0 0 / 0.08), 0 8px 8px -4px rgb(0 0 0 / 0.02);
-  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--color-primary) 35%, transparent);
-  --shadow-focus-error: 0 0 0 3px color-mix(in srgb, var(--color-danger) 30%, transparent);
+	/* 📦 ELEVATION & DEPTH — Soft shadows */
+	--shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+	--shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+	--shadow-md:
+		0 4px 6px -2px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
+	--shadow-lg:
+		0 12px 16px -4px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.03);
+	--shadow-xl:
+		0 20px 24px -4px rgb(0 0 0 / 0.08), 0 8px 8px -4px rgb(0 0 0 / 0.02);
+	--shadow-focus: 0 0 0 3px
+		color-mix(in srgb, var(--color-primary) 35%, transparent);
+	--shadow-focus-error: 0 0 0 3px
+		color-mix(in srgb, var(--color-danger) 30%, transparent);
 
-  /* 🔘 BORDER RADIUS */
-  --radius-xs: 0.125rem;
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
+	/* 🔘 BORDER RADIUS */
+	--radius-xs: 0.125rem;
+	--radius-sm: 0.25rem;
+	--radius-md: 0.5rem;
+	--radius-lg: 0.75rem;
+	--radius-xl: 1rem;
+	--radius-2xl: 1.5rem;
 
-  /* 🔤 TYPOGRAPHY — Modern, non-academic fonts */
-  --font-display: "Bricolage Grotesque", system-ui, -apple-system, sans-serif;
-  --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "Fira Code", "Fira Mono", "Cascadia Code", ui-monospace, monospace;
+	/* 🔤 TYPOGRAPHY — Modern, non-academic fonts */
+	--font-display: 'Bricolage Grotesque', system-ui, -apple-system, sans-serif;
+	--font-body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--font-mono:
+		'Fira Code', 'Fira Mono', 'Cascadia Code', ui-monospace, monospace;
 
-  /* Font size scale */
-  --text-xs:   0.75rem;
-  --text-sm:   0.875rem;
-  --text-base: 1rem;
-  --text-lg:   1.125rem;
-  --text-xl:   1.25rem;
-  --text-2xl:  1.5rem;
-  --text-3xl:  1.875rem;
-  --text-4xl:  2.25rem;
-  --text-5xl:  3rem;
+	/* Font size scale */
+	--text-xs: 0.75rem;
+	--text-sm: 0.875rem;
+	--text-base: 1rem;
+	--text-lg: 1.125rem;
+	--text-xl: 1.25rem;
+	--text-2xl: 1.5rem;
+	--text-3xl: 1.875rem;
+	--text-4xl: 2.25rem;
+	--text-5xl: 3rem;
 
-  /* Font weights */
-  --weight-light:   300;
-  --weight-regular: 400;
-  --weight-medium:  500;
-  --weight-semibold: 600;
-  --weight-bold:    700;
+	/* Font weights */
+	--weight-light: 300;
+	--weight-regular: 400;
+	--weight-medium: 500;
+	--weight-semibold: 600;
+	--weight-bold: 700;
 
-  /* Line heights */
-  --leading-tight:   1.2;
-  --leading-snug:    1.35;
-  --leading-normal:  1.5;
-  --leading-relaxed: 1.65;
-  --leading-loose:   1.8;
+	/* Line heights */
+	--leading-tight: 1.2;
+	--leading-snug: 1.35;
+	--leading-normal: 1.5;
+	--leading-relaxed: 1.65;
+	--leading-loose: 1.8;
 
-  /* Letter spacing */
-  --tracking-tight:  -0.02em;
-  --tracking-normal:  0em;
-  --tracking-wide:    0.03em;
-  --tracking-wider:   0.07em;
+	/* Letter spacing */
+	--tracking-tight: -0.02em;
+	--tracking-normal: 0em;
+	--tracking-wide: 0.03em;
+	--tracking-wider: 0.07em;
 
-  /* ⏱️ TRANSITIONS */
-  --transition-fast: 120ms;
-  --transition-base: 200ms;
-  --transition-slow: 300ms;
-  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
-  --ease-out: cubic-bezier(0, 0, 0, 1);
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+	/* ⏱️ TRANSITIONS */
+	--transition-fast: 120ms;
+	--transition-base: 200ms;
+	--transition-slow: 300ms;
+	--ease-standard: cubic-bezier(0.2, 0, 0, 1);
+	--ease-out: cubic-bezier(0, 0, 0, 1);
+	--ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ----- Dark Mode: "Deep Slate" with blue undertones ----- */
 .dark {
-  /* ✦✦✦ PRIMARY — Brighter blue for dark backgrounds */
-  --color-primary: #6caccb;           /* Lively medium blue (clr-primary-a20) */
-  --color-primary-hover: #83b7d2;     /* Softer hover */
-  --color-primary-soft: #1e3a4a;      /* Deep blue surface for badges */
-  --color-primary-muted: #142d3a80;   /* Semi-transparent wash */
-  --color-primary-subtle: #98c3da;    /* Muted light blue */
+	/* ✦✦✦ PRIMARY — Brighter blue for dark backgrounds */
+	--color-primary: #6caccb; /* Lively medium blue (clr-primary-a20) */
+	--color-primary-hover: #83b7d2; /* Softer hover */
+	--color-primary-soft: #1e3a4a; /* Deep blue surface for badges */
+	--color-primary-muted: #142d3a80; /* Semi-transparent wash */
+	--color-primary-subtle: #98c3da; /* Muted light blue */
 
-  /* 🌑 DARK SURFACES — Based on user's surface palette */
-  --color-bg: #121212;                /* Deepest base (clr-surface-a0) */
-  --color-surface: #282828;           /* Cards (clr-surface-a10) */
-  --color-surface-raised: #3f3f3f;    /* Modals, popovers (clr-surface-a20) */
-  --color-input-bg: #282828;          /* Form fields match surface */
-  --color-border: #3f3f3f;            /* Visible borders (clr-surface-a20) */
-  --color-border-light: #2a2a2a;      /* Faint structural lines */
-  --color-border-hover: #575757;      /* Interactive hover (clr-surface-a30) */
+	/* 🌑 DARK SURFACES — Based on user's surface palette */
+	--color-bg: #121212; /* Deepest base (clr-surface-a0) */
+	--color-surface: #282828; /* Cards (clr-surface-a10) */
+	--color-surface-raised: #3f3f3f; /* Modals, popovers (clr-surface-a20) */
+	--color-input-bg: #282828; /* Form fields match surface */
+	--color-border: #3f3f3f; /* Visible borders (clr-surface-a20) */
+	--color-border-light: #2a2a2a; /* Faint structural lines */
+	--color-border-hover: #575757; /* Interactive hover (clr-surface-a30) */
 
-  /* 📝 TYPOGRAPHY — Cool white on dark */
-  --color-text-primary: #eceff4;      /* Off-white, comfortable */
-  --color-text-secondary: #cbd5e1;    /* Muted blue-gray */
-  --color-text-muted: #94a3b8;        /* Accessible gray */
-  --color-text-placeholder: #64748b;
-  --color-text-inverse: #121212;      /* Used on light buttons */
+	/* 📝 TYPOGRAPHY — Cool white on dark */
+	--color-text-primary: #eceff4; /* Off-white, comfortable */
+	--color-text-secondary: #cbd5e1; /* Muted blue-gray */
+	--color-text-muted: #94a3b8; /* Accessible gray */
+	--color-text-placeholder: #64748b;
+	--color-text-inverse: #121212; /* Used on light buttons */
 
-  /* 🟢 SEMANTIC — Brighter variants for dark background */
-  --color-success: #47d5a6;           /* Vibrant mint-green (clr-success-a10) */
-  --color-success-hover: #9ae8ce;     /* Very light hover */
-  --color-success-soft: #1a3a2e;      /* Deep green surface */
+	/* 🟢 SEMANTIC — Brighter variants for dark background */
+	--color-success: #47d5a6; /* Vibrant mint-green (clr-success-a10) */
+	--color-success-hover: #9ae8ce; /* Very light hover */
+	--color-success-soft: #1a3a2e; /* Deep green surface */
 
-  --color-danger: #d94a4a;            /* Coral-red (clr-danger-a10) */
-  --color-danger-hover: #eb9e9e;      /* Light red-pink */
-  --color-danger-soft: #3d1515;       /* Deep red surface */
+	--color-danger: #d94a4a; /* Coral-red (clr-danger-a10) */
+	--color-danger-hover: #eb9e9e; /* Light red-pink */
+	--color-danger-soft: #3d1515; /* Deep red surface */
 
-  --color-warning: #d7ac61;           /* Golden amber (clr-warning-a10) */
-  --color-warning-hover: #ecd7b2;     /* Pale gold */
-  --color-warning-soft: #332a14;      /* Deep amber surface */
+	--color-warning: #d7ac61; /* Golden amber (clr-warning-a10) */
+	--color-warning-hover: #ecd7b2; /* Pale gold */
+	--color-warning-soft: #332a14; /* Deep amber surface */
 
-  --color-info: #4077d1;              /* Bright sky blue (clr-info-a10) */
-  --color-info-hover: #92b2e5;        /* Light blue */
-  --color-info-soft: #0a1a35;         /* Deep navy surface */
+	--color-info: #4077d1; /* Bright sky blue (clr-info-a10) */
+	--color-info-hover: #92b2e5; /* Light blue */
+	--color-info-soft: #0a1a35; /* Deep navy surface */
 
-  /* 🏛️ SECONDARY — Periwinkle purple for dark mode */
-  --color-secondary: #a78bfa;         /* Soft purple */
-  --color-secondary-hover: #c4b5fd;   /* Lighter hover */
-  --color-secondary-soft: #2d1b4e;    /* Deep purple surface */
+	/* 🏛️ SECONDARY — Periwinkle purple for dark mode */
+	--color-secondary: #a78bfa; /* Soft purple */
+	--color-secondary-hover: #c4b5fd; /* Lighter hover */
+	--color-secondary-soft: #2d1b4e; /* Deep purple surface */
 
-  /* 📦 ELEVATION — Darker, moody shadows */
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.5);
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.4);
-  --shadow-md: 0 4px 6px -2px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-  --shadow-lg: 0 12px 16px -4px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.4);
-  --shadow-xl: 0 20px 24px -4px rgb(0 0 0 / 0.7), 0 8px 8px -4px rgb(0 0 0 / 0.5);
+	/* 📦 ELEVATION — Darker, moody shadows */
+	--shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+	--shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+	--shadow-md: 0 4px 6px -2px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+	--shadow-lg:
+		0 12px 16px -4px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+	--shadow-xl:
+		0 20px 24px -4px rgb(0 0 0 / 0.7), 0 8px 8px -4px rgb(0 0 0 / 0.5);
 
-  /* Focus rings glow on dark */
-  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--color-primary) 45%, transparent),
-                  0 0 12px 1px color-mix(in srgb, var(--color-primary) 20%, transparent);
-  --shadow-focus-error: 0 0 0 3px color-mix(in srgb, var(--color-danger) 40%, transparent),
-                        0 0 10px 1px color-mix(in srgb, var(--color-danger) 15%, transparent);
+	/* Focus rings glow on dark */
+	--shadow-focus:
+		0 0 0 3px color-mix(in srgb, var(--color-primary) 45%, transparent),
+		0 0 12px 1px color-mix(in srgb, var(--color-primary) 20%, transparent);
+	--shadow-focus-error:
+		0 0 0 3px color-mix(in srgb, var(--color-danger) 40%, transparent),
+		0 0 10px 1px color-mix(in srgb, var(--color-danger) 15%, transparent);
 }
 
 /* =============================================
@@ -201,203 +211,226 @@
 
 /* Smooth theme transitions */
 * {
-  transition: background-color var(--transition-base) var(--ease-standard),
-              border-color var(--transition-base) var(--ease-standard),
-              color var(--transition-fast) var(--ease-out);
+	transition:
+		background-color var(--transition-base) var(--ease-standard),
+		border-color var(--transition-base) var(--ease-standard),
+		color var(--transition-fast) var(--ease-out);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
 }
 
 html,
 body,
 #root {
-  min-height: 100%;
-  scroll-behavior: smooth;
+	min-height: 100%;
+	scroll-behavior: smooth;
 }
 
 body {
-  margin: 0;
-  background: var(--color-bg);
-  color: var(--color-text-primary);
-  font-family: var(--font-body);
-  font-size: var(--text-base);
-  font-weight: var(--weight-regular);
-  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  line-height: var(--leading-normal);
+	margin: 0;
+	background: var(--color-bg);
+	color: var(--color-text-primary);
+	font-family: var(--font-body);
+	font-size: var(--text-base);
+	font-weight: var(--weight-regular);
+	font-feature-settings:
+		'kern' 1,
+		'liga' 1,
+		'calt' 1;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	line-height: var(--leading-normal);
 }
 
 /* =============================================
    TYPOGRAPHY SYSTEM — Fresh & editorial
    ============================================= */
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-display);
-  font-weight: var(--weight-semibold);
-  line-height: var(--leading-tight);
-  color: var(--color-text-primary);
-  margin-top: 0;
-  letter-spacing: var(--tracking-tight);
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-family: var(--font-display);
+	font-weight: var(--weight-semibold);
+	line-height: var(--leading-tight);
+	color: var(--color-text-primary);
+	margin-top: 0;
+	letter-spacing: var(--tracking-tight);
 }
 
 h1 {
-  font-size: var(--text-4xl);
-  font-weight: var(--weight-bold);
+	font-size: var(--text-4xl);
+	font-weight: var(--weight-bold);
 }
 
 h2 {
-  font-size: var(--text-3xl);
+	font-size: var(--text-3xl);
 }
 
 h3 {
-  font-size: var(--text-2xl);
+	font-size: var(--text-2xl);
 }
 
 h4 {
-  font-size: var(--text-xl);
-  font-weight: var(--weight-medium);
+	font-size: var(--text-xl);
+	font-weight: var(--weight-medium);
 }
 
-h5, h6 {
-  font-size: var(--text-lg);
-  font-weight: var(--weight-medium);
+h5,
+h6 {
+	font-size: var(--text-lg);
+	font-weight: var(--weight-medium);
 }
 
 p {
-  font-family: var(--font-body);
-  line-height: var(--leading-relaxed);
-  margin-top: 0;
-  margin-bottom: 1em;
+	font-family: var(--font-body);
+	line-height: var(--leading-relaxed);
+	margin-top: 0;
+	margin-bottom: 1em;
 }
 
 .lead {
-  font-size: var(--text-lg);
-  line-height: var(--leading-relaxed);
-  color: var(--color-text-secondary);
-  font-weight: var(--weight-light);
+	font-size: var(--text-lg);
+	line-height: var(--leading-relaxed);
+	color: var(--color-text-secondary);
+	font-weight: var(--weight-light);
 }
 
 .eyebrow {
-  font-family: var(--font-body);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
-  color: var(--color-primary);
+	font-family: var(--font-body);
+	font-size: var(--text-xs);
+	font-weight: var(--weight-semibold);
+	letter-spacing: var(--tracking-wider);
+	text-transform: uppercase;
+	color: var(--color-primary);
 }
 
 .label-sm {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  color: var(--color-text-secondary);
-  line-height: var(--leading-tight);
+	font-size: var(--text-sm);
+	font-weight: var(--weight-medium);
+	color: var(--color-text-secondary);
+	line-height: var(--leading-tight);
 }
 
 /* Code & technical — Fira Code shines */
-code, kbd, samp, pre {
-  font-family: var(--font-mono);
-  font-size: 0.9em;
+code,
+kbd,
+samp,
+pre {
+	font-family: var(--font-mono);
+	font-size: 0.9em;
 }
 
 code {
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
-  padding: 0.15em 0.4em;
-  border-radius: var(--radius-sm);
+	background: var(--color-primary-soft);
+	color: var(--color-primary);
+	padding: 0.15em 0.4em;
+	border-radius: var(--radius-sm);
 }
 
 .dark code {
-  background: var(--color-primary-soft);
-  color: var(--color-primary-subtle);
+	background: var(--color-primary-soft);
+	color: var(--color-primary-subtle);
 }
 
 pre {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 1.25rem 1.5rem;
-  overflow-x: auto;
-  line-height: var(--leading-relaxed);
+	background: var(--color-surface);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	padding: 1.25rem 1.5rem;
+	overflow-x: auto;
+	line-height: var(--leading-relaxed);
 }
 
 pre code {
-  background: none;
-  padding: 0;
-  color: inherit;
+	background: none;
+	padding: 0;
+	color: inherit;
 }
 
 blockquote {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: var(--text-xl);
-  font-weight: var(--weight-light);
-  line-height: var(--leading-relaxed);
-  color: var(--color-text-secondary);
-  border-left: 3px solid var(--color-primary);
-  margin: 2rem 0;
-  padding: 0.5rem 0 0.5rem 1.5rem;
+	font-family: var(--font-display);
+	font-style: italic;
+	font-size: var(--text-xl);
+	font-weight: var(--weight-light);
+	line-height: var(--leading-relaxed);
+	color: var(--color-text-secondary);
+	border-left: 3px solid var(--color-primary);
+	margin: 2rem 0;
+	padding: 0.5rem 0 0.5rem 1.5rem;
 }
 
 /* Focus states */
 :focus-visible {
-  outline: none;
-  box-shadow: var(--shadow-focus);
-  border-radius: var(--radius-sm);
+	outline: none;
+	box-shadow: var(--shadow-focus);
+	border-radius: var(--radius-sm);
 }
 
 /* Selection */
 ::selection {
-  background-color: var(--color-primary-soft);
-  color: var(--color-text-primary);
+	background-color: var(--color-primary-soft);
+	color: var(--color-text-primary);
 }
 .dark ::selection {
-  background-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
-  color: var(--color-text-primary);
+	background-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+	color: var(--color-text-primary);
 }
 
 /* Links */
 a {
-  color: var(--color-primary);
-  text-decoration: none;
-  transition: color var(--transition-fast) var(--ease-out);
+	color: var(--color-primary);
+	text-decoration: none;
+	transition: color var(--transition-fast) var(--ease-out);
 }
 a:hover {
-  color: var(--color-primary-hover);
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
+	color: var(--color-primary-hover);
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
 }
 
 html {
-  scroll-padding-top: 2rem;
+	scroll-padding-top: 2rem;
 }
 
 /* =============================================
    ANIMATIONS (Preserved)
    ============================================= */
 @keyframes overlayFade {
-  from { opacity: 0; }
-  to { opacity: 1; }
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
 }
 
 @keyframes fadeScaleIn {
-  from { opacity: 0; transform: translateY(8px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+	from {
+		opacity: 0;
+		transform: translateY(8px) scale(0.98);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
 }
 
 .overlay-fade {
-  animation: overlayFade var(--transition-base) var(--ease-out) forwards;
+	animation: overlayFade var(--transition-base) var(--ease-out) forwards;
 }
 
 .fade-scale-in {
-  animation: fadeScaleIn var(--transition-base) var(--ease-in-out) forwards;
+	animation: fadeScaleIn var(--transition-base) var(--ease-in-out) forwards;
 }
