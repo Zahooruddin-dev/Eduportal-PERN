@@ -1,5 +1,5 @@
 import { Clock3, Inbox, Loader2 } from 'lucide-react';
-import { formatDateTime, formatMessagePreview } from '../utils';
+import { formatDateTime, formatMessagePreview }  from './utils/utilis';
 
 export function InboxPanel({ inbox, inboxLoading, selectedConversation, onSelect }) {
 	return (

@@ -1,6 +1,6 @@
 import { Loader2, MessageSquare, SendHorizontal, X } from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
-import { avatarInitial, toLabel } from '../utils';
+import { avatarInitial, toLabel }  from './utils/utilis';
 
 export function ConversationView({
 	selectedConversation,

@@ -1,87 +1,175 @@
-import { Clock3, Inbox, Loader2 } from 'lucide-react';
-import { formatDateTime, formatMessagePreview } from '../utils';
+import { useCallback, useState } from 'react';
+import { useAuth } from '../../../../context/AuthContext';
+import { useCommunication } from './hooks/useCommunication';
+import { InboxPanel } from './components/InboxPanel';
+import { DirectoryPanel } from './components/DirectoryPanel';
+import { ConversationView } from './components/ConversationView';
+import { TeacherProfileModal } from './components/TeacherProfileModal';
+import { MobileTabBar } from './components/MobileTabBar';
+import Toast from '../../../Toast';
 
-export function InboxPanel({ inbox, inboxLoading, selectedConversation, onSelect }) {
+export default function CommunicationCenter() {
+	const { user } = useAuth();
+	const [toast, setToast] = useState({ isOpen: false, type: 'info', message: '' });
+	const [mobileTab, setMobileTab] = useState('inbox');
+
+	const openToast = useCallback((type, message) => {
+		setToast({ isOpen: true, type, message });
+	}, []);
+
+	const comm = useCommunication({ user, openToast });
+
+	const handleInboxSelect = useCallback(async (item) => {
+		await comm.openConversationFromInbox(item);
+		setMobileTab('chat');
+	}, [comm]);
+
+	const handleContactSelect = useCallback(async (contact) => {
+		await comm.openConversationWithContact(contact);
+		setMobileTab('chat');
+	}, [comm]);
+
+	const handleMobileBack = useCallback(() => {
+		setMobileTab('inbox');
+	}, []);
+
 	return (
-		<div className='flex h-full flex-col'>
-			<div className='shrink-0 px-4 pt-4 pb-3 border-b border-[var(--color-border)]'>
-				<p className='text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]'>
-					Messages
-				</p>
-				<div className='mt-1 flex items-center justify-between'>
-					<h2 className='flex items-center gap-2 text-lg font-bold text-[var(--color-text-primary)]'>
-						<Inbox size={18} strokeWidth={2} />
-						Inbox
-					</h2>
+		<div className='min-h-screen bg-[var(--color-bg)]'>
+			<div className='mx-auto max-w-7xl px-0 pb-20 sm:px-4 sm:pb-20 lg:px-8 lg:pb-8 lg:pt-8'>
+
+				<div className='hidden lg:grid lg:h-[calc(100vh-4rem)] lg:grid-cols-3 lg:gap-5'>
+					<div className='flex flex-col gap-5 overflow-hidden'>
+						<div className='flex flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm' style={{ maxHeight: '45%' }}>
+							<InboxPanel
+								inbox={comm.inbox}
+								inboxLoading={comm.inboxLoading}
+								selectedConversation={comm.selectedConversation}
+								onSelect={comm.openConversationFromInbox}
+							/>
+						</div>
+						<div className='flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm'>
+							<DirectoryPanel
+								contacts={comm.contacts}
+								contactsLoading={comm.contactsLoading}
+								searchText={comm.searchText}
+								setSearchText={comm.setSearchText}
+								subjectText={comm.subjectText}
+								setSubjectText={comm.setSubjectText}
+								searchRole={comm.searchRole}
+								setSearchRole={comm.setSearchRole}
+								userRole={user?.role}
+								onSearch={comm.loadContacts}
+								onSelect={comm.openConversationWithContact}
+							/>
+						</div>
+					</div>
+
+					<div className='lg:col-span-2 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm'>
+						<ConversationView
+							selectedConversation={comm.selectedConversation}
+							messages={comm.messages}
+							messagesLoading={comm.messagesLoading}
+							draft={comm.draft}
+							setDraft={comm.setDraft}
+							replyTo={comm.replyTo}
+							setReplyTo={comm.setReplyTo}
+							editingMessageId={comm.editingMessageId}
+							setEditingMessageId={comm.setEditingMessageId}
+							editingText={comm.editingText}
+							setEditingText={comm.setEditingText}
+							sending={comm.sending}
+							user={user}
+							messageViewportRef={comm.messageViewportRef}
+							onScroll={comm.onMessagesScroll}
+							onSend={comm.handleSendMessage}
+							onEditSave={comm.handleEditMessage}
+							onDelete={comm.handleDeleteMessage}
+							onCopy={comm.handleCopyMessage}
+							onViewProfile={comm.openTeacherProfile}
+							showBackButton={false}
+						/>
+					</div>
+				</div>
+
+				<div className='lg:hidden'>
+					<div className={`${mobileTab === 'inbox' ? 'block' : 'hidden'} min-h-[calc(100vh-8rem)]`}>
+						<div className='h-full bg-[var(--color-surface)] border-b border-[var(--color-border)]'>
+							<InboxPanel
+								inbox={comm.inbox}
+								inboxLoading={comm.inboxLoading}
+								selectedConversation={comm.selectedConversation}
+								onSelect={handleInboxSelect}
+							/>
+						</div>
+					</div>
+
+					<div className={`${mobileTab === 'directory' ? 'block' : 'hidden'} min-h-[calc(100vh-8rem)]`}>
+						<div className='h-full bg-[var(--color-surface)] border-b border-[var(--color-border)]'>
+							<DirectoryPanel
+								contacts={comm.contacts}
+								contactsLoading={comm.contactsLoading}
+								searchText={comm.searchText}
+								setSearchText={comm.setSearchText}
+								subjectText={comm.subjectText}
+								setSubjectText={comm.setSubjectText}
+								searchRole={comm.searchRole}
+								setSearchRole={comm.setSearchRole}
+								userRole={user?.role}
+								onSearch={comm.loadContacts}
+								onSelect={handleContactSelect}
+							/>
+						</div>
+					</div>
+
+					<div className={`${mobileTab === 'chat' ? 'flex' : 'hidden'} h-[calc(100vh-8rem)] flex-col bg-[var(--color-surface)]`}>
+						<ConversationView
+							selectedConversation={comm.selectedConversation}
+							messages={comm.messages}
+							messagesLoading={comm.messagesLoading}
+							draft={comm.draft}
+							setDraft={comm.setDraft}
+							replyTo={comm.replyTo}
+							setReplyTo={comm.setReplyTo}
+							editingMessageId={comm.editingMessageId}
+							setEditingMessageId={comm.setEditingMessageId}
+							editingText={comm.editingText}
+							setEditingText={comm.setEditingText}
+							sending={comm.sending}
+							user={user}
+							messageViewportRef={comm.messageViewportRef}
+							onScroll={comm.onMessagesScroll}
+							onSend={comm.handleSendMessage}
+							onEditSave={comm.handleEditMessage}
+							onDelete={comm.handleDeleteMessage}
+							onCopy={comm.handleCopyMessage}
+							onViewProfile={comm.openTeacherProfile}
+							onBack={handleMobileBack}
+							showBackButton
+						/>
+					</div>
 				</div>
 			</div>
 
-			<div className='flex-1 overflow-y-auto'>
-				{inboxLoading ? (
-					<div className='flex items-center justify-center gap-2 py-12 text-sm text-[var(--color-text-muted)]'>
-						<Loader2 size={16} className='animate-spin' />
-						Loading...
-					</div>
-				) : inbox.length === 0 ? (
-					<div className='flex flex-col items-center justify-center gap-2 py-16 px-6 text-center'>
-						<div className='flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-border)]'>
-							<Inbox size={20} className='text-[var(--color-text-muted)]' />
-						</div>
-						<p className='text-sm font-medium text-[var(--color-text-secondary)]'>No conversations yet</p>
-						<p className='text-xs text-[var(--color-text-muted)]'>Search your directory to start one</p>
-					</div>
-				) : (
-					<ul className='divide-y divide-[var(--color-border)]'>
-						{inbox.map((item) => {
-							const isActive = selectedConversation?.conversationId === item.conversation_id;
-							const hasUnread = Number(item.unread_count || 0) > 0;
-							return (
-								<li key={item.conversation_id}>
-									<button
-										onClick={() => onSelect(item)}
-										className={`w-full px-4 py-3 text-left transition-colors ${
-											isActive
-												? 'bg-[var(--color-primary)]/10'
-												: 'hover:bg-[var(--color-border)]/30'
-										}`}
-									>
-										<div className='flex items-start gap-3'>
-											<div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-												isActive
-													? 'bg-[var(--color-primary)] text-white'
-													: 'bg-[var(--color-primary)]/15 text-[var(--color-primary)]'
-											}`}>
-												{String(item.other_username || '?').charAt(0).toUpperCase()}
-											</div>
-											<div className='min-w-0 flex-1'>
-												<div className='flex items-center justify-between gap-2'>
-													<p className={`truncate text-sm ${hasUnread ? 'font-bold text-[var(--color-text-primary)]' : 'font-medium text-[var(--color-text-primary)]'}`}>
-														{item.other_username}
-													</p>
-													<div className='flex shrink-0 items-center gap-1.5'>
-														{hasUnread && (
-															<span className='flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-primary)] px-1.5 text-[10px] font-bold text-white'>
-																{item.unread_count}
-															</span>
-														)}
-													</div>
-												</div>
-												<p className={`mt-0.5 truncate text-xs ${hasUnread ? 'font-medium text-[var(--color-text-secondary)]' : 'text-[var(--color-text-muted)]'}`}>
-													{formatMessagePreview(item.last_message_content)}
-												</p>
-												<div className='mt-1 flex items-center gap-1 text-[10px] text-[var(--color-text-muted)]'>
-													<Clock3 size={10} />
-													{formatDateTime(item.last_message_at || item.updated_at || item.created_at)}
-												</div>
-											</div>
-										</div>
-									</button>
-								</li>
-							);
-						})}
-					</ul>
-				)}
-			</div>
+			<MobileTabBar
+				activeTab={mobileTab}
+				onTabChange={setMobileTab}
+				unreadCount={comm.unreadCount}
+				hasConversation={Boolean(comm.selectedConversation)}
+			/>
+
+			<TeacherProfileModal
+				isOpen={comm.profileModalOpen}
+				onClose={() => comm.setProfileModalOpen(false)}
+				profile={comm.teacherProfile}
+				loading={comm.teacherProfileLoading}
+			/>
+
+			<Toast
+				type={toast.type}
+				message={toast.message}
+				isOpen={toast.isOpen}
+				onClose={() => setToast((prev) => ({ ...prev, isOpen: false }))}
+			/>
 		</div>
 	);
 }

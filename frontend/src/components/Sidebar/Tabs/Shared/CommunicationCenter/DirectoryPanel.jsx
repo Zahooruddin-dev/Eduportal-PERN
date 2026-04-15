@@ -1,5 +1,5 @@
 import { Loader2, Search, Users } from 'lucide-react';
-import { avatarInitial, summarizeContact } from '../utils';
+import { avatarInitial, summarizeContact } from './utils/utilis';
 
 export function DirectoryPanel({ contacts, contactsLoading, searchText, setSearchText, subjectText, setSubjectText, searchRole, setSearchRole, userRole, onSearch, onSelect }) {
 	return (

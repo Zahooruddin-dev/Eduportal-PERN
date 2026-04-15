@@ -1,5 +1,5 @@
 import { Copy, Pencil, Reply, Trash2, X } from 'lucide-react';
-import { formatTime } from '../utils';
+import { formatTime }  from './utils/utilis';
 
 export function MessageBubble({
 	message,
