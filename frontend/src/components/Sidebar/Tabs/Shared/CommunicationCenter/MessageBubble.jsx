@@ -24,7 +24,7 @@ export function MessageBubble({
 				{String(isMine ? 'Me' : (message.sender_username || '?')).charAt(0).toUpperCase()}
 			</div>
 
-			<div className={`flex max-w-[75%] flex-col gap-1 ${isMine ? 'items-end' : 'items-start'}`}>
+			<div className={`flex max-w-[85%] flex-col gap-1 sm:max-w-[78%] lg:max-w-[75%] ${isMine ? 'items-end' : 'items-start'}`}>
 				<div className={`relative rounded-2xl px-3.5 py-2.5 shadow-sm ${
 					isMine
 						? 'rounded-br-sm bg-[var(--color-primary)] text-white'
@@ -55,7 +55,7 @@ export function MessageBubble({
 							</div>
 						</div>
 					) : (
-						<p className={`whitespace-pre-wrap text-sm leading-relaxed ${isDeleted ? 'italic opacity-60' : ''}`}>
+						<p className={`whitespace-pre-wrap break-words text-sm leading-relaxed ${isDeleted ? 'italic opacity-60' : ''}`}>
 							{message.content}
 						</p>
 					)}
@@ -67,7 +67,7 @@ export function MessageBubble({
 				</div>
 
 				{!isEditing && (
-					<div className={`flex flex-wrap gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 ${isMine ? 'justify-end' : 'justify-start'}`}>
+					<div className={`flex flex-wrap gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 ${isMine ? 'justify-end' : 'justify-start'}`}>
 						<button onClick={() => onReply(message)} className='inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1 text-[10px] text-[var(--color-text-muted)] shadow-sm transition hover:bg-[var(--color-border)]/50'>
 							<Reply size={11} /> Reply
 						</button>

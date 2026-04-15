@@ -1,11 +1,26 @@
+import { useEffect } from 'react';
 import { Loader2, User, X } from 'lucide-react';
 
 export function TeacherProfileModal({ isOpen, onClose, profile, loading }) {
+	useEffect(() => {
+		if (!isOpen) return undefined;
+		const onKeyDown = (event) => {
+			if (event.key === 'Escape') onClose();
+		};
+		const previousOverflow = document.body.style.overflow;
+		document.body.style.overflow = 'hidden';
+		window.addEventListener('keydown', onKeyDown);
+		return () => {
+			document.body.style.overflow = previousOverflow;
+			window.removeEventListener('keydown', onKeyDown);
+		};
+	}, [isOpen, onClose]);
+
 	if (!isOpen) return null;
 
 	return (
-		<div className='fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4 bg-black/50'>
-			<div className='w-full max-w-lg rounded-t-2xl sm:rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl'>
+		<div onClick={onClose} className='fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4 bg-black/50'>
+			<div onClick={(event) => event.stopPropagation()} className='w-full max-w-lg rounded-t-2xl sm:rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl'>
 				<div className='flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4'>
 					<div>
 						<p className='text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]'>

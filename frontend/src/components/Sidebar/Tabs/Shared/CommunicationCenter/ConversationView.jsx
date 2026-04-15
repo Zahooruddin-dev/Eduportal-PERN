@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Loader2, MessageSquare, SendHorizontal, X } from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
 import { avatarInitial, toLabel }  from './utils/utilis';
@@ -26,6 +27,20 @@ export function ConversationView({
 	onBack,
 	showBackButton,
 }) {
+	const composerRef = useRef(null);
+
+	useEffect(() => {
+		if (draft.trim()) return;
+		const node = composerRef.current;
+		if (!node) return;
+		node.style.height = '42px';
+	}, [draft]);
+
+	const resizeComposer = (node) => {
+		node.style.height = 'auto';
+		node.style.height = Math.min(node.scrollHeight, 120) + 'px';
+	};
+
 	if (!selectedConversation) {
 		return (
 			<div className='flex h-full flex-col items-center justify-center gap-4 p-8 text-center'>
@@ -146,9 +161,13 @@ export function ConversationView({
 				)}
 				<div className='flex items-end gap-2'>
 					<textarea
+						ref={composerRef}
 						rows={1}
 						value={draft}
-						onChange={(e) => setDraft(e.target.value)}
+						onChange={(e) => {
+							setDraft(e.target.value);
+							resizeComposer(e.target);
+						}}
 						onKeyDown={(e) => {
 							if (e.key === 'Enter' && !e.shiftKey) {
 								e.preventDefault();
@@ -156,12 +175,9 @@ export function ConversationView({
 							}
 						}}
 						placeholder='Message…'
-						className='flex-1 resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 transition'
+						className='flex-1 resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3.5 py-2.5 text-base text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 transition sm:text-sm'
 						style={{ minHeight: '42px', maxHeight: '120px', overflowY: 'auto' }}
-						onInput={(e) => {
-							e.target.style.height = 'auto';
-							e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
-						}}
+						onInput={(e) => resizeComposer(e.target)}
 					/>
 					<button
 						onClick={onSend}

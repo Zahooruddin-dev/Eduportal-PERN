@@ -50,6 +50,9 @@ export function useSocket({ userId, onNewMessage, onMessageUpdated, onMessageDel
 
 		socket.on('chat:new-message', (msg) => {
 			onNewMessage(msg, activeConversationIdRef.current);
+			if (msg.conversation_id === activeConversationIdRef.current && msg.sender_id !== userId) {
+				socket.emit('chat:mark-read', { conversationId: msg.conversation_id }, () => {});
+			}
 			loadInbox({ silent: true });
 		});
 

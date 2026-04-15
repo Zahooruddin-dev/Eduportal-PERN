@@ -20,12 +20,14 @@ export default function CommunicationCenter() {
 	const comm = useCommunication({ user, openToast });
 
 	const handleInboxSelect = useCallback(async (item) => {
-		await comm.openConversationFromInbox(item);
+		const opened = await comm.openConversationFromInbox(item);
+		if (!opened) return;
 		setMobileTab('chat');
 	}, [comm]);
 
 	const handleContactSelect = useCallback(async (contact) => {
-		await comm.openConversationWithContact(contact);
+		const opened = await comm.openConversationWithContact(contact);
+		if (!opened) return;
 		setMobileTab('chat');
 	}, [comm]);
 
@@ -34,10 +36,10 @@ export default function CommunicationCenter() {
 	}, []);
 
 	return (
-		<div className='min-h-screen bg-[var(--color-bg)]'>
+		<div className='min-h-[100dvh] bg-[var(--color-bg)]'>
 			<div className='mx-auto max-w-7xl px-0 pb-20 sm:px-4 sm:pb-20 lg:px-8 lg:pb-8 lg:pt-8'>
 
-				<div className='hidden lg:grid lg:h-[calc(100vh-4rem)] lg:grid-cols-3 lg:gap-5'>
+				<div className='hidden lg:grid lg:h-[calc(100dvh-4rem)] lg:grid-cols-3 lg:gap-5'>
 					<div className='flex flex-col gap-5 overflow-hidden'>
 						<div className='flex flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm' style={{ maxHeight: '45%' }}>
 							<InboxPanel
@@ -92,7 +94,7 @@ export default function CommunicationCenter() {
 				</div>
 
 				<div className='lg:hidden'>
-					<div className={`${mobileTab === 'inbox' ? 'block' : 'hidden'} min-h-[calc(100vh-8rem)]`}>
+					<div className={`${mobileTab === 'inbox' ? 'block' : 'hidden'} min-h-[calc(100dvh-8rem)]`}>
 						<div className='h-full bg-[var(--color-surface)] border-b border-[var(--color-border)]'>
 							<InboxPanel
 								inbox={comm.inbox}
@@ -103,7 +105,7 @@ export default function CommunicationCenter() {
 						</div>
 					</div>
 
-					<div className={`${mobileTab === 'directory' ? 'block' : 'hidden'} min-h-[calc(100vh-8rem)]`}>
+					<div className={`${mobileTab === 'directory' ? 'block' : 'hidden'} min-h-[calc(100dvh-8rem)]`}>
 						<div className='h-full bg-[var(--color-surface)] border-b border-[var(--color-border)]'>
 							<DirectoryPanel
 								contacts={comm.contacts}
@@ -121,7 +123,7 @@ export default function CommunicationCenter() {
 						</div>
 					</div>
 
-					<div className={`${mobileTab === 'chat' ? 'flex' : 'hidden'} h-[calc(100vh-8rem)] flex-col bg-[var(--color-surface)]`}>
+					<div className={`${mobileTab === 'chat' ? 'flex' : 'hidden'} h-[calc(100dvh-8rem)] flex-col bg-[var(--color-surface)]`}>
 						<ConversationView
 							selectedConversation={comm.selectedConversation}
 							messages={comm.messages}

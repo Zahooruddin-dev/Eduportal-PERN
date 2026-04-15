@@ -36,6 +36,9 @@ export function useCommunication({ user, openToast }) {
 
 	const messageViewportRef = useRef(null);
 	const stickToBottomRef = useRef(true);
+	const activeConversationIdRef = useRef(null);
+	const latestMessageLoadRef = useRef(0);
+	const initialLoadDoneRef = useRef(false);
 
 	const emitUnreadEvent = useCallback((count) => {
 		window.dispatchEvent(new CustomEvent('communication-unread', { detail: { count } }));
@@ -108,14 +111,21 @@ export function useCommunication({ user, openToast }) {
 	}, [loadInbox]);
 
 	const loadMessages = useCallback(async (conversationId) => {
+		const loadId = latestMessageLoadRef.current + 1;
+		latestMessageLoadRef.current = loadId;
 		setMessagesLoading(true);
 		try {
 			const res = await getConversationMessages(conversationId, { limit: 200 });
+			if (latestMessageLoadRef.current !== loadId) return;
+			if (activeConversationIdRef.current !== conversationId) return;
 			setMessages(Array.isArray(res.data) ? res.data : []);
 		} catch (err) {
+			if (latestMessageLoadRef.current !== loadId) return;
 			openToast('error', err?.response?.data?.message || 'Failed to load messages.');
 		} finally {
-			setMessagesLoading(false);
+			if (latestMessageLoadRef.current === loadId) {
+				setMessagesLoading(false);
+			}
 		}
 	}, [openToast]);
 
@@ -140,6 +150,7 @@ export function useCommunication({ user, openToast }) {
 
 	const selectConversation = useCallback(async (conversationId, otherUser) => {
 		stickToBottomRef.current = true;
+		activeConversationIdRef.current = conversationId;
 		setSelectedConversation({ conversationId, otherUser });
 		setReplyTo(null);
 		setEditingMessageId(null);
@@ -150,6 +161,7 @@ export function useCommunication({ user, openToast }) {
 		markReadViaSocket(conversationId);
 		await markRead(conversationId);
 		await loadInbox({ silent: true });
+		return true;
 	}, [joinConversationRoom, loadInbox, loadMessages, markRead, markReadViaSocket, setActiveConversationId]);
 
 	const openConversationWithContact = useCallback(async (contact) => {
@@ -157,10 +169,11 @@ export function useCommunication({ user, openToast }) {
 			const res = await openDirectConversation({ participantId: contact.id });
 			const conversation = res.data?.conversation;
 			const participant = res.data?.participant;
-			if (!conversation) return;
-			await selectConversation(conversation.id, participant || contact);
+			if (!conversation) return false;
+			return await selectConversation(conversation.id, participant || contact);
 		} catch (err) {
 			openToast('error', err?.response?.data?.message || 'Failed to open conversation.');
+			return false;
 		}
 	}, [openToast, selectConversation]);
 
@@ -171,11 +184,12 @@ export function useCommunication({ user, openToast }) {
 			role: item.other_role,
 			profile_pic: item.other_profile_pic,
 		};
-		await selectConversation(item.conversation_id, otherUser);
+		return await selectConversation(item.conversation_id, otherUser);
 	}, [selectConversation]);
 
 	const handleSendMessage = useCallback(async () => {
 		const conversationId = selectedConversation?.conversationId;
+		if (sending) return;
 		if (!conversationId || !draft.trim()) return;
 		const content = draft.trim();
 		setSending(true);
@@ -202,7 +216,7 @@ export function useCommunication({ user, openToast }) {
 		} finally {
 			setSending(false);
 		}
-	}, [draft, loadInbox, loadMessages, openToast, replyTo?.id, selectedConversation?.conversationId, sendViaSocket]);
+	}, [draft, loadInbox, loadMessages, openToast, replyTo?.id, selectedConversation?.conversationId, sendViaSocket, sending]);
 
 	const handleEditMessage = useCallback(async (messageId) => {
 		if (!editingText.trim()) { openToast('warning', 'Message cannot be empty.'); return; }
@@ -242,6 +256,7 @@ export function useCommunication({ user, openToast }) {
 	const openTeacherProfile = useCallback(async () => {
 		if (!selectedConversation?.otherUser?.id) return;
 		setTeacherProfileLoading(true);
+		setTeacherProfile(null);
 		setProfileModalOpen(true);
 		try {
 			const res = await getTeacherCommunicationProfile(selectedConversation.otherUser.id);
@@ -266,12 +281,18 @@ export function useCommunication({ user, openToast }) {
 	);
 
 	useEffect(() => {
+		activeConversationIdRef.current = selectedConversation?.conversationId || null;
+	}, [selectedConversation?.conversationId]);
+
+	useEffect(() => {
+		if (initialLoadDoneRef.current) return;
+		initialLoadDoneRef.current = true;
 		loadInbox();
 		loadContacts();
 		getCommunicationUnreadCount()
 			.then((res) => syncUnreadCount(Number(res.data?.unreadCount || 0)))
 			.catch(() => {});
-	}, []);
+	}, [loadContacts, loadInbox, syncUnreadCount]);
 
 	useEffect(() => {
 		const id = setInterval(() => {

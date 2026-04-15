@@ -7,10 +7,17 @@ const tabs = [
 ];
 
 export function MobileTabBar({ activeTab, onTabChange, unreadCount, hasConversation }) {
+	const bottomInset = 'max(env(safe-area-inset-bottom), 0px)';
+
 	return (
-		<nav className='fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-surface)] pb-safe lg:hidden'>
+		<nav
+			className='fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur lg:hidden'
+			style={{ paddingBottom: bottomInset }}
+		>
 			<div className='flex'>
-				{tabs.map(({ id, label, Icon }) => {
+				{tabs.map((tab) => {
+					const { id, label } = tab;
+					const TabIcon = tab.Icon;
 					const isActive = activeTab === id;
 					const showBadge = id === 'inbox' && unreadCount > 0;
 					const isDisabled = id === 'chat' && !hasConversation;
@@ -18,7 +25,10 @@ export function MobileTabBar({ activeTab, onTabChange, unreadCount, hasConversat
 					return (
 						<button
 							key={id}
+							type='button'
 							onClick={() => !isDisabled && onTabChange(id)}
+							disabled={isDisabled}
+							aria-label={label}
 							className={`relative flex flex-1 flex-col items-center gap-1 py-3 transition-colors ${
 								isDisabled
 									? 'cursor-default opacity-40'
@@ -28,7 +38,7 @@ export function MobileTabBar({ activeTab, onTabChange, unreadCount, hasConversat
 							}`}
 						>
 							<div className='relative'>
-								<Icon size={22} strokeWidth={isActive ? 2.5 : 1.8} />
+								<TabIcon size={22} strokeWidth={isActive ? 2.5 : 1.8} />
 								{showBadge && (
 									<span className='absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-primary)] px-1 text-[9px] font-bold text-white'>
 										{unreadCount > 99 ? '99+' : unreadCount}
