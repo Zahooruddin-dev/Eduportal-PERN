@@ -1,636 +1,640 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import {
-  Menu,
-  ChevronLeft,
-  ChevronRight,
-  Bell,
-  Calendar,
-  BookOpen,
-  FileText,
-  User,
-  BarChart,
-  MessageSquare,
-  UserCheck,
-  LogOut,
-  GraduationCap,
-  Sun,
-  Megaphone,
-  Moon,
-  X,
-  Users,
+	Menu,
+	ChevronLeft,
+	ChevronRight,
+	Bell,
+	Calendar,
+	BookOpen,
+	FileText,
+	User,
+	BarChart,
+	MessageSquare,
+	UserCheck,
+	LogOut,
+	GraduationCap,
+	Sun,
+	Megaphone,
+	X,
+	Users,
 } from 'lucide-react';
 import Toast from '../Toast';
 import ConfirmModal from '../ConfirmModal';
 import logo from '../../assets/logo.png';
-import { getAdminNotificationUnreadSummary, getCommunicationUnreadCount } from '../../api/api';
+import {
+	getAdminNotificationUnreadSummary,
+	getCommunicationUnreadCount,
+} from '../../api/api';
 import { io } from 'socket.io-client';
 
 const studentNavItems = [
-  { id: 'enrolled-classes', label: 'Enrolled Classes', icon: GraduationCap },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'announcements', label: 'Announcements', icon: Megaphone },
-  { id: 'teacher-communication', label: 'Teacher Communication', icon: MessageSquare },
-  { id: 'academic-calendar', label: 'Academic Calendar', icon: Calendar },
-  { id: 'course-material', label: 'Course Material', icon: BookOpen },
-  { id: 'gradebook', label: 'Gradebook', icon: BarChart },
-  { id: 'assignments', label: 'Assignments', icon: FileText },
-  { id: 'report', label: 'Report', icon: FileText },
+	{ id: 'enrolled-classes', label: 'Enrolled Classes', icon: GraduationCap },
+	{ id: 'notifications', label: 'Notifications', icon: Bell },
+	{ id: 'announcements', label: 'Announcements', icon: Megaphone },
+	{
+		id: 'teacher-communication',
+		label: 'Teacher Communication',
+		icon: MessageSquare,
+	},
+	{ id: 'academic-calendar', label: 'Academic Calendar', icon: Calendar },
+	{ id: 'course-material', label: 'Course Material', icon: BookOpen },
+	{ id: 'gradebook', label: 'Gradebook', icon: BarChart },
+	{ id: 'assignments', label: 'Assignments', icon: FileText },
+	{ id: 'report', label: 'Report', icon: FileText },
 ];
 
 const teacherNavItems = [
-  { id: 'teacher-class', label: 'Classes', icon: GraduationCap },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'teacher-calendar', label: 'Calendar', icon: Calendar },
-  { id: 'gradebook-teacher', label: 'Gradebook', icon: BarChart },
-  { id: 'course-material', label: 'Course Material', icon: BookOpen },
-  { id: 'assignments', label: 'Assignments', icon: FileText },
-  { id: 'student-communication', label: 'Student Communication', icon: MessageSquare },
-  { id: 'teacher-attendance', label: 'Student Attendance', icon: UserCheck },
-  { id: 'report', label: 'Report', icon: FileText },
+	{ id: 'teacher-class', label: 'Classes', icon: GraduationCap },
+	{ id: 'notifications', label: 'Notifications', icon: Bell },
+	{ id: 'teacher-calendar', label: 'Calendar', icon: Calendar },
+	{ id: 'gradebook-teacher', label: 'Gradebook', icon: BarChart },
+	{ id: 'course-material', label: 'Course Material', icon: BookOpen },
+	{ id: 'assignments', label: 'Assignments', icon: FileText },
+	{
+		id: 'student-communication',
+		label: 'Student Communication',
+		icon: MessageSquare,
+	},
+	{ id: 'teacher-attendance', label: 'Student Attendance', icon: UserCheck },
+	{ id: 'report', label: 'Report', icon: FileText },
 ];
 
 const parentNavItems = [
-  { id: 'parent-announcements', label: 'Announcements', icon: Megaphone },
-  { id: 'parent-profile-center', label: 'Parent Profile', icon: User },
-  { id: 'parent-teacher-complaint', label: 'Teacher Complaint', icon: MessageSquare },
-  { id: 'parent-suggestions', label: 'Suggestions', icon: FileText },
-  { id: 'parent-report', label: 'Report', icon: FileText },
+	{ id: 'parent-announcements', label: 'Announcements', icon: Megaphone },
+	{ id: 'parent-profile-center', label: 'Parent Profile', icon: User },
+	{
+		id: 'parent-teacher-complaint',
+		label: 'Teacher Complaint',
+		icon: MessageSquare,
+	},
+	{ id: 'parent-suggestions', label: 'Suggestions', icon: FileText },
+	{ id: 'parent-report', label: 'Report', icon: FileText },
 ];
 
 const adminNavItems = [
-  { id: 'admin-user-management', label: 'User Management', icon: Users },
-  { id: 'admin-risk-overview', label: 'Risk Overview', icon: BarChart },
-  { id: 'admin-announcements', label: 'Announcements', icon: Megaphone },
-  { id: 'admin-reports', label: 'Reports', icon: FileText },
+	{ id: 'admin-user-management', label: 'User Management', icon: Users },
+	{ id: 'admin-risk-overview', label: 'Risk Overview', icon: BarChart },
+	{ id: 'admin-announcements', label: 'Announcements', icon: Megaphone },
+	{ id: 'admin-reports', label: 'Reports', icon: FileText },
 ];
 
 function NavTooltip({ label, visible }) {
-  return (
-    <div
-      role="tooltip"
-      aria-hidden={!visible}
-      className={`
+	return (
+		<div
+			role='tooltip'
+			aria-hidden={!visible}
+			className={`
         absolute left-full ml-3 px-2.5 py-1.5 rounded-lg
         bg-[var(--color-text-primary)] text-[var(--color-bg)]
         text-xs font-medium whitespace-nowrap pointer-events-none z-50 shadow-lg
         transition-all duration-150
         ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-1'}
       `}
-    >
-      {label}
-    </div>
-  );
+		>
+			{label}
+		</div>
+	);
 }
 
 function NavItem({ item, active, collapsed, onClick, onMobileClose }) {
-  const [hovered, setHovered] = useState(false);
-  const Icon = item.icon;
+	const [hovered, setHovered] = useState(false);
+	const Icon = item.icon;
 
-  const handleClick = () => {
-    onClick(item.id);
-    onMobileClose?.();
-  };
+	const handleClick = () => {
+		onClick(item.id);
+		onMobileClose?.();
+	};
 
-  return (
-    <div
-      className="relative px-2"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <button
-        type="button"
-        onClick={handleClick}
-        aria-current={active ? 'page' : undefined}
-        className={`
+	return (
+		<div
+			className='relative px-2'
+			onMouseEnter={() => setHovered(true)}
+			onMouseLeave={() => setHovered(false)}
+		>
+			<button
+				type='button'
+				onClick={handleClick}
+				aria-current={active ? 'page' : undefined}
+				className={`
           w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left relative
           transition-all duration-200 ease-out
           focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2
-          ${active
-            ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
-            : 'text-[var(--color-text-muted)] hover:bg-[var(--color-border)]/60 hover:text-[var(--color-text-primary)]'
-          }
+          ${
+						active
+							? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
+							: 'text-[var(--color-text-muted)] hover:bg-[var(--color-border)]/60 hover:text-[var(--color-text-primary)]'
+					}
         `}
-      >
-        <span
-          aria-hidden="true"
-          className={`
+			>
+				<span
+					aria-hidden='true'
+					className={`
             absolute left-0 top-1/2 -translate-y-1/2 w-0.5 rounded-full bg-[var(--color-primary)]
             transition-all duration-200 ease-out
             ${active ? 'h-5 opacity-100' : 'h-0 opacity-0'}
           `}
-        />
-        <Icon
-          size={18}
-          aria-hidden="true"
-          className={`
-            shrink-0 transition-colors duration-200
-            ${active ? 'text-[var(--color-primary)]' : ''}
-          `}
-        />
-        {Number(item.badgeCount || 0) > 0 && (
-          <span className={`
+				/>
+				<Icon
+					size={18}
+					aria-hidden='true'
+					className={`shrink-0 transition-colors duration-200 ${active ? 'text-[var(--color-primary)]' : ''}`}
+				/>
+				{item.badgeCount > 0 && (
+					<span
+						className={`
             absolute top-1.5 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white
             ${collapsed ? 'right-1.5' : 'right-2.5'}
-          `}>
-            {item.badgeCount > 99 ? '99+' : item.badgeCount}
-          </span>
-        )}
-        <span
-          className={`
+          `}
+					>
+						{item.badgeCount > 99 ? '99+' : item.badgeCount}
+					</span>
+				)}
+				<span
+					className={`
             text-sm font-medium whitespace-nowrap overflow-hidden
             transition-all duration-300 ease-in-out
             ${collapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'}
           `}
-        >
-          {item.label}
-        </span>
-      </button>
-      {collapsed && <NavTooltip label={item.label} visible={hovered} />}
-    </div>
-  );
+				>
+					{item.label}
+				</span>
+			</button>
+			{collapsed && <NavTooltip label={item.label} visible={hovered} />}
+		</div>
+	);
 }
 
 function SidebarBody({
-  collapsed,
-  isMobile,
-  activeTab,
-  setActiveTab,
-  navItems,
-  user,
-  theme,
-  toggle,
-  onClose,
-  onLogout,
-  showCloseX = false,
+	collapsed,
+	isMobile,
+	activeTab,
+	setActiveTab,
+	navItems,
+	user,
+	theme,
+	toggle,
+	onClose,
+	onLogout,
+	showCloseX = false,
 }) {
-  const isCollapsed = collapsed && !isMobile;
+	const isCollapsed = collapsed && !isMobile;
 
-  return (
-    <aside
-      aria-label="Main navigation"
-      className="flex flex-col h-full bg-[var(--color-surface)] border-r border-[var(--color-border)]"
-    >
-      <div
-        className={`
-          flex items-center border-b border-[var(--color-border)] h-16 shrink-0 px-3 gap-2
-          transition-all duration-300
-        `}
-      >
-        <div className="flex items-center gap-2.5 flex-1 min-w-0">
-          <img
-            src={logo}
-            alt="Mizuka Portal logo"
-            className={`
+	return (
+		<aside
+			aria-label='Main navigation'
+			className='flex flex-col h-full bg-[var(--color-surface)] border-r border-[var(--color-border)]'
+		>
+			<div
+				className={`
+        flex items-center border-b border-[var(--color-border)] h-16 shrink-0 px-3 gap-2
+        transition-all duration-300
+      `}
+			>
+				<div className='flex items-center gap-2.5 flex-1 min-w-0'>
+					<img
+						src={logo}
+						alt='Mizuka Portal logo'
+						className={`
               shrink-0 object-contain transition-all duration-300
               ${isCollapsed ? 'h-9 w-9' : 'h-10 w-10'}
             `}
-          />
-          <div
-            className={`
-              overflow-hidden transition-all duration-300 ease-in-out
-              ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'}
-            `}
-          >
-            <p className="text-sm font-semibold text-[var(--color-text-primary)] whitespace-nowrap leading-tight">
-              Mizuka Portal
-            </p>
-            <p className="text-[10px] text-[var(--color-text-muted)] capitalize whitespace-nowrap leading-tight">
-              {user?.role} dashboard
-            </p>
-          </div>
-        </div>
+					/>
+					<div
+						className={`
+            overflow-hidden transition-all duration-300 ease-in-out
+            ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'}
+          `}
+					>
+						<p className='text-sm font-semibold text-[var(--color-text-primary)] whitespace-nowrap leading-tight'>
+							Mizuka Portal
+						</p>
+						<p className='text-[10px] text-[var(--color-text-muted)] capitalize whitespace-nowrap leading-tight'>
+							{user?.role} dashboard
+						</p>
+					</div>
+				</div>
 
-        {isMobile || showCloseX ? (
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close navigation"
-            className="p-1.5 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 transition-colors duration-150 shrink-0 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-          >
-            <X size={18} aria-hidden="true" />
-          </button>
-        ) : (
-          !collapsed && (
-            <button
-              type="button"
-              onClick={() => onClose()}
-              aria-label="Collapse sidebar"
-              className="p-1.5 rounded-lg relative z-10 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 transition-all duration-150 shrink-0 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-            >
-              <ChevronLeft size={18} aria-hidden="true" />
-            </button>
-          )
-        )}
-      </div>
+				{isMobile || showCloseX ? (
+					<button
+						type='button'
+						onClick={onClose}
+						aria-label='Close navigation'
+						className='p-1.5 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 transition-colors duration-150 shrink-0 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]'
+					>
+						<X size={18} aria-hidden='true' />
+					</button>
+				) : (
+					!collapsed && (
+						<button
+							type='button'
+							onClick={() => onClose()}
+							aria-label='Collapse sidebar'
+							className='p-1.5 rounded-lg relative z-10 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 transition-all duration-150 shrink-0 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]'
+						>
+							<ChevronLeft size={18} aria-hidden='true' />
+						</button>
+					)
+				)}
+			</div>
 
-      <div
-        className={`
-          overflow-hidden transition-all duration-300 ease-in-out
-          ${isCollapsed
-            ? 'max-h-0 opacity-0 pt-0 px-0'
-            : 'max-h-10 opacity-100 pt-4 px-4 pb-1'
-          }
-        `}
-      >
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">
-          Menu
-        </p>
-      </div>
+			<div
+				className={`
+        overflow-hidden transition-all duration-300 ease-in-out
+        ${
+					isCollapsed
+						? 'max-h-0 opacity-0 pt-0 px-0'
+						: 'max-h-10 opacity-100 pt-4 px-4 pb-1'
+				}
+      `}
+			>
+				<p className='text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]'>
+					Menu
+				</p>
+			</div>
 
-      <nav
-        aria-label="Primary navigation"
-        className="flex-1 py-2 overflow-y-auto overflow-x-hidden"
-      >
-        {navItems.map((item) => (
-          <NavItem
-            key={item.id}
-            item={item}
-            active={activeTab === item.id}
-            collapsed={isCollapsed}
-            onClick={setActiveTab}
-            onMobileClose={isMobile ? onClose : undefined}
-          />
-        ))}
-      </nav>
+			<nav
+				aria-label='Primary navigation'
+				className='flex-1 py-2 overflow-y-auto overflow-x-hidden'
+			>
+				{navItems.map((item) => (
+					<NavItem
+						key={item.id}
+						item={item}
+						active={activeTab === item.id}
+						collapsed={isCollapsed}
+						onClick={setActiveTab}
+						onMobileClose={isMobile ? onClose : undefined}
+					/>
+				))}
+			</nav>
 
-      <div className="border-t border-[var(--color-border)] p-3 shrink-0 space-y-1">
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('profile');
-            isMobile && onClose();
-          }}
-          aria-label="Go to profile settings"
-          className={`
+			<div className='border-t border-[var(--color-border)] p-3 shrink-0 space-y-1'>
+				<button
+					type='button'
+					onClick={() => {
+						setActiveTab('profile');
+						isMobile && onClose();
+					}}
+					aria-label='Go to profile settings'
+					className={`
             w-full flex items-center gap-3 px-2 py-2 rounded-xl transition-all duration-200
             focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2
-            ${activeTab === 'profile'
-              ? 'bg-[var(--color-primary)]/10'
-              : 'hover:bg-[var(--color-border)]/60'
-            }
+            ${
+							activeTab === 'profile'
+								? 'bg-[var(--color-primary)]/10'
+								: 'hover:bg-[var(--color-border)]/60'
+						}
             ${isCollapsed ? 'justify-center' : ''}
           `}
-        >
-          {user?.profile ? (
-            <img
-              src={user.profile}
-              alt=""
-              aria-hidden="true"
-              className="w-8 h-8 rounded-full object-cover ring-2 ring-[var(--color-border)] shrink-0"
-            />
-          ) : (
-            <div
-              aria-hidden="true"
-              className="w-8 h-8 rounded-full bg-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)] text-sm font-semibold shrink-0"
-            >
-              {user?.username?.charAt(0).toUpperCase()}
-            </div>
-          )}
-          <div
-            className={`
-              overflow-hidden transition-all duration-300 ease-in-out text-left
-              ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'}
-            `}
-          >
-            <p className="text-sm font-medium text-[var(--color-text-primary)] truncate leading-tight whitespace-nowrap">
-              {user?.username}
-            </p>
-            <p className="text-xs text-[var(--color-text-muted)] capitalize truncate leading-tight whitespace-nowrap">
-              {user?.role}
-            </p>
-          </div>
-        </button>
-
-        <div
-          className={`
-            flex gap-1 transition-all duration-300
-            ${isCollapsed ? 'flex-col items-center' : ''}
+				>
+					{user?.profile ? (
+						<img
+							src={user.profile}
+							alt=''
+							aria-hidden='true'
+							className='w-8 h-8 rounded-full object-cover ring-2 ring-[var(--color-border)] shrink-0'
+						/>
+					) : (
+						<div
+							aria-hidden='true'
+							className='w-8 h-8 rounded-full bg-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)] text-sm font-semibold shrink-0'
+						>
+							{user?.username?.charAt(0).toUpperCase()}
+						</div>
+					)}
+					<div
+						className={`
+            overflow-hidden transition-all duration-300 ease-in-out text-left
+            ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'}
           `}
-        >
-          <button
-            type="button"
-            onClick={toggle}
-            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            className={`
+					>
+						<p className='text-sm font-medium text-[var(--color-text-primary)] truncate leading-tight whitespace-nowrap'>
+							{user?.username}
+						</p>
+						<p className='text-xs text-[var(--color-text-muted)] capitalize truncate leading-tight whitespace-nowrap'>
+							{user?.role}
+						</p>
+					</div>
+				</button>
+
+				<div
+					className={`
+          flex gap-1 transition-all duration-300
+          ${isCollapsed ? 'flex-col items-center' : ''}
+        `}
+				>
+					<button
+						type='button'
+						onClick={toggle}
+						aria-label={
+							theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
+						}
+						className={`
               flex-1 flex items-center justify-center gap-2 p-2 rounded-xl
               text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]
               hover:bg-[var(--color-border)]/60 transition-all duration-150
               focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
             `}
-          >
-            <span className="transition-transform duration-300 rotate-0">
-              {theme === 'dark' ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}
-            </span>
-            <span
-              className={`
-                text-xs font-medium whitespace-nowrap overflow-hidden
-                transition-all duration-300 ease-in-out
-                ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[60px] opacity-100'}
-              `}
-            >
-              {theme === 'dark' ? 'Light' : 'Dark'}
-            </span>
-          </button>
+					>
+						<span className='transition-transform duration-300 rotate-0'>
+							{theme === 'dark' ? (
+								<Sun size={16} aria-hidden='true' />
+							) : (
+								<Moon size={16} aria-hidden='true' />
+							)}
+						</span>
+						<span
+							className={`
+              text-xs font-medium whitespace-nowrap overflow-hidden
+              transition-all duration-300 ease-in-out
+              ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[60px] opacity-100'}
+            `}
+						>
+							{theme === 'dark' ? 'Light' : 'Dark'}
+						</span>
+					</button>
 
-          <button
-            type="button"
-            onClick={onLogout}
-            aria-label="Log out"
-            className={`
+					<button
+						type='button'
+						onClick={onLogout}
+						aria-label='Log out'
+						className={`
               flex-1 flex items-center justify-center gap-2 p-2 rounded-xl
               text-[var(--color-text-muted)] hover:text-red-500 hover:bg-red-500/8
               transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-500
             `}
-          >
-            <LogOut size={16} aria-hidden="true" />
-            <span
-              className={`
-                text-xs font-medium whitespace-nowrap overflow-hidden
-                transition-all duration-300 ease-in-out
-                ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[60px] opacity-100'}
-              `}
-            >
-              Log out
-            </span>
-          </button>
-        </div>
-      </div>
-    </aside>
-  );
+					>
+						<LogOut size={16} aria-hidden='true' />
+						<span
+							className={`
+              text-xs font-medium whitespace-nowrap overflow-hidden
+              transition-all duration-300 ease-in-out
+              ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[60px] opacity-100'}
+            `}
+						>
+							Log out
+						</span>
+					</button>
+				</div>
+			</div>
+		</aside>
+	);
 }
 
 export default function Sidebar({
-  collapsed,
-  setCollapsed,
-  activeTab,
-  setActiveTab,
+	collapsed,
+	setCollapsed,
+	activeTab,
+	setActiveTab,
 }) {
-  const { user, logout } = useAuth();
-  const [communicationUnreadCount, setCommunicationUnreadCount] = useState(0);
-  const [adminNotificationUnreadCount, setAdminNotificationUnreadCount] = useState(0);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [mobileClosing, setMobileClosing] = useState(false);
-  const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
-  const [toast, setToast] = useState({
-    isOpen: false,
-    type: 'info',
-    message: '',
-  });
-  const { theme, toggle } = useTheme();
+	const { user, logout } = useAuth();
+	const [communicationUnreadCount, setCommunicationUnreadCount] = useState(0);
+	const [adminNotificationUnreadCount, setAdminNotificationUnreadCount] =
+		useState(0);
+	const [mobileOpen, setMobileOpen] = useState(false);
+	const [mobileClosing, setMobileClosing] = useState(false);
+	const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
+	const [toast, setToast] = useState({
+		isOpen: false,
+		type: 'info',
+		message: '',
+	});
+	const { theme, toggle } = useTheme();
+	const socketRef = useRef(null);
 
-  useEffect(() => {
-    const supportsCommunication = user?.role === 'student' || user?.role === 'teacher';
-    if (!supportsCommunication) {
-      return undefined;
-    }
+	const loadCommunicationUnread = useCallback(async () => {
+		try {
+			const response = await getCommunicationUnreadCount();
+			setCommunicationUnreadCount(Number(response.data?.unreadCount || 0));
+		} catch (error) {}
+	}, []);
 
-    let mounted = true;
-    let socket;
+	const loadAdminNotificationUnread = useCallback(async () => {
+		try {
+			const response = await getAdminNotificationUnreadSummary({ limit: 1 });
+			setAdminNotificationUnreadCount(Number(response.data?.unreadCount || 0));
+		} catch (error) {}
+	}, []);
 
-    const loadUnreadCount = async () => {
-      try {
-        const response = await getCommunicationUnreadCount();
-        const unread = Number(response.data?.unreadCount || 0);
-        if (mounted) {
-          setCommunicationUnreadCount(unread);
-        }
-      } catch {
-        return null;
-      }
-    };
+	useEffect(() => {
+		if (!user?.role) return;
 
-    const handleUnreadEvent = (event) => {
-      const unread = Number(event.detail?.count || 0);
-      setCommunicationUnreadCount(unread);
-    };
+		const supportsCommunication =
+			user.role === 'student' || user.role === 'teacher';
+		if (supportsCommunication) {
+			loadCommunicationUnread();
+			const interval = setInterval(loadCommunicationUnread, 12000);
+			const handleUnreadEvent = (event) => {
+				setCommunicationUnreadCount(Number(event.detail?.count || 0));
+			};
+			window.addEventListener('communication-unread', handleUnreadEvent);
 
-    loadUnreadCount();
-    window.addEventListener('communication-unread', handleUnreadEvent);
-    const intervalId = window.setInterval(loadUnreadCount, 12000);
+			const token = localStorage.getItem('token');
+			if (token && !socketRef.current) {
+				socketRef.current = io(
+					import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000',
+					{
+						auth: { token },
+						transports: ['websocket', 'polling'],
+					},
+				);
+				socketRef.current.on('chat:unread-count-updated', (payload) => {
+					setCommunicationUnreadCount(Number(payload?.unreadCount || 0));
+				});
+			}
 
-    const token = localStorage.getItem('token');
-    if (token) {
-      socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000', {
-        auth: { token },
-        transports: ['websocket', 'polling'],
-      });
-      socket.on('chat:unread-count-updated', (payload) => {
-        const unread = Number(payload?.unreadCount || 0);
-        if (mounted) {
-          setCommunicationUnreadCount(unread);
-        }
-      });
-    }
+			return () => {
+				clearInterval(interval);
+				window.removeEventListener('communication-unread', handleUnreadEvent);
+				if (socketRef.current) {
+					socketRef.current.disconnect();
+					socketRef.current = null;
+				}
+			};
+		}
+	}, [user?.role, loadCommunicationUnread]);
 
-    return () => {
-      mounted = false;
-      window.removeEventListener('communication-unread', handleUnreadEvent);
-      window.clearInterval(intervalId);
-      if (socket) {
-        socket.disconnect();
-      }
-    };
-  }, [user?.role]);
+	useEffect(() => {
+		if (!user?.role) return;
 
-  useEffect(() => {
-    const supportsNotifications = user?.role === 'student' || user?.role === 'teacher' || user?.role === 'parent';
-    if (!supportsNotifications) {
-      return undefined;
-    }
+		const supportsNotifications =
+			user.role === 'student' ||
+			user.role === 'teacher' ||
+			user.role === 'parent';
+		if (supportsNotifications) {
+			loadAdminNotificationUnread();
+			const interval = setInterval(loadAdminNotificationUnread, 15000);
+			const onFocus = () => loadAdminNotificationUnread();
+			window.addEventListener('focus', onFocus);
 
-    let mounted = true;
+			return () => {
+				clearInterval(interval);
+				window.removeEventListener('focus', onFocus);
+			};
+		}
+	}, [user?.role, loadAdminNotificationUnread]);
 
-    const loadUnreadCount = async () => {
-      try {
-        const response = await getAdminNotificationUnreadSummary({ limit: 1 });
-        const unread = Number(response.data?.unreadCount || 0);
-        if (mounted) {
-          setAdminNotificationUnreadCount(unread);
-        }
-      } catch {
-        return null;
-      }
-    };
+	const baseNavItems = useMemo(() => {
+		if (user?.role === 'student') return studentNavItems;
+		if (user?.role === 'admin') return adminNavItems;
+		if (user?.role === 'parent') return parentNavItems;
+		return teacherNavItems;
+	}, [user?.role]);
 
-    loadUnreadCount();
-    const intervalId = window.setInterval(loadUnreadCount, 15000);
-    const onFocus = () => loadUnreadCount();
-    window.addEventListener('focus', onFocus);
+	const navItems = useMemo(() => {
+		return baseNavItems.map((item) => {
+			const isCommunication =
+				item.id === 'teacher-communication' ||
+				item.id === 'student-communication';
+			const isNotification =
+				item.id === 'notifications' || item.id === 'parent-announcements';
+			return {
+				...item,
+				badgeCount: isCommunication
+					? communicationUnreadCount
+					: isNotification
+						? adminNotificationUnreadCount
+						: 0,
+			};
+		});
+	}, [baseNavItems, communicationUnreadCount, adminNotificationUnreadCount]);
 
-    return () => {
-      mounted = false;
-      window.clearInterval(intervalId);
-      window.removeEventListener('focus', onFocus);
-    };
-  }, [user?.role]);
+	const openMobile = useCallback(() => {
+		setMobileClosing(false);
+		setMobileOpen(true);
+	}, []);
 
-  const navItems = (user?.role === 'student'
-    ? studentNavItems
-    : user?.role === 'admin'
-      ? adminNavItems
-      : user?.role === 'parent'
-        ? parentNavItems
-        : teacherNavItems
-  ).map((item) => {
-    const isCommunication = item.id === 'teacher-communication' || item.id === 'student-communication';
-    const isNotification = item.id === 'notifications' || item.id === 'parent-announcements';
-    return {
-      ...item,
-      badgeCount: isCommunication
-        ? communicationUnreadCount
-        : isNotification
-          ? adminNotificationUnreadCount
-          : 0,
-    };
-  });
+	const closeMobile = useCallback(() => {
+		setMobileClosing(true);
+		setTimeout(() => {
+			setMobileOpen(false);
+			setMobileClosing(false);
+		}, 260);
+	}, []);
 
-  const openMobile = () => {
-    setMobileClosing(false);
-    setMobileOpen(true);
-  };
+	useEffect(() => {
+		const handleKey = (e) => {
+			if (e.key === 'Escape' && mobileOpen) closeMobile();
+		};
+		document.addEventListener('keydown', handleKey);
+		return () => document.removeEventListener('keydown', handleKey);
+	}, [mobileOpen, closeMobile]);
 
-  const closeMobile = () => {
-    setMobileClosing(true);
-    setTimeout(() => {
-      setMobileOpen(false);
-      setMobileClosing(false);
-    }, 260);
-  };
+	useEffect(() => {
+		if (mobileOpen) {
+			document.body.style.overflow = 'hidden';
+		} else {
+			document.body.style.overflow = '';
+		}
+		return () => {
+			document.body.style.overflow = '';
+		};
+	}, [mobileOpen]);
 
-  useEffect(() => {
-    const handleKey = (e) => {
-      if (e.key === 'Escape' && mobileOpen) closeMobile();
-    };
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
-  }, [mobileOpen]);
+	const handleLogoutClick = useCallback(() => {
+		setConfirmLogoutOpen(true);
+	}, []);
 
-  useEffect(() => {
-    document.body.style.overflow = mobileOpen ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [mobileOpen]);
+	const handleConfirmLogout = useCallback(() => {
+		setConfirmLogoutOpen(false);
+		setToast({ isOpen: true, type: 'success', message: 'Logging out…' });
+		setTimeout(logout, 700);
+	}, [logout]);
 
-  const sharedProps = {
-    activeTab,
-    setActiveTab,
-    navItems,
-    user,
-    theme,
-    toggle,
-    onLogout: () => setConfirmLogoutOpen(true),
-  };
+	const sharedProps = {
+		activeTab,
+		setActiveTab,
+		navItems,
+		user,
+		theme,
+		toggle,
+		onLogout: handleLogoutClick,
+	};
 
-  return (
-    <>
-      {/* Mobile open button */}
-      <button
-        type="button"
-        onClick={openMobile}
-        aria-label="Open navigation menu"
-        aria-expanded={mobileOpen}
-        className="lg:hidden fixed top-4 left-4 z-30 flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-secondary)] shadow-sm transition-all duration-150 hover:text-[var(--color-text-primary)] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-      >
-        <Menu size={18} aria-hidden="true" />
-      </button>
+	return (
+		<>
+			<button
+				type='button'
+				onClick={openMobile}
+				aria-label='Open navigation menu'
+				aria-expanded={mobileOpen}
+				className='lg:hidden fixed top-4 left-4 z-30 flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-secondary)] shadow-sm transition-all duration-150 hover:text-[var(--color-text-primary)] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]'
+			>
+				<Menu size={18} aria-hidden='true' />
+			</button>
 
-      {/* Desktop expand button (when collapsed) */}
-      {collapsed && (
-        <button
-          type="button"
-          onClick={() => setCollapsed(false)}
-          aria-label="Expand sidebar"
-          className="hidden lg:flex fixed top-4 left-4 z-30 h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-secondary)] shadow-sm transition-all duration-150 hover:text-[var(--color-text-primary)] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-        >
-          <Menu size={18} aria-hidden="true" />
-        </button>
-      )}
+			{collapsed && (
+				<button
+					type='button'
+					onClick={() => setCollapsed(false)}
+					aria-label='Expand sidebar'
+					className='hidden lg:flex fixed top-4 left-4 z-30 h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-secondary)] shadow-sm transition-all duration-150 hover:text-[var(--color-text-primary)] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]'
+				>
+					<Menu size={18} aria-hidden='true' />
+				</button>
+			)}
 
-      {/* Desktop sidebar */}
-      <div
-        className={`
-          hidden lg:flex h-full overflow-hidden transition-all duration-300 ease-in-out
-          ${collapsed ? 'w-[72px]' : 'w-60'}
-        `}
-      >
-        <SidebarBody
-          {...sharedProps}
-          collapsed={collapsed}
-          isMobile={false}
-          onClose={() => setCollapsed((v) => !v)}
-        />
-      </div>
+			<div
+				className={`
+        hidden lg:flex h-full overflow-hidden transition-all duration-300 ease-in-out
+        ${collapsed ? 'w-[72px]' : 'w-60'}
+      `}
+			>
+				<SidebarBody
+					{...sharedProps}
+					collapsed={collapsed}
+					isMobile={false}
+					onClose={() => setCollapsed((v) => !v)}
+				/>
+			</div>
 
-      {/* Mobile drawer */}
-      {mobileOpen && (
-        <div
-          className={`
-            lg:hidden fixed inset-0 z-40 flex
-            transition-all duration-260
-          `}
-        >
-          <div
-            aria-hidden="true"
-            onClick={closeMobile}
-            className={`
+			{mobileOpen && (
+				<div className='lg:hidden fixed inset-0 z-40 flex'>
+					<div
+						aria-hidden='true'
+						onClick={closeMobile}
+						className={`
               absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-260
               ${mobileClosing ? 'opacity-0' : 'opacity-100'}
             `}
-          />
-          <div
-            className={`
+					/>
+					<div
+						className={`
               relative flex h-full w-72
               transition-transform duration-260 ease-[cubic-bezier(0.22,1,0.36,1)]
               ${mobileClosing ? '-translate-x-full' : 'translate-x-0'}
             `}
-            style={{
-              animation: mobileClosing
-                ? 'none'
-                : 'drawerIn 280ms cubic-bezier(0.22,1,0.36,1) both',
-            }}
-          >
-            <SidebarBody
-              {...sharedProps}
-              collapsed={false}
-              isMobile={true}
-              onClose={closeMobile}
-              showCloseX={true}
-            />
-          </div>
-        </div>
-      )}
+					>
+						<SidebarBody
+							{...sharedProps}
+							collapsed={false}
+							isMobile={true}
+							onClose={closeMobile}
+							showCloseX={true}
+						/>
+					</div>
+				</div>
+			)}
 
-      <style>{`
-        @keyframes drawerIn {
-          from { transform: translateX(-100%); opacity: 0.5; }
-          to   { transform: translateX(0);     opacity: 1;   }
-        }
-      `}</style>
+			<Toast
+				type={toast.type}
+				message={toast.message}
+				isOpen={toast.isOpen}
+				onClose={() => setToast((t) => ({ ...t, isOpen: false }))}
+			/>
 
-      <Toast
-        type={toast.type}
-        message={toast.message}
-        isOpen={toast.isOpen}
-        onClose={() => setToast((t) => ({ ...t, isOpen: false }))}
-      />
-
-      <ConfirmModal
-        isOpen={confirmLogoutOpen}
-        onClose={() => setConfirmLogoutOpen(false)}
-        onConfirm={() => {
-          setConfirmLogoutOpen(false);
-          setToast({ isOpen: true, type: 'success', message: 'Logging out…' });
-          setTimeout(logout, 700);
-        }}
-        title="Log out"
-        message="Are you sure you want to log out?"
-        confirmText="Log out"
-        cancelText="Cancel"
-        type="warning"
-      />
-    </>
-  );
+			<ConfirmModal
+				isOpen={confirmLogoutOpen}
+				onClose={() => setConfirmLogoutOpen(false)}
+				onConfirm={handleConfirmLogout}
+				title='Log out'
+				message='Are you sure you want to log out?'
+				confirmText='Log out'
+				cancelText='Cancel'
+				type='warning'
+			/>
+		</>
+	);
 }
