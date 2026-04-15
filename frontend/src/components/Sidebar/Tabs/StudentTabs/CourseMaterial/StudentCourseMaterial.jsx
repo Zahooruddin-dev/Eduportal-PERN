@@ -209,7 +209,7 @@ export default function StudentCourseMaterial() {
         <header className='mb-6 border-b-2 border-[var(--color-primary)]/20 pb-6 md:mb-8 md:pb-8'>
           <div className='flex items-center gap-3 md:gap-4'>
             <div className='rounded-xl bg-[var(--color-primary)]/10 p-3 md:rounded-2xl md:p-4'>
-              <span className='text-2xl md:text-3xl'>📚</span>
+              <span className='text-2xl font-bold text-[var(--color-primary)] md:text-3xl'>Cs</span>
             </div>
             <div>
               <h1 className='text-2xl font-bold text-[var(--color-text-primary)] md:text-4xl'>Course Materials</h1>
@@ -234,7 +234,7 @@ export default function StudentCourseMaterial() {
         {classes.length === 0 ? (
           <div className='rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-surface)]/50 p-8 text-center md:p-12'>
             <div className='mb-4 inline-block rounded-2xl bg-[var(--color-primary)]/10 p-4'>
-              <span className='text-5xl'>📚</span>
+              <span className='text-5xl font-bold text-[var(--color-primary)]'>Cs</span>
             </div>
             <p className='text-lg font-semibold text-[var(--color-text-primary)]'>
               No Courses Yet
@@ -253,7 +253,7 @@ export default function StudentCourseMaterial() {
                   htmlFor='student-resource-class-selector'
                   className='mb-2 block text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)]'
                 >
-                  🎓 Select Your Course
+                  Select Your Course
                 </label>
                 <div className='relative'>
                   <select
@@ -280,7 +280,7 @@ export default function StudentCourseMaterial() {
               {selectedClass && (
                 <div className='rounded-xl border-2 border-[var(--color-primary)]/30 bg-gradient-to-br from-[var(--color-primary)]/8 via-[var(--color-surface)] to-[var(--color-primary)]/8 p-4 shadow-md md:rounded-2xl md:p-6'>
                   <h3 className='mb-4 text-sm font-bold uppercase tracking-widest text-[var(--color-text-muted)]'>
-                    📚 Course Instructor
+                    Course Instructor
                   </h3>
                   <div className='flex flex-col items-center gap-4 md:flex-row md:items-center md:gap-6'>
                     {/* Avatar Section */}
@@ -308,7 +308,7 @@ export default function StudentCourseMaterial() {
                         {selectedClass.subject || 'Subject'}
                       </p>
                       <p className='mt-2 text-xs text-[var(--color-text-muted)] md:text-sm'>
-                        📍 {selectedClass.room_number ? `Room ${selectedClass.room_number}` : 'Room: TBA'} • 🎓 {selectedClass.grade_level || 'Grade: N/A'}
+                        Room {selectedClass.room_number || 'TBA'} • Grade {selectedClass.grade_level || 'N/A'}
                       </p>
                     </div>
                   </div>
@@ -318,20 +318,20 @@ export default function StudentCourseMaterial() {
               {/* Class Stats Grid */}
               <div className='grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4'>
                 <div className='rounded-xl border-2 border-[var(--color-border)] bg-gradient-to-br from-[var(--color-primary)]/5 to-transparent p-4 text-center shadow-sm transition hover:border-[var(--color-primary)]/50 hover:shadow-md md:rounded-2xl md:p-5'>
-                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>📚 Course Name</p>
+                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>Course Name</p>
                   <p className='mt-2 truncate text-sm font-bold text-[var(--color-primary)] md:text-base'>
                     {selectedClass?.class_name || '-'}
                   </p>
                 </div>
 
                 <div className='rounded-xl border-2 border-[var(--color-border)] bg-gradient-to-br from-blue-500/5 to-transparent p-4 text-center shadow-sm transition hover:border-blue-500/50 hover:shadow-md md:rounded-2xl md:p-5'>
-                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>📦 Total Materials</p>
+                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>Total Materials</p>
                   <p className='mt-2 text-sm font-bold text-blue-600 md:text-base'>{resources.length}</p>
                   <p className='mt-1 text-xs text-[var(--color-text-muted)]'>{filteredResources.length} shown</p>
                 </div>
 
                 <div className='rounded-xl border-2 border-[var(--color-border)] bg-gradient-to-br from-purple-500/5 to-transparent p-4 text-center shadow-sm transition hover:border-purple-500/50 hover:shadow-md md:rounded-2xl md:p-5'>
-                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>📄 Files</p>
+                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>Files</p>
                   <p className='mt-2 text-sm font-bold text-purple-600 md:text-base'>
                     {resources.filter(r => r.type === 'file').length}
                   </p>
@@ -339,7 +339,7 @@ export default function StudentCourseMaterial() {
                 </div>
 
                 <div className='rounded-xl border-2 border-[var(--color-border)] bg-gradient-to-br from-green-500/5 to-transparent p-4 text-center shadow-sm transition hover:border-green-500/50 hover:shadow-md md:rounded-2xl md:p-5'>
-                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>🔗 Links</p>
+                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>Links</p>
                   <p className='mt-2 text-sm font-bold text-green-600 md:text-base'>
                     {resources.filter(r => r.type === 'link').length}
                   </p>
@@ -350,7 +350,7 @@ export default function StudentCourseMaterial() {
               {/* Additional Course Info */}
               <div className='grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4'>
                 <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm md:rounded-2xl md:p-5'>
-                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>⏰ Last Updated</p>
+                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>Last Updated</p>
                   <p className='mt-2 text-sm font-semibold text-[var(--color-text-primary)]'>
                     {resources.length > 0
                       ? formatDate(
@@ -365,7 +365,7 @@ export default function StudentCourseMaterial() {
                 </div>
 
                 <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm md:rounded-2xl md:p-5'>
-                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>👥 Comments</p>
+                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>Comments</p>
                   <p className='mt-2 text-sm font-semibold text-[var(--color-text-primary)]'>
                     {resources.reduce((sum, r) => sum + (r.comment_count || 0), 0)} total discussions
                   </p>
@@ -376,12 +376,9 @@ export default function StudentCourseMaterial() {
             {/* Filters and Search */}
             <div className='mb-6 space-y-4 md:mb-8'>
               <div className='rounded-xl border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm transition hover:shadow-md md:rounded-2xl md:p-5'>
-                <div className='mb-4 flex items-center gap-2'>
-                  <span className='text-lg'>🔎</span>
-                  <h3 className='text-sm font-bold uppercase tracking-widest text-[var(--color-text-muted)]'>
-                    Search & Filter
-                  </h3>
-                </div>
+                <h3 className='mb-4 text-sm font-bold uppercase tracking-widest text-[var(--color-text-muted)]'>
+                  Search & Filter
+                </h3>
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
                   {/* Search */}
                   <div>
@@ -429,9 +426,9 @@ export default function StudentCourseMaterial() {
                       onChange={(event) => setSortBy(event.target.value)}
                       className='w-full rounded-lg border-2 border-[var(--color-border)] bg-[var(--color-input-bg)] px-4 py-2.5 text-sm font-medium text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 md:rounded-xl'
                     >
-                      <option value='newest'>📅 Newest first</option>
-                      <option value='oldest'>📅 Oldest first</option>
-                      <option value='expiring'>⏰ Expiring soon</option>
+                      <option value='newest'>Newest first</option>
+                      <option value='oldest'>Oldest first</option>
+                      <option value='expiring'>Expiring soon</option>
                     </select>
                   </div>
                 </div>
@@ -448,7 +445,7 @@ export default function StudentCourseMaterial() {
                       className='inline-flex items-center gap-2.5 rounded-lg border-2 border-[var(--color-primary)] bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)]/80 px-4 py-2.5 text-sm font-bold text-white shadow-lg transition hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:scale-100 md:rounded-xl md:px-5 md:py-3'
                     >
                       <Download size={18} />
-                      {downloadingAll ? 'Downloading Files...' : '⬇ Download All Files'}
+                      {downloadingAll ? 'Downloading Files...' : 'Download All Files'}
                     </button>
                   )}
                 </div>
@@ -463,7 +460,7 @@ export default function StudentCourseMaterial() {
             ) : resources.length === 0 ? (
               <div className='rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-surface)]/50 p-8 text-center md:p-12'>
                 <div className='mb-4 inline-block rounded-2xl bg-[var(--color-primary)]/10 p-4'>
-                  <span className='text-5xl'>📭</span>
+                  <span className='text-5xl font-bold text-[var(--color-primary)]'>∅</span>
                 </div>
                 <p className='text-lg font-semibold text-[var(--color-text-primary)]'>
                   No Materials Available
@@ -475,7 +472,7 @@ export default function StudentCourseMaterial() {
             ) : filteredResources.length === 0 ? (
               <div className='rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-surface)]/50 p-8 text-center md:p-12'>
                 <div className='mb-4 inline-block rounded-2xl bg-[var(--color-primary)]/10 p-4'>
-                  <span className='text-5xl'>🔍</span>
+                  <span className='text-5xl font-bold text-[var(--color-primary)]'>◯</span>
                 </div>
                 <p className='text-lg font-semibold text-[var(--color-text-primary)]'>
                   No Matches Found
@@ -517,7 +514,7 @@ export default function StudentCourseMaterial() {
                         {/* Tags */}
                         <div className='mt-3.5 flex flex-wrap gap-2'>
                           <span className='inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary)]/15 px-3 py-1.5 text-xs font-bold text-[var(--color-primary)]'>
-                            {resource.type === 'file' ? '📄 File' : '🔗 Link'}
+                            {resource.type === 'file' ? 'File' : 'Link'}
                           </span>
 
                           {resource.tags?.length > 0 &&
