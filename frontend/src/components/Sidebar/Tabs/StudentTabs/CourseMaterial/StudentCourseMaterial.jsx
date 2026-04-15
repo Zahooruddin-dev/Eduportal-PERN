@@ -206,11 +206,18 @@ export default function StudentCourseMaterial() {
     <div className='min-h-screen bg-[var(--color-bg-primary)] p-3 sm:p-4 md:p-6'>
       <div className='mx-auto max-w-6xl'>
         {/* Header */}
-        <header className='mb-6 md:mb-8'>
-          <h1 className='text-2xl font-bold text-[var(--color-text-primary)] md:text-3xl'>Course Materials</h1>
-          <p className='mt-2 text-sm text-[var(--color-text-muted)] md:text-base'>
-            Access files and resources shared by your instructors
-          </p>
+        <header className='mb-6 border-b-2 border-[var(--color-primary)]/20 pb-6 md:mb-8 md:pb-8'>
+          <div className='flex items-center gap-3 md:gap-4'>
+            <div className='rounded-xl bg-[var(--color-primary)]/10 p-3 md:rounded-2xl md:p-4'>
+              <span className='text-2xl md:text-3xl'>📚</span>
+            </div>
+            <div>
+              <h1 className='text-2xl font-bold text-[var(--color-text-primary)] md:text-4xl'>Course Materials</h1>
+              <p className='mt-1 text-sm text-[var(--color-text-muted)] md:text-base'>
+                Access all files and resources shared by your instructors
+              </p>
+            </div>
+          </div>
         </header>
 
         {/* Error Alert */}
@@ -225,9 +232,15 @@ export default function StudentCourseMaterial() {
 
         {/* No Classes State */}
         {classes.length === 0 ? (
-          <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-center md:rounded-2xl md:p-8'>
-            <p className='text-[var(--color-text-muted)]'>
-              You are not enrolled in any classes yet.
+          <div className='rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-surface)]/50 p-8 text-center md:p-12'>
+            <div className='mb-4 inline-block rounded-2xl bg-[var(--color-primary)]/10 p-4'>
+              <span className='text-5xl'>📚</span>
+            </div>
+            <p className='text-lg font-semibold text-[var(--color-text-primary)]'>
+              No Courses Yet
+            </p>
+            <p className='mt-2 text-[var(--color-text-muted)]'>
+              You are not enrolled in any classes yet. Admin will add you to classes soon!
             </p>
           </div>
         ) : (
@@ -235,19 +248,19 @@ export default function StudentCourseMaterial() {
             {/* Class Selection and Info */}
             <div className='mb-6 space-y-4 md:mb-8'>
               {/* Class Selector */}
-              <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm md:rounded-2xl md:p-5'>
+              <div className='rounded-xl border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm transition hover:shadow-md md:rounded-2xl md:p-5'>
                 <label
                   htmlFor='student-resource-class-selector'
-                  className='mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]'
+                  className='mb-2 block text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)]'
                 >
-                  Select Class
+                  🎓 Select Your Course
                 </label>
                 <div className='relative'>
                   <select
                     id='student-resource-class-selector'
                     value={selectedClassId}
                     onChange={handleClassChange}
-                    className='w-full appearance-none rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-4 py-3 text-sm font-medium text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 md:rounded-xl md:px-5 md:py-3'
+                    className='w-full appearance-none rounded-lg border-2 border-[var(--color-border)] bg-[var(--color-input-bg)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 md:rounded-xl md:px-5 md:py-3'
                   >
                     {classes.map((classItem) => (
                       <option key={classItem.id} value={classItem.id}>
@@ -256,8 +269,8 @@ export default function StudentCourseMaterial() {
                     ))}
                   </select>
                   <ChevronDown
-                    size={18}
-                    className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]'
+                    size={20}
+                    className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-primary)]'
                     aria-hidden='true'
                   />
                 </div>
@@ -265,27 +278,38 @@ export default function StudentCourseMaterial() {
 
               {/* Teacher Info Card */}
               {selectedClass && (
-                <div className='rounded-xl border border-[var(--color-border)] bg-gradient-to-r from-[var(--color-primary)]/5 to-[var(--color-primary)]/10 p-4 shadow-sm md:rounded-2xl md:p-5'>
-                  <h3 className='mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--color-text-muted)]'>
-                    Instructor
+                <div className='rounded-xl border-2 border-[var(--color-primary)]/30 bg-gradient-to-br from-[var(--color-primary)]/8 via-[var(--color-surface)] to-[var(--color-primary)]/8 p-4 shadow-md md:rounded-2xl md:p-6'>
+                  <h3 className='mb-4 text-sm font-bold uppercase tracking-widest text-[var(--color-text-muted)]'>
+                    📚 Course Instructor
                   </h3>
-                  <div className='flex flex-col items-start gap-3 sm:flex-row sm:items-center md:gap-4'>
-                    {selectedClass.teacher_profile_pic ? (
-                      <img
-                        src={selectedClass.teacher_profile_pic}
-                        alt='Teacher'
-                        className='h-12 w-12 rounded-full object-cover ring-2 ring-[var(--color-primary)]/30'
-                      />
-                    ) : (
-                      <div className='flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-primary)]/20 text-base font-semibold text-[var(--color-primary)]'>
-                        {selectedClass.teacher_name?.[0]?.toUpperCase() || '?'}
-                      </div>
-                    )}
-                    <div className='flex-1'>
-                      <p className='text-base font-semibold text-[var(--color-text-primary)]'>
+                  <div className='flex flex-col items-center gap-4 md:flex-row md:items-center md:gap-6'>
+                    {/* Avatar Section */}
+                    <div className='relative'>
+                      {selectedClass.teacher_profile_pic ? (
+                        <img
+                          src={selectedClass.teacher_profile_pic}
+                          alt={selectedClass.teacher_name}
+                          className='h-20 w-20 rounded-full object-cover ring-4 ring-[var(--color-primary)]/40 shadow-lg md:h-24 md:w-24'
+                        />
+                      ) : (
+                        <div className='flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary)]/80 text-2xl font-bold text-white ring-4 ring-[var(--color-primary)]/40 shadow-lg md:h-24 md:w-24 md:text-3xl'>
+                          {selectedClass.teacher_name?.[0]?.toUpperCase() || '?'}
+                        </div>
+                      )}
+                      <div className='absolute bottom-0 right-0 h-6 w-6 rounded-full border-2 border-[var(--color-surface)] bg-green-500 md:h-7 md:w-7'></div>
+                    </div>
+                    
+                    {/* Teacher Info */}
+                    <div className='flex-1 text-center md:text-left'>
+                      <p className='text-lg font-bold text-[var(--color-text-primary)] md:text-2xl'>
                         {selectedClass.teacher_name || 'Instructor'}
                       </p>
-                      <p className='text-xs text-[var(--color-text-muted)]'>{selectedClass.subject || 'No subject'}</p>
+                      <p className='mt-1 text-sm font-medium text-[var(--color-primary)] md:text-base'>
+                        {selectedClass.subject || 'Subject'}
+                      </p>
+                      <p className='mt-2 text-xs text-[var(--color-text-muted)] md:text-sm'>
+                        📍 {selectedClass.room_number ? `Room ${selectedClass.room_number}` : 'Room: TBA'} • 🎓 {selectedClass.grade_level || 'Grade: N/A'}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -293,29 +317,57 @@ export default function StudentCourseMaterial() {
 
               {/* Class Stats Grid */}
               <div className='grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4'>
-                <div className='rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-center shadow-sm md:rounded-xl md:p-4'>
-                  <p className='text-xs uppercase tracking-wider text-[var(--color-text-muted)]'>Class</p>
-                  <p className='mt-1 truncate text-sm font-semibold text-[var(--color-text-primary)] md:text-base'>
+                <div className='rounded-xl border-2 border-[var(--color-border)] bg-gradient-to-br from-[var(--color-primary)]/5 to-transparent p-4 text-center shadow-sm transition hover:border-[var(--color-primary)]/50 hover:shadow-md md:rounded-2xl md:p-5'>
+                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>📚 Course Name</p>
+                  <p className='mt-2 truncate text-sm font-bold text-[var(--color-primary)] md:text-base'>
                     {selectedClass?.class_name || '-'}
                   </p>
                 </div>
 
-                <div className='rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-center shadow-sm md:rounded-xl md:p-4'>
-                  <p className='text-xs uppercase tracking-wider text-[var(--color-text-muted)]'>Resources</p>
-                  <p className='mt-1 text-sm font-semibold text-[var(--color-primary)] md:text-base'>{resources.length}</p>
+                <div className='rounded-xl border-2 border-[var(--color-border)] bg-gradient-to-br from-blue-500/5 to-transparent p-4 text-center shadow-sm transition hover:border-blue-500/50 hover:shadow-md md:rounded-2xl md:p-5'>
+                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>📦 Total Materials</p>
+                  <p className='mt-2 text-sm font-bold text-blue-600 md:text-base'>{resources.length}</p>
+                  <p className='mt-1 text-xs text-[var(--color-text-muted)]'>{filteredResources.length} shown</p>
                 </div>
 
-                <div className='rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-center shadow-sm md:rounded-xl md:p-4'>
-                  <p className='text-xs uppercase tracking-wider text-[var(--color-text-muted)]'>Files</p>
-                  <p className='mt-1 text-sm font-semibold text-[var(--color-text-primary)] md:text-base'>
+                <div className='rounded-xl border-2 border-[var(--color-border)] bg-gradient-to-br from-purple-500/5 to-transparent p-4 text-center shadow-sm transition hover:border-purple-500/50 hover:shadow-md md:rounded-2xl md:p-5'>
+                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>📄 Files</p>
+                  <p className='mt-2 text-sm font-bold text-purple-600 md:text-base'>
                     {resources.filter(r => r.type === 'file').length}
+                  </p>
+                  <p className='mt-1 text-xs text-[var(--color-text-muted)]'>downloadable</p>
+                </div>
+
+                <div className='rounded-xl border-2 border-[var(--color-border)] bg-gradient-to-br from-green-500/5 to-transparent p-4 text-center shadow-sm transition hover:border-green-500/50 hover:shadow-md md:rounded-2xl md:p-5'>
+                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>🔗 Links</p>
+                  <p className='mt-2 text-sm font-bold text-green-600 md:text-base'>
+                    {resources.filter(r => r.type === 'link').length}
+                  </p>
+                  <p className='mt-1 text-xs text-[var(--color-text-muted)]'>external</p>
+                </div>
+              </div>
+
+              {/* Additional Course Info */}
+              <div className='grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4'>
+                <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm md:rounded-2xl md:p-5'>
+                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>⏰ Last Updated</p>
+                  <p className='mt-2 text-sm font-semibold text-[var(--color-text-primary)]'>
+                    {resources.length > 0
+                      ? formatDate(
+                          resources.reduce((latest, r) =>
+                            new Date(r.created_at) > new Date(latest.created_at)
+                              ? r
+                              : latest
+                          ).created_at
+                        )
+                      : 'No updates yet'}
                   </p>
                 </div>
 
-                <div className='rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-center shadow-sm md:rounded-xl md:p-4'>
-                  <p className='text-xs uppercase tracking-wider text-[var(--color-text-muted)]'>Links</p>
-                  <p className='mt-1 text-sm font-semibold text-[var(--color-text-primary)] md:text-base'>
-                    {resources.filter(r => r.type === 'link').length}
+                <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm md:rounded-2xl md:p-5'>
+                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>👥 Comments</p>
+                  <p className='mt-2 text-sm font-semibold text-[var(--color-text-primary)]'>
+                    {resources.reduce((sum, r) => sum + (r.comment_count || 0), 0)} total discussions
                   </p>
                 </div>
               </div>
@@ -323,38 +375,44 @@ export default function StudentCourseMaterial() {
 
             {/* Filters and Search */}
             <div className='mb-6 space-y-4 md:mb-8'>
-              <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm md:rounded-2xl md:p-5'>
+              <div className='rounded-xl border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm transition hover:shadow-md md:rounded-2xl md:p-5'>
+                <div className='mb-4 flex items-center gap-2'>
+                  <span className='text-lg'>🔎</span>
+                  <h3 className='text-sm font-bold uppercase tracking-widest text-[var(--color-text-muted)]'>
+                    Search & Filter
+                  </h3>
+                </div>
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
                   {/* Search */}
                   <div>
-                    <label htmlFor='student-resource-search' className='mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]'>
-                      Search
+                    <label htmlFor='student-resource-search' className='mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>
+                      Search Materials
                     </label>
                     <input
                       id='student-resource-search'
                       type='text'
                       value={searchQuery}
                       onChange={(event) => setSearchQuery(event.target.value)}
-                      placeholder='Search materials...'
-                      className='w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-4 py-2.5 text-sm text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)]/50 transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 md:rounded-xl'
+                      placeholder='Type to search...'
+                      className='w-full rounded-lg border-2 border-[var(--color-border)] bg-[var(--color-input-bg)] px-4 py-2.5 text-sm font-medium text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)]/40 transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 md:rounded-xl'
                     />
                   </div>
 
                   {/* Tag Filter */}
                   <div>
-                    <label htmlFor='student-resource-tag-filter' className='mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]'>
-                      Tag Filter
+                    <label htmlFor='student-resource-tag-filter' className='mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>
+                      Filter by Tag
                     </label>
                     <select
                       id='student-resource-tag-filter'
                       value={selectedTag}
                       onChange={(event) => setSelectedTag(event.target.value)}
-                      className='w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-4 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 md:rounded-xl'
+                      className='w-full rounded-lg border-2 border-[var(--color-border)] bg-[var(--color-input-bg)] px-4 py-2.5 text-sm font-medium text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 md:rounded-xl'
                     >
                       <option value='all'>All tags</option>
                       {availableTags.map((tag) => (
                         <option key={tag} value={tag}>
-                          {tag}
+                          #{tag}
                         </option>
                       ))}
                     </select>
@@ -362,33 +420,35 @@ export default function StudentCourseMaterial() {
 
                   {/* Sort */}
                   <div>
-                    <label htmlFor='student-resource-sort' className='mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]'>
-                      Sort
+                    <label htmlFor='student-resource-sort' className='mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>
+                      Sort By
                     </label>
                     <select
                       id='student-resource-sort'
                       value={sortBy}
                       onChange={(event) => setSortBy(event.target.value)}
-                      className='w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-4 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 md:rounded-xl'
+                      className='w-full rounded-lg border-2 border-[var(--color-border)] bg-[var(--color-input-bg)] px-4 py-2.5 text-sm font-medium text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 md:rounded-xl'
                     >
-                      <option value='newest'>Newest first</option>
-                      <option value='oldest'>Oldest first</option>
-                      <option value='expiring'>Expiring soon</option>
+                      <option value='newest'>📅 Newest first</option>
+                      <option value='oldest'>📅 Oldest first</option>
+                      <option value='expiring'>⏰ Expiring soon</option>
                     </select>
                   </div>
                 </div>
 
-                <div className='mt-3 flex items-center justify-between text-xs text-[var(--color-text-muted)]'>
-                  <p>Showing {filteredResources.length} of {resources.length} materials</p>
+                <div className='mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row md:mt-5'>
+                  <p className='text-xs font-semibold text-[var(--color-text-muted)]'>
+                    Showing <span className='font-bold text-[var(--color-primary)]'>{filteredResources.length}</span> of <span className='font-bold text-[var(--color-text-primary)]'>{resources.length}</span> materials
+                  </p>
                   {filteredResources.some(r => r.type === 'file') && (
                     <button
                       type='button'
                       onClick={handleDownloadAll}
                       disabled={downloadingAll}
-                      className='inline-flex items-center gap-1.5 rounded-lg bg-[var(--color-primary)]/10 px-3 py-1.5 text-xs font-medium text-[var(--color-primary)] transition hover:bg-[var(--color-primary)]/20 disabled:opacity-50'
+                      className='inline-flex items-center gap-2.5 rounded-lg border-2 border-[var(--color-primary)] bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)]/80 px-4 py-2.5 text-sm font-bold text-white shadow-lg transition hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:scale-100 md:rounded-xl md:px-5 md:py-3'
                     >
-                      <Download size={14} />
-                      {downloadingAll ? 'Downloading...' : 'Download All Files'}
+                      <Download size={18} />
+                      {downloadingAll ? 'Downloading Files...' : '⬇ Download All Files'}
                     </button>
                   )}
                 </div>
@@ -397,74 +457,90 @@ export default function StudentCourseMaterial() {
 
             {/* Resources List */}
             {loadingResources ? (
-              <div className='flex h-40 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] md:rounded-2xl'>
+              <div className='flex h-40 items-center justify-center rounded-xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-surface)] md:rounded-2xl'>
                 <SpinnerIcon />
               </div>
             ) : resources.length === 0 ? (
-              <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-center md:rounded-2xl md:p-8'>
-                <p className='text-[var(--color-text-muted)]'>No materials available for this class yet.</p>
+              <div className='rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-surface)]/50 p-8 text-center md:p-12'>
+                <div className='mb-4 inline-block rounded-2xl bg-[var(--color-primary)]/10 p-4'>
+                  <span className='text-5xl'>📭</span>
+                </div>
+                <p className='text-lg font-semibold text-[var(--color-text-primary)]'>
+                  No Materials Available
+                </p>
+                <p className='mt-2 text-[var(--color-text-muted)]'>
+                  Your instructor hasn't uploaded any materials for this class yet.
+                </p>
               </div>
             ) : filteredResources.length === 0 ? (
-              <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-center md:rounded-2xl md:p-8'>
-                <p className='text-[var(--color-text-muted)]'>No materials match your current filters.</p>
+              <div className='rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-surface)]/50 p-8 text-center md:p-12'>
+                <div className='mb-4 inline-block rounded-2xl bg-[var(--color-primary)]/10 p-4'>
+                  <span className='text-5xl'>🔍</span>
+                </div>
+                <p className='text-lg font-semibold text-[var(--color-text-primary)]'>
+                  No Matches Found
+                </p>
+                <p className='mt-2 text-[var(--color-text-muted)]'>
+                  No materials match your current search or filter criteria.
+                </p>
               </div>
             ) : (
-              <div className='grid gap-3 md:gap-4'>
+              <div className='grid gap-4 md:gap-5'>
                 {filteredResources.map((resource) => (
                   <article
                     key={resource.id}
-                    className='group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm transition hover:border-[var(--color-primary)]/50 hover:shadow-md md:rounded-2xl md:p-5'
+                    className='group rounded-xl border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm transition hover:border-[var(--color-primary)]/60 hover:shadow-lg hover:-translate-y-1 md:rounded-2xl md:p-6'
                   >
                     {/* Resource Header */}
-                    <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-4'>
+                    <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between'>
                       <div className='flex-1'>
-                        <h3 className='text-base font-semibold text-[var(--color-text-primary)] md:text-lg'>
-                          {resource.title}
-                        </h3>
-
-                        {resource.description && (
-                          <p className='mt-1.5 text-sm text-[var(--color-text-secondary)]'>
-                            {resource.description}
-                          </p>
-                        )}
+                        <div className='flex items-start gap-3'>
+                          <div className='mt-1 rounded-lg bg-[var(--color-primary)]/10 p-2 md:p-2.5'>
+                            {resource.type === 'file' ? (
+                              <FileText size={20} className='text-[var(--color-primary)]' />
+                            ) : (
+                              <LinkIcon size={20} className='text-[var(--color-primary)]' />
+                            )}
+                          </div>
+                          <div className='flex-1'>
+                            <h3 className='text-base font-bold text-[var(--color-text-primary)] md:text-lg'>
+                              {resource.title}
+                            </h3>
+                            {resource.description && (
+                              <p className='mt-1.5 line-clamp-2 text-sm text-[var(--color-text-secondary)]'>
+                                {resource.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
 
                         {/* Tags */}
-                        <div className='mt-2.5 flex flex-wrap gap-2'>
-                          <span className='inline-flex items-center gap-1 rounded-full bg-[var(--color-primary)]/12 px-2.5 py-1 text-xs font-medium text-[var(--color-primary)]'>
-                            {resource.type === 'file' ? (
-                              <>
-                                <FileText size={12} />
-                                File
-                              </>
-                            ) : (
-                              <>
-                                <LinkIcon size={12} />
-                                Link
-                              </>
-                            )}
+                        <div className='mt-3.5 flex flex-wrap gap-2'>
+                          <span className='inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary)]/15 px-3 py-1.5 text-xs font-bold text-[var(--color-primary)]'>
+                            {resource.type === 'file' ? '📄 File' : '🔗 Link'}
                           </span>
 
                           {resource.tags?.length > 0 &&
                             resource.tags.map((tag, index) => (
                               <span
                                 key={`${tag}-${index}`}
-                                className='rounded-full bg-[var(--color-border)] px-2.5 py-1 text-xs font-medium text-[var(--color-text-secondary)]'
+                                className='rounded-full bg-[var(--color-border)]/60 px-3 py-1.5 text-xs font-semibold text-[var(--color-text-secondary)]'
                               >
-                                {tag}
+                                #{tag}
                               </span>
                             ))}
                         </div>
 
                         {/* Metadata */}
-                        <div className='mt-3 flex flex-wrap gap-3 text-xs text-[var(--color-text-muted)]'>
-                          <div className='flex items-center gap-1'>
-                            <Clock size={12} />
-                            Added: {formatDate(resource.created_at)}
+                        <div className='mt-3.5 flex flex-wrap gap-3 text-xs font-medium text-[var(--color-text-muted)]'>
+                          <div className='flex items-center gap-1.5'>
+                            <Clock size={14} className='text-[var(--color-primary)]' />
+                            {formatDate(resource.created_at)}
                           </div>
                           {resource.expires_at && (
-                            <div className='flex items-center gap-1 text-[var(--color-warning)]'>
-                              <Clock size={12} />
-                              Expires: {formatDate(resource.expires_at)}
+                            <div className='flex items-center gap-1.5 rounded-full bg-[var(--color-warning)]/10 px-2.5 py-1 text-[var(--color-warning)]'>
+                              <Clock size={14} />
+                              ⏰ Expires: {formatDate(resource.expires_at)}
                             </div>
                           )}
                         </div>
@@ -472,7 +548,7 @@ export default function StudentCourseMaterial() {
                     </div>
 
                     {/* Actions */}
-                    <div className='mt-4 flex flex-wrap gap-2 md:mt-5'>
+                    <div className='mt-5 flex flex-wrap gap-2 md:mt-6 md:gap-3'>
                       {resource.type === 'file' ? (
                         <button
                           type='button'
@@ -482,21 +558,21 @@ export default function StudentCourseMaterial() {
                               title: resource.title,
                             });
                           }}
-                          className='inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-sm font-medium text-[var(--color-primary)] transition hover:bg-[var(--color-primary)]/5 md:gap-2 md:rounded-xl md:px-4'
+                          className='inline-flex items-center gap-2 rounded-lg border-2 border-[var(--color-primary)] bg-[var(--color-primary)]/5 px-4 py-2.5 text-sm font-bold text-[var(--color-primary)] transition hover:bg-[var(--color-primary)]/15 hover:scale-105 md:rounded-xl md:px-5'
                         >
-                          <FileText size={16} />
-                          <span className='hidden sm:inline'>View</span>File
+                          <FileText size={18} />
+                          <span className='hidden sm:inline'>Preview</span>File
                         </button>
                       ) : (
                         <a
                           href={resource.content}
                           target='_blank'
                           rel='noopener noreferrer'
-                          className='inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-sm font-medium text-[var(--color-primary)] transition hover:bg-[var(--color-primary)]/5 md:gap-2 md:rounded-xl md:px-4'
+                          className='inline-flex items-center gap-2 rounded-lg border-2 border-[var(--color-primary)] bg-[var(--color-primary)]/5 px-4 py-2.5 text-sm font-bold text-[var(--color-primary)] transition hover:bg-[var(--color-primary)]/15 hover:scale-105 md:rounded-xl md:px-5'
                         >
-                          <LinkIcon size={16} />
-                          Open
-                          <ExternalLink size={14} className='hidden sm:inline' />
+                          <LinkIcon size={18} />
+                          Open Link
+                          <ExternalLink size={16} className='hidden sm:inline' />
                         </a>
                       )}
 
@@ -504,9 +580,9 @@ export default function StudentCourseMaterial() {
                         <button
                           type='button'
                           onClick={() => downloadFile(getFileViewUrl(resource.content), resource.title)}
-                          className='inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-sm font-medium text-[var(--color-text-secondary)] transition hover:text-[var(--color-primary)] hover:bg-[var(--color-border)]/50 md:gap-2 md:rounded-xl md:px-4'
+                          className='inline-flex items-center gap-2 rounded-lg border-2 border-[var(--color-text-muted)]/30 bg-[var(--color-text-muted)]/5 px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] transition hover:border-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-primary)] hover:scale-105 md:rounded-xl md:px-5'
                         >
-                          <Download size={16} />
+                          <Download size={18} />
                           <span className='hidden sm:inline'>Download</span>
                         </button>
                       )}
@@ -514,11 +590,11 @@ export default function StudentCourseMaterial() {
                       <button
                         type='button'
                         onClick={() => setShowCommentsFor(resource.id)}
-                        className='inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-sm font-medium text-[var(--color-text-secondary)] transition hover:bg-[var(--color-border)]/50 md:gap-2 md:rounded-xl md:px-4'
+                        className='ml-auto inline-flex items-center gap-2 rounded-lg border-2 border-[var(--color-text-muted)]/30 bg-[var(--color-text-muted)]/5 px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] transition hover:border-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 hover:scale-105 md:rounded-xl md:px-5'
                       >
-                        <MessageSquare size={16} />
+                        <MessageSquare size={18} />
                         <span className='hidden sm:inline'>Comments</span>
-                        <span className='rounded-full bg-[var(--color-primary)]/12 px-2 py-0.5 text-xs font-semibold text-[var(--color-primary)]'>
+                        <span className='rounded-full bg-[var(--color-primary)] px-2.5 py-1 text-xs font-bold text-white'>
                           {resource.comment_count ?? 0}
                         </span>
                       </button>
