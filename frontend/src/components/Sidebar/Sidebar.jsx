@@ -286,10 +286,10 @@ function SidebarBody({
 						<p className='text-sm font-semibold text-[var(--color-text-primary)] truncate leading-tight whitespace-nowrap'>
 							{user?.username}
 						</p>
-						<p className='text-[11px] font-medium text-[var(--color-primary)] capitalize truncate leading-tight whitespace-nowrap'>
+						<p className='text-[11px] font-medium text-[var(--color-primary)] capitalize truncate leading-tight whitespace-nowrap -mt-0.5'>
 							{user?.role}
 						</p>
-						<p className='text-[10px] text-[var(--color-text-muted)] truncate leading-tight whitespace-nowrap mt-0.5'>
+						<p className='text-[10px] text-[var(--color-text-muted)] truncate leading-tight whitespace-nowrap -mt-0.5'>
 							{user?.email}
 						</p>
 					</div>
