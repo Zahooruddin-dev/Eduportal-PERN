@@ -1,6 +1,27 @@
 @import "tailwindcss";
 
 /* =============================================
+   FONTS
+   ============================================= */
+
+/*
+  Font pairing rationale:
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  Fraunces       → Headings   — Variable optical-size serif.     │
+  │                               Scholarly warmth, strong italics. │
+  │                               Feels like a premium textbook.    │
+  │                                                                  │
+  │  Plus Jakarta   → Body       — Modern grotesque. Friendly,      │
+  │  Sans                         readable at all sizes. Not Inter.  │
+  │                                                                  │
+  │  JetBrains Mono → Code       — Purpose-built for readability    │
+  │                               in technical content & education. │
+  └─────────────────────────────────────────────────────────────────┘
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* =============================================
    GLOBAL THEME: EDUCATIONAL PORTAL
    ============================================= */
 
@@ -76,6 +97,43 @@
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
+
+  /* 🔤 TYPOGRAPHY SCALE
+     Use these variables everywhere — never hardcode font-family strings. */
+  --font-display:  "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body:     "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:     "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace;
+
+  /* Font size scale — fluid-friendly, named semantically */
+  --text-xs:   0.75rem;     /* 12px — captions, labels */
+  --text-sm:   0.875rem;    /* 14px — secondary text, metadata */
+  --text-base: 1rem;        /* 16px — body copy */
+  --text-lg:   1.125rem;    /* 18px — lead paragraphs */
+  --text-xl:   1.25rem;     /* 20px — card headings */
+  --text-2xl:  1.5rem;      /* 24px — section titles */
+  --text-3xl:  1.875rem;    /* 30px — page headings */
+  --text-4xl:  2.25rem;     /* 36px — hero headings */
+  --text-5xl:  3rem;        /* 48px — display / marketing */
+
+  /* Font weights */
+  --weight-light:   300;
+  --weight-regular: 400;
+  --weight-medium:  500;
+  --weight-semibold: 600;
+  --weight-bold:    700;
+
+  /* Line heights */
+  --leading-tight:   1.2;   /* Headings */
+  --leading-snug:    1.35;  /* Sub-headings, card titles */
+  --leading-normal:  1.5;   /* Body text */
+  --leading-relaxed: 1.65;  /* Long-form reading */
+  --leading-loose:   1.8;   /* Legibility-first contexts */
+
+  /* Letter spacing */
+  --tracking-tight:  -0.02em;  /* Large display headings */
+  --tracking-normal:  0em;
+  --tracking-wide:    0.03em;  /* Small caps, labels */
+  --tracking-wider:   0.07em;  /* Eyebrow text */
 
   /* ⏱️ TRANSITIONS
      Standardized timing functions. */
@@ -202,11 +260,134 @@ body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text-primary);
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: var(--weight-regular);
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "ss01" 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.5;
+  line-height: var(--leading-normal);
+}
+
+/* =============================================
+   TYPOGRAPHY SYSTEM
+   ============================================= */
+
+/* Display headings — Fraunces at optical size for crisp rendering */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  color: var(--color-text-primary);
+  margin-top: 0;
+  font-optical-sizing: auto;     /* Activates Fraunces' optical-size axis */
+}
+
+h1 {
+  font-size: var(--text-4xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+}
+
+h2 {
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+}
+
+h3 {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+}
+
+h4 {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-medium);
+}
+
+h5, h6 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-medium);
+}
+
+/* Body copy — relaxed leading for comfortable reading */
+p {
+  font-family: var(--font-body);
+  line-height: var(--leading-relaxed);
+  margin-top: 0;
+  margin-bottom: 1em;
+}
+
+/* Lead paragraph — slightly larger, for introductory text */
+.lead {
+  font-size: var(--text-lg);
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-secondary);
+  font-weight: var(--weight-light);
+}
+
+/* Eyebrow / overline text — small caps feel */
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+/* Labels and metadata */
+.label-sm {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-tight);
+}
+
+/* Code and technical content */
+code, kbd, samp, pre {
+  font-family: var(--font-mono);
+  font-size: 0.9em;            /* Mono fonts read large — optically correct */
+}
+
+code {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  padding: 0.15em 0.4em;
+  border-radius: var(--radius-sm);
+}
+
+.dark code {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-subtle);
+}
+
+pre {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  line-height: var(--leading-relaxed);
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+/* Blockquote — Fraunces italic shines here */
+blockquote {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-light);
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-secondary);
+  border-left: 3px solid var(--color-primary);
+  margin: 2rem 0;
+  padding: 0.5rem 0 0.5rem 1.5rem;
 }
 
 /* Improve default focus styles for accessibility */
@@ -224,14 +405,6 @@ body {
 .dark ::selection {
   background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
   color: var(--color-text-primary);
-}
-
-/* Headings inherit weight and spacing naturally */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--color-text-primary);
-  margin-top: 0;
 }
 
 /* Links styled with teal */
