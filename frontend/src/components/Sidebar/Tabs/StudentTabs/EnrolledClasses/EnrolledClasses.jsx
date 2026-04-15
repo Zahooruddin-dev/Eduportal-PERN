@@ -211,6 +211,18 @@ export default function EnrolledClasses() {
 		setSelectedClassForSchedule(null);
 	};
 
+	// Lock body scroll when modal is open
+	useEffect(() => {
+		if (showScheduleModal || showAnnouncementsModal) {
+			document.body.style.overflow = 'hidden';
+		} else {
+			document.body.style.overflow = '';
+		}
+		return () => {
+			document.body.style.overflow = '';
+		};
+	}, [showScheduleModal, showAnnouncementsModal]);
+
 	const cardGridClasses =
 		'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5';
 
@@ -688,7 +700,7 @@ export default function EnrolledClasses() {
 			)}
 
 			{showScheduleModal && selectedClassForSchedule && (
-				<div className='fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4'>
+				<div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
 					<div
 						className='overlay-fade absolute inset-0 bg-black/55 backdrop-blur-[2px]'
 						onClick={closeScheduleModal}
@@ -698,19 +710,20 @@ export default function EnrolledClasses() {
 						role='dialog'
 						aria-modal='true'
 						aria-labelledby='schedule-title'
-						className='fade-scale-in relative z-10 mx-auto w-full overflow-hidden rounded-t-3xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl sm:max-w-2xl sm:rounded-2xl'
+						className='fade-scale-in relative z-10 mx-auto w-full max-w-md overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl'
 					>
-						<div className='px-4 py-4 sm:px-6 sm:py-5 border-b border-[var(--color-border)]'>
-							<div className='flex items-start sm:items-center justify-between gap-4'>
-								<div className='min-w-0'>
+						{/* Header */}
+						<div className='border-b border-[var(--color-border)] bg-gradient-to-r from-[var(--color-primary)]/5 to-transparent px-6 py-5'>
+							<div className='flex items-start justify-between gap-4'>
+								<div className='min-w-0 flex-1'>
 									<h2
 										id='schedule-title'
-										className='text-lg sm:text-xl font-semibold text-[var(--color-text-primary)] truncate'
+										className='text-lg font-bold text-[var(--color-text-primary)] truncate'
 									>
 										{selectedClassForSchedule.class_name}
 									</h2>
-									<p className='mt-0.5 text-sm text-[var(--color-text-muted)]'>
-										Full schedule
+									<p className='mt-1.5 text-sm font-medium text-[var(--color-primary)]'>
+										Full Schedule
 									</p>
 								</div>
 								<button
@@ -735,57 +748,75 @@ export default function EnrolledClasses() {
 								</button>
 							</div>
 						</div>
-						<div className='max-h-[78vh] overflow-y-auto bg-[var(--color-bg)]/30 p-4 sm:p-6'>
+
+						{/* Content */}
+						<div className='max-h-[60vh] overflow-y-auto bg-[var(--color-bg)]/20 p-6'>
 							{getScheduleBlocksFromClass(selectedClassForSchedule).length === 0 ? (
-								<div className='rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] py-12 text-center'>
+								<div className='rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] py-10 text-center'>
+									<svg
+										className='mx-auto h-10 w-10 mb-3 text-[var(--color-text-muted)]/40'
+										fill='none'
+										stroke='currentColor'
+										viewBox='0 0 24 24'
+									>
+										<path
+											strokeLinecap='round'
+											strokeLinejoin='round'
+											strokeWidth='2'
+											d='M12 8v4l3 2m6-11a9 9 0 11-18 0 9 9 0 0118 0z'
+										/>
+									</svg>
 									<p className='text-sm text-[var(--color-text-muted)]'>
-										No schedule listed.
+										No schedule listed
 									</p>
 								</div>
 							) : (
-								<div className='space-y-3'>
+								<div className='space-y-2.5'>
 									{getScheduleBlocksFromClass(selectedClassForSchedule).map((block, index) => (
 										<div
 											key={`${block.day}-${block.start_time}-${index}`}
-											className='group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-[border-color,box-shadow] duration-200 ease-out hover:border-[var(--color-primary)]/30 hover:shadow-sm'
+											className='group relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-all duration-200 ease-out hover:border-[var(--color-primary)]/40 hover:shadow-md'
 										>
-											<div className='flex items-center justify-between gap-3'>
-												<div className='flex-1'>
-													<p className='text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide'>
+											<div className='absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[var(--color-primary)] to-[var(--color-primary-hover)] opacity-0 transition-opacity group-hover:opacity-100' />
+											
+											<div className='flex items-center justify-between gap-3 pl-1'>
+												<div className='flex-1 min-w-0'>
+													<p className='text-xs font-semibold text-[var(--color-primary)] uppercase tracking-widest'>
 														{block.day}
 													</p>
 													<p className='mt-2 text-base font-semibold text-[var(--color-text-primary)]'>
 														{formatTimeRange(block.start_time, block.end_time)}
 													</p>
 												</div>
-												<div className='flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)]'>
+												<div className='flex-shrink-0 flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] group-hover:bg-[var(--color-primary)]/20 transition-colors'>
 													<svg
 														className='h-5 w-5'
-														fill='none'
-														stroke='currentColor'
+														fill='currentColor'
 														viewBox='0 0 24 24'
 													>
-														<path
-															strokeLinecap='round'
-															strokeLinejoin='round'
-															strokeWidth='2'
-															d='M12 8v4l3 2m6-11a9 9 0 11-18 0 9 9 0 0118 0z'
-														/>
+														<path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z' />
 													</svg>
 												</div>
 											</div>
 										</div>
 									))}
-									{selectedClassForSchedule.room_number && (
-										<div className='mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4'>
-											<p className='text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide'>
-												Room
+								</div>
+							)}
+
+							{/* Room Info */}
+							{selectedClassForSchedule.room_number && (
+								<div className='mt-6 pt-6 border-t border-[var(--color-border)]'>
+									<div className='relative overflow-hidden rounded-xl border border-[var(--color-primary)]/25 bg-gradient-to-br from-[var(--color-primary)]/5 to-[var(--color-primary)]/10 p-4'>
+										<div className='absolute top-0 right-0 h-24 w-24 -mr-8 -mt-8 rounded-full bg-[var(--color-primary)]/5' />
+										<div className='relative z-10'>
+											<p className='text-xs font-semibold text-[var(--color-primary)] uppercase tracking-widest'>
+												📍 Location
 											</p>
-											<p className='mt-2 text-base font-semibold text-[var(--color-text-primary)]'>
-												{selectedClassForSchedule.room_number}
+											<p className='mt-2 text-lg font-bold text-[var(--color-text-primary)]'>
+												Room {selectedClassForSchedule.room_number}
 											</p>
 										</div>
-									)}
+									</div>
 								</div>
 							)}
 						</div>
