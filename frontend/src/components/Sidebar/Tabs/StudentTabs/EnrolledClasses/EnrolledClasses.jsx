@@ -16,6 +16,11 @@ import {
 	getScheduleBlocksFromClass,
 } from '../../../../../utils/scheduleUtils';
 
+// Helper function to get avatar initial
+function getAvatarInitial(username) {
+	return String(username || '?').charAt(0).toUpperCase();
+}
+
 export default function EnrolledClasses() {
 	const { user } = useAuth();
 	const [enrolledClasses, setEnrolledClasses] = useState([]);
@@ -258,77 +263,98 @@ export default function EnrolledClasses() {
 					</div>
 
 					{cls.teacher_name && (
-						<p className='mt-2 text-sm text-[var(--color-text-muted)] font-medium'>
-							<span className='text-xs font-semibold text-[var(--color-text-muted)]'>Teacher:</span> {cls.teacher_name}
-						</p>
-					)}
-
-					<div className='mt-3 rounded-xl border border-[var(--color-border)]/80 bg-[var(--color-bg)]/40 p-3 space-y-1.5 text-sm text-[var(--color-text-secondary)]'>
-						{scheduleBlocks.length > 0 ? (
-							<>
-								{scheduleBlocks.slice(0, 2).map((block, index) => (
-									<p
-										key={`${block.day}-${block.start_time}-${index}`}
-										className='flex items-center gap-1.5'
-									>
-										<span className='w-14 text-xs font-semibold text-[var(--color-text-muted)]'>
-											{block.day}
-										</span>
-										<span>
-											{formatTimeRange(block.start_time, block.end_time)}
-										</span>
-									</p>
-								))}
-								{scheduleBlocks.length > 2 && (
-									<p className='pl-[3.8rem] text-xs text-[var(--color-text-muted)]'>
-										+ {scheduleBlocks.length - 2} more sessions
-									</p>
-								)}
-							</>
-						) : (
-							<p className='italic text-[var(--color-text-muted)]'>
-								No schedule listed
-							</p>
-						)}
-						{cls.room_number && (
-							<p className='flex items-center gap-1.5'>
-								<span className='w-14 text-xs font-semibold text-[var(--color-text-muted)]'>
-									Room
-								</span>
-								<span>{cls.room_number}</span>
-							</p>
-						)}
-					</div>
-
-					{!enrolled && cls.description && (
-						<p className='mt-3 text-sm leading-relaxed text-[var(--color-text-muted)] line-clamp-2'>
-							{cls.description}
-						</p>
-					)}
-
-					{cls.meeting_link && (
-						<a
-							href={cls.meeting_link}
-							target='_blank'
-							rel='noreferrer'
-							className='mt-3 inline-flex w-fit items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-xs font-semibold text-[var(--color-primary)] transition-[color,border-color,background-color] duration-200 ease-out hover:border-[var(--color-primary)]/35 hover:bg-[var(--color-primary-soft)]/60 hover:text-[var(--color-primary-hover)]'
-						>
-							<svg
-								className='h-4 w-4'
-								fill='none'
-								stroke='currentColor'
-								viewBox='0 0 24 24'
-							>
-								<path
-									strokeLinecap='round'
-									strokeLinejoin='round'
-									strokeWidth='2'
-									d='M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z'
+					<div className='mt-3 flex items-center gap-2 rounded-lg border border-[var(--color-border)]/60 bg-[var(--color-bg)]/50 p-2.5'>
+						<div className='flex-shrink-0'>
+							{cls.teacher_profile_pic ? (
+								<img
+									src={cls.teacher_profile_pic}
+									alt={cls.teacher_name}
+									className='h-8 w-8 rounded-full object-cover ring-1 ring-[var(--color-border)]'
 								/>
-							</svg>
-							Join meeting
-						</a>
+							) : (
+								<div className='flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-primary)]/40 to-[var(--color-primary)] text-xs font-bold text-white ring-1 ring-[var(--color-primary)]/30'>
+									{getAvatarInitial(cls.teacher_name)}
+								</div>
+							)}
+						</div>
+						<div className='min-w-0 flex-1'>
+							<p className='text-xs font-semibold text-[var(--color-text-muted)] leading-none'>
+								Teacher
+							</p>
+							<p className='truncate text-sm font-medium text-[var(--color-text-primary)]'>
+								{cls.teacher_name}
+							</p>
+						</div>
+					</div>
+				)}
+
+				<div className='mt-3 rounded-xl border border-[var(--color-border)]/80 bg-[var(--color-bg)]/40 p-3 space-y-1.5 text-sm text-[var(--color-text-secondary)]'>
+					{scheduleBlocks.length > 0 ? (
+						<>
+							{scheduleBlocks.slice(0, 2).map((block, index) => (
+								<p
+									key={`${block.day}-${block.start_time}-${index}`}
+									className='flex items-center gap-1.5'
+								>
+									<span className='w-14 text-xs font-semibold text-[var(--color-text-muted)]'>
+										{block.day}
+									</span>
+									<span>
+										{formatTimeRange(block.start_time, block.end_time)}
+									</span>
+								</p>
+							))}
+							{scheduleBlocks.length > 2 && (
+								<p className='pl-[3.8rem] text-xs text-[var(--color-text-muted)]'>
+									+ {scheduleBlocks.length - 2} more sessions
+								</p>
+							)}
+						</>
+					) : (
+						<p className='italic text-[var(--color-text-muted)]'>
+							No schedule listed
+						</p>
 					)}
+					{cls.room_number && (
+						<p className='flex items-center gap-1.5'>
+							<span className='w-14 text-xs font-semibold text-[var(--color-text-muted)]'>
+								Room
+							</span>
+							<span>{cls.room_number}</span>
+						</p>
+					)}
+				</div>
+
+				{!enrolled && cls.description && (
+					<p className='mt-3 text-sm leading-relaxed text-[var(--color-text-muted)] line-clamp-2'>
+						{cls.description}
+					</p>
+				)}
+
+				{cls.meeting_link && (
+					<a
+						href={cls.meeting_link}
+						target='_blank'
+						rel='noreferrer'
+						className='mt-3 inline-flex w-fit items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-xs font-semibold text-[var(--color-primary)] transition-[color,border-color,background-color] duration-200 ease-out hover:border-[var(--color-primary)]/35 hover:bg-[var(--color-primary-soft)]/60 hover:text-[var(--color-primary-hover)]'
+					>
+						<svg
+							className='h-4 w-4'
+							fill='none'
+							stroke='currentColor'
+							viewBox='0 0 24 24'
+						>
+							<path
+								strokeLinecap='round'
+								strokeLinejoin='round'
+								strokeWidth='2'
+								d='M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z'
+							/>
+						</svg>
+						Join meeting
+					</a>
+				)}
+
 
 					{enrolled && cls.enrollment_date && (
 						<p className='mt-3 border-t border-[var(--color-border)] pt-3 text-xs text-[var(--color-text-muted)]'>
