@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fira+Code:wght@400;500;600&display=swap');
+
 @import 'tailwindcss';
 
 /* =============================================
@@ -18,8 +20,6 @@
    └─────────────────────────────────────────────────────────────────┘
 */
 
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fira+Code:wght@400;500;600&display=swap');
-
 /* =============================================
    GLOBAL THEME: MODERN EDITORIAL PORTAL
    ============================================= */
@@ -28,49 +28,51 @@
 :root {
 	/* ✦✦✦ PRIMARY BLUE SYSTEM ✦✦✦
      Fresh, trustworthy, and energetic — not the typical navy or teal. */
-	--color-primary: #3395bc; /* Bold azure blue */
-	--color-primary-hover: #2a7ca0; /* Slightly deeper for hover */
-	--color-primary-soft: #e6f4f9; /* Soft blue wash for backgrounds */
-	--color-primary-muted: #f0f8fc; /* Very light mist */
-	--color-primary-subtle: #7eb9d2; /* Muted blue for subtle accents */
+	--color-primary: #2f88b3; /* Bold azure blue */
+	--color-primary-hover: #266f92; /* Slightly deeper for hover */
+	--color-primary-soft: #e4f2f9; /* Soft blue wash for backgrounds */
+	--color-primary-muted: #eef6fb; /* Very light mist */
+	--color-primary-subtle: #75afcb; /* Muted blue for subtle accents */
 
 	/* 🌫️ NEUTRAL FOUNDATION — Clean, modern grays */
-	--color-bg: #ffffff; /* Pure white background */
-	--color-surface: #f9fafb; /* Off-white for cards */
+	--color-bg: #f3f7fc; /* Pure white background */
+	--color-bg-gradient: linear-gradient(135deg, #f8fbff 0%, #eef4fb 100%);
+	--color-surface: #ffffff; /* Off-white for cards */
 	--color-surface-raised: #ffffff; /* Pure white for elevated elements */
-	--color-input-bg: #ffffff; /* White inputs */
-	--color-border: #e5e7eb; /* Light gray border */
-	--color-border-light: #f3f4f6; /* Faintest separator */
-	--color-border-hover: #d1d5db; /* Slightly darker on hover */
+	--color-input-bg: #f8fbff; /* White inputs */
+	--color-border: #d6e1ec; /* Light gray border */
+	--color-border-light: #e7eef6; /* Faintest separator */
+	--color-border-hover: #b9c8d8; /* Slightly darker on hover */
 
 	/* 📝 TYPOGRAPHY COLORS — High contrast, warm grays */
-	--color-text-primary: #11181c; /* Almost black, slightly cool */
-	--color-text-secondary: #4b5563; /* Accessible gray */
-	--color-text-muted: #6b7280; /* Softer but readable */
-	--color-text-placeholder: #9ca3af;
+	--color-text-primary: #0f1a27; /* Almost black, slightly cool */
+	--color-text-secondary: #3b4c5f; /* Accessible gray */
+	--color-text-muted: #607286; /* Softer but readable */
+	--color-text-placeholder: #8ba0b4;
 	--color-text-inverse: #ffffff;
 
 	/* 🟢 SEMANTIC STATES — Based on user's palette */
-	--color-success: #22946e; /* Deep green */
-	--color-success-hover: #1a7557;
-	--color-success-soft: #e0f2ea;
+	--color-success: #2e9b75; /* Deep green */
+	--color-success-hover: #267f61;
+	--color-success-soft: #e2f5ed;
 
-	--color-danger: #9c2121; /* Deep red */
-	--color-danger-hover: #7a1a1a;
-	--color-danger-soft: #fae6e6;
+	--color-danger: #b33838; /* Deep red */
+	--color-danger-hover: #902d2d;
+	--color-danger-soft: #fdecec;
 
-	--color-warning: #a87a2a; /* Warm amber */
-	--color-warning-hover: #8a631f;
-	--color-warning-soft: #fef2e0;
+	--color-warning: #b7852f; /* Warm amber */
+	--color-warning-hover: #966d26;
+	--color-warning-soft: #fff4e4;
 
-	--color-info: #21498a; /* Deep indigo-blue */
-	--color-info-hover: #1a3a6e;
-	--color-info-soft: #e6edf7;
+	--color-info: #2f5ea8; /* Deep indigo-blue */
+	--color-info-hover: #264d8a;
+	--color-info-soft: #e9effa;
 
 	/* 🏛️ SECONDARY ACCENT — Soft violet for variety */
-	--color-secondary: #8b5cf6; /* Vivid purple */
-	--color-secondary-hover: #7c3aed;
-	--color-secondary-soft: #ede9fe;
+	--color-secondary: #4f7bc4; /* Vivid purple */
+	--color-secondary-hover: #3f68ad;
+	--color-secondary-soft: #e7eefb;
+	color-scheme: light;
 
 	/* 📦 ELEVATION & DEPTH — Soft shadows */
 	--shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.03);
@@ -143,58 +145,60 @@
 /* ----- Dark Mode: "Deep Slate" with blue undertones ----- */
 .dark {
 	/* ✦✦✦ PRIMARY — Brighter blue for dark backgrounds */
-	--color-primary: #6caccb; /* Lively medium blue (clr-primary-a20) */
-	--color-primary-hover: #83b7d2; /* Softer hover */
-	--color-primary-soft: #1e3a4a; /* Deep blue surface for badges */
-	--color-primary-muted: #142d3a80; /* Semi-transparent wash */
-	--color-primary-subtle: #98c3da; /* Muted light blue */
+	--color-primary: #63b0d7; /* Lively medium blue (clr-primary-a20) */
+	--color-primary-hover: #7ac0e1; /* Softer hover */
+	--color-primary-soft: #123043; /* Deep blue surface for badges */
+	--color-primary-muted: #0f2636cc; /* Semi-transparent wash */
+	--color-primary-subtle: #a7d7ec; /* Muted light blue */
 
 	/* 🌑 DARK SURFACES — Based on user's surface palette */
-	--color-bg: #121212; /* Deepest base (clr-surface-a0) */
-	--color-surface: #282828; /* Cards (clr-surface-a10) */
-	--color-surface-raised: #3f3f3f; /* Modals, popovers (clr-surface-a20) */
-	--color-input-bg: #282828; /* Form fields match surface */
-	--color-border: #3f3f3f; /* Visible borders (clr-surface-a20) */
-	--color-border-light: #2a2a2a; /* Faint structural lines */
-	--color-border-hover: #575757; /* Interactive hover (clr-surface-a30) */
+	--color-bg: #0b0f14; /* Deepest base (clr-surface-a0) */
+	--color-bg-gradient: linear-gradient(135deg, #0f1115 0%, #05070a 100%);
+	--color-surface: #111923; /* Cards (clr-surface-a10) */
+	--color-surface-raised: #172332; /* Modals, popovers (clr-surface-a20) */
+	--color-input-bg: #101a26; /* Form fields match surface */
+	--color-border: #273548; /* Visible borders (clr-surface-a20) */
+	--color-border-light: #1d2a3b; /* Faint structural lines */
+	--color-border-hover: #33475f; /* Interactive hover (clr-surface-a30) */
 
 	/* 📝 TYPOGRAPHY — Cool white on dark */
-	--color-text-primary: #eceff4; /* Off-white, comfortable */
-	--color-text-secondary: #cbd5e1; /* Muted blue-gray */
-	--color-text-muted: #94a3b8; /* Accessible gray */
-	--color-text-placeholder: #64748b;
-	--color-text-inverse: #121212; /* Used on light buttons */
+	--color-text-primary: #e8eef5; /* Off-white, comfortable */
+	--color-text-secondary: #c4d1df; /* Muted blue-gray */
+	--color-text-muted: #90a2b8; /* Accessible gray */
+	--color-text-placeholder: #6f8198;
+	--color-text-inverse: #05070a; /* Used on light buttons */
 
 	/* 🟢 SEMANTIC — Brighter variants for dark background */
-	--color-success: #47d5a6; /* Vibrant mint-green (clr-success-a10) */
-	--color-success-hover: #9ae8ce; /* Very light hover */
-	--color-success-soft: #1a3a2e; /* Deep green surface */
+	--color-success: #4ec89e; /* Vibrant mint-green (clr-success-a10) */
+	--color-success-hover: #77dbb9; /* Very light hover */
+	--color-success-soft: #173529; /* Deep green surface */
 
-	--color-danger: #d94a4a; /* Coral-red (clr-danger-a10) */
-	--color-danger-hover: #eb9e9e; /* Light red-pink */
-	--color-danger-soft: #3d1515; /* Deep red surface */
+	--color-danger: #e16868; /* Coral-red (clr-danger-a10) */
+	--color-danger-hover: #ef8f8f; /* Light red-pink */
+	--color-danger-soft: #3b1818; /* Deep red surface */
 
-	--color-warning: #d7ac61; /* Golden amber (clr-warning-a10) */
-	--color-warning-hover: #ecd7b2; /* Pale gold */
-	--color-warning-soft: #332a14; /* Deep amber surface */
+	--color-warning: #e0b36a; /* Golden amber (clr-warning-a10) */
+	--color-warning-hover: #eac68d; /* Pale gold */
+	--color-warning-soft: #3a2d16; /* Deep amber surface */
 
-	--color-info: #4077d1; /* Bright sky blue (clr-info-a10) */
-	--color-info-hover: #92b2e5; /* Light blue */
-	--color-info-soft: #0a1a35; /* Deep navy surface */
+	--color-info: #66a1ff; /* Bright sky blue (clr-info-a10) */
+	--color-info-hover: #90b9ff; /* Light blue */
+	--color-info-soft: #142744; /* Deep navy surface */
 
 	/* 🏛️ SECONDARY — Periwinkle purple for dark mode */
-	--color-secondary: #a78bfa; /* Soft purple */
-	--color-secondary-hover: #c4b5fd; /* Lighter hover */
-	--color-secondary-soft: #2d1b4e; /* Deep purple surface */
+	--color-secondary: #8cb3ff; /* Soft purple */
+	--color-secondary-hover: #a7c5ff; /* Lighter hover */
+	--color-secondary-soft: #1f3150; /* Deep purple surface */
+	color-scheme: dark;
 
 	/* 📦 ELEVATION — Darker, moody shadows */
-	--shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.5);
-	--shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.4);
-	--shadow-md: 0 4px 6px -2px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+	--shadow-xs: 0 1px 2px 0 rgb(3 7 12 / 0.6);
+	--shadow-sm: 0 1px 3px 0 rgb(3 7 12 / 0.65), 0 1px 2px -1px rgb(3 7 12 / 0.55);
+	--shadow-md: 0 4px 10px -2px rgb(3 7 12 / 0.65), 0 2px 4px -2px rgb(3 7 12 / 0.45);
 	--shadow-lg:
-		0 12px 16px -4px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+		0 16px 24px -8px rgb(3 7 12 / 0.7), 0 6px 10px -6px rgb(3 7 12 / 0.55);
 	--shadow-xl:
-		0 20px 24px -4px rgb(0 0 0 / 0.7), 0 8px 8px -4px rgb(0 0 0 / 0.5);
+		0 24px 36px -12px rgb(3 7 12 / 0.78), 0 10px 16px -8px rgb(3 7 12 / 0.6);
 
 	/* Focus rings glow on dark */
 	--shadow-focus:
@@ -237,7 +241,11 @@ body,
 
 body {
 	margin: 0;
-	background: var(--color-bg);
+	background-color: var(--color-bg);
+	background-image: var(--color-bg-gradient);
+	background-repeat: no-repeat;
+	background-size: cover;
+	background-attachment: fixed;
 	color: var(--color-text-primary);
 	font-family: var(--font-body);
 	font-size: var(--text-base);
@@ -249,6 +257,13 @@ body {
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	line-height: var(--leading-normal);
+}
+
+.dark main.min-h-screen.bg-\[var\(--color-bg\)\],
+.dark div.min-h-screen.bg-\[var\(--color-bg\)\],
+.dark div.min-h-\[100dvh\].bg-\[var\(--color-bg\)\],
+.dark div.min-h-full.bg-\[var\(--color-bg\)\] {
+	background-color: transparent;
 }
 
 /* =============================================
