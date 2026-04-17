@@ -1,210 +1,308 @@
 import { createElement, useRef, useEffect, useState, useCallback } from 'react';
 import {
-  Bold, Italic, Underline, Strikethrough,
-  List, ListOrdered, AlignLeft, AlignCenter, AlignRight,
-  Heading1, Heading2, Quote, Minus, RotateCcw, RotateCw,
-  Type,
+	Bold,
+	Italic,
+	Underline,
+	Strikethrough,
+	List,
+	ListOrdered,
+	AlignLeft,
+	AlignCenter,
+	AlignRight,
+	Heading1,
+	Heading2,
+	Quote,
+	Minus,
+	RotateCcw,
+	RotateCw,
+	Type,
 } from 'lucide-react';
 
 function ToolBtn({ icon: Icon, label, onClick, active, disabled }) {
-  return (
-    <button
-      type="button"
-      title={label}
-      disabled={disabled}
-      onMouseDown={(e) => {
-        e.preventDefault();
-        onClick();
-      }}
-      className={`p-1.5 rounded-md transition-colors text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)] disabled:opacity-30 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
-        active ? 'bg-[var(--color-primary)]/15 text-[var(--color-primary)]' : ''
-      }`}
-    >
-      {createElement(Icon, { size: 14, strokeWidth: 2 })}
-    </button>
-  );
+	return (
+		<button
+			type='button'
+			title={label}
+			disabled={disabled}
+			onMouseDown={(e) => {
+				e.preventDefault();
+				onClick();
+			}}
+			className={`p-1.5 rounded-md transition-colors text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)] disabled:opacity-30 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
+				active ? 'bg-[var(--color-primary)]/15 text-[var(--color-primary)]' : ''
+			}`}
+		>
+			{createElement(Icon, { size: 14, strokeWidth: 2 })}
+		</button>
+	);
 }
 
 function Divider() {
-  return <span className="w-px h-5 bg-[var(--color-border)] mx-0.5 shrink-0" />;
+	return <span className='w-px h-5 bg-[var(--color-border)] mx-0.5 shrink-0' />;
 }
 
 function FontSizeSelect({ onChange }) {
-  return (
-    <select
-      title="Font size"
-      defaultValue=""
-      onChange={(e) => {
-        const v = e.target.value;
-        if (v) onChange(v);
-        e.target.value = '';
-      }}
-      onMouseDown={(e) => e.stopPropagation()}
-      className="h-7 text-xs bg-[var(--color-input-bg)] border border-[var(--color-border)] rounded-md px-1 text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] cursor-pointer"
-    >
-      <option value="" disabled>Size</option>
-      {['1','2','3','4','5','6','7'].map((s) => (
-        <option key={s} value={s}>{['8','10','12','14','18','24','36'][+s-1]}px</option>
-      ))}
-    </select>
-  );
+	return (
+		<select
+			title='Font size'
+			defaultValue=''
+			onChange={(e) => {
+				const v = e.target.value;
+				if (v) onChange(v);
+				e.target.value = '';
+			}}
+			onMouseDown={(e) => e.stopPropagation()}
+			className='h-7 text-xs bg-[var(--color-input-bg)] border border-[var(--color-border)] rounded-md px-1 text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] cursor-pointer'
+		>
+			<option value='' disabled>
+				Size
+			</option>
+			{['1', '2', '3', '4', '5', '6', '7'].map((s) => (
+				<option key={s} value={s}>
+					{['8', '10', '12', '14', '18', '24', '36'][+s - 1]}px
+				</option>
+			))}
+		</select>
+	);
 }
 
-export default function AssignmentWriteEditor({ value, onChange, placeholder = 'Start writing your assignment here…', minHeight = 320 }) {
-  const editorRef = useRef(null);
-  const [activeFormats, setActiveFormats] = useState({});
-  const [wordCount, setWordCount] = useState(0);
-  const [charCount, setCharCount] = useState(0);
-  const isMounted = useRef(true);
+export default function AssignmentWriteEditor({
+	value,
+	onChange,
+	placeholder = 'Start writing your assignment here…',
+	minHeight = 320,
+}) {
+	const editorRef = useRef(null);
+	const [activeFormats, setActiveFormats] = useState({});
+	const [wordCount, setWordCount] = useState(0);
+	const [charCount, setCharCount] = useState(0);
+	const isMounted = useRef(true);
 
-  useEffect(() => {
-    isMounted.current = true;
-    return () => { isMounted.current = false; };
-  }, []);
+	useEffect(() => {
+		isMounted.current = true;
+		return () => {
+			isMounted.current = false;
+		};
+	}, []);
 
-  const updateCounts = (text) => {
-    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-    setWordCount(words);
-    setCharCount(text.replace(/\n/g, '').length);
-  };
+	const updateCounts = (text) => {
+		const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+		setWordCount(words);
+		setCharCount(text.replace(/\n/g, '').length);
+	};
 
-  useEffect(() => {
-    if (
-      editorRef.current
-      && typeof value === 'string'
-      && editorRef.current.innerHTML !== value
-    ) {
-      editorRef.current.innerHTML = value;
-    }
-  }, [value]);
+	useEffect(() => {
+		if (
+			editorRef.current &&
+			typeof value === 'string' &&
+			editorRef.current.innerHTML !== value
+		) {
+			editorRef.current.innerHTML = value;
+		}
+	}, [value]);
 
-  const checkActiveFormats = useCallback(() => {
-    try {
-      setActiveFormats({
-        bold: document.queryCommandState('bold'),
-        italic: document.queryCommandState('italic'),
-        underline: document.queryCommandState('underline'),
-        strikeThrough: document.queryCommandState('strikeThrough'),
-        insertUnorderedList: document.queryCommandState('insertUnorderedList'),
-        insertOrderedList: document.queryCommandState('insertOrderedList'),
-        justifyLeft: document.queryCommandState('justifyLeft'),
-        justifyCenter: document.queryCommandState('justifyCenter'),
-        justifyRight: document.queryCommandState('justifyRight'),
-      });
-    } catch {
-      return null;
-    }
-  }, []);
+	const checkActiveFormats = useCallback(() => {
+		try {
+			setActiveFormats({
+				bold: document.queryCommandState('bold'),
+				italic: document.queryCommandState('italic'),
+				underline: document.queryCommandState('underline'),
+				strikeThrough: document.queryCommandState('strikeThrough'),
+				insertUnorderedList: document.queryCommandState('insertUnorderedList'),
+				insertOrderedList: document.queryCommandState('insertOrderedList'),
+				justifyLeft: document.queryCommandState('justifyLeft'),
+				justifyCenter: document.queryCommandState('justifyCenter'),
+				justifyRight: document.queryCommandState('justifyRight'),
+			});
+		} catch {
+			return null;
+		}
+	}, []);
 
-  const exec = useCallback((cmd, value = null) => {
-    editorRef.current?.focus();
-    document.execCommand(cmd, false, value);
-    checkActiveFormats();
-    if (editorRef.current) {
-      onChange?.(editorRef.current.innerHTML);
-    }
-  }, [checkActiveFormats, onChange]);
+	const exec = useCallback(
+		(cmd, value = null) => {
+			editorRef.current?.focus();
+			document.execCommand(cmd, false, value);
+			checkActiveFormats();
+			if (editorRef.current) {
+				onChange?.(editorRef.current.innerHTML);
+			}
+		},
+		[checkActiveFormats, onChange],
+	);
 
-  const handleInput = () => {
-    if (editorRef.current) {
-      onChange?.(editorRef.current.innerHTML);
-      updateCounts(editorRef.current.innerText || '');
-    }
-  };
+	const handleInput = () => {
+		if (editorRef.current) {
+			onChange?.(editorRef.current.innerHTML);
+			updateCounts(editorRef.current.innerText || '');
+		}
+	};
 
-  const handleKeyUp = () => checkActiveFormats();
-  const handleMouseUp = () => checkActiveFormats();
+	const handleKeyUp = () => checkActiveFormats();
+	const handleMouseUp = () => checkActiveFormats();
 
-  const handleKeyDown = (e) => {
-    if (e.ctrlKey || e.metaKey) {
-      switch (e.key.toLowerCase()) {
-        case 'b': e.preventDefault(); exec('bold'); break;
-        case 'i': e.preventDefault(); exec('italic'); break;
-        case 'u': e.preventDefault(); exec('underline'); break;
-        case 'z': e.preventDefault(); exec(e.shiftKey ? 'redo' : 'undo'); break;
-        case 'y': e.preventDefault(); exec('redo'); break;
-        default: break;
-      }
-    }
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      exec('insertHTML', '&nbsp;&nbsp;&nbsp;&nbsp;');
-    }
-  };
+	const handleKeyDown = (e) => {
+		if (e.ctrlKey || e.metaKey) {
+			switch (e.key.toLowerCase()) {
+				case 'b':
+					e.preventDefault();
+					exec('bold');
+					break;
+				case 'i':
+					e.preventDefault();
+					exec('italic');
+					break;
+				case 'u':
+					e.preventDefault();
+					exec('underline');
+					break;
+				case 'z':
+					e.preventDefault();
+					exec(e.shiftKey ? 'redo' : 'undo');
+					break;
+				case 'y':
+					e.preventDefault();
+					exec('redo');
+					break;
+				default:
+					break;
+			}
+		}
+		if (e.key === 'Tab') {
+			e.preventDefault();
+			exec('insertHTML', '&nbsp;&nbsp;&nbsp;&nbsp;');
+		}
+	};
 
-  const insertHR = () => exec('insertHTML', '<hr style="border:none;border-top:1px solid var(--color-border);margin:12px 0"/>');
-  const insertBlockquote = () => exec('formatBlock', 'blockquote');
-  const insertH1 = () => exec('formatBlock', 'h1');
-  const insertH2 = () => exec('formatBlock', 'h2');
-  const insertP  = () => exec('formatBlock', 'p');
+	const insertHR = () =>
+		exec(
+			'insertHTML',
+			'<hr style="border:none;border-top:1px solid var(--color-border);margin:12px 0"/>',
+		);
+	const insertBlockquote = () => exec('formatBlock', 'blockquote');
+	const insertH1 = () => exec('formatBlock', 'h1');
+	const insertH2 = () => exec('formatBlock', 'h2');
+	const insertP = () => exec('formatBlock', 'p');
 
-  const handleBlur = () => {
-    if (editorRef.current && !editorRef.current.innerText.trim()) {
-      editorRef.current.innerHTML = '';
-    }
-  };
+	const handleBlur = () => {
+		if (editorRef.current && !editorRef.current.innerText.trim()) {
+			editorRef.current.innerHTML = '';
+		}
+	};
 
-  return (
-    <div className="flex flex-col rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden focus-within:ring-2 focus-within:ring-[var(--color-primary)]/30 focus-within:border-[var(--color-primary)]/50 transition-all">
+	return (
+		<div className='flex flex-col rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden focus-within:ring-2 focus-within:ring-[var(--color-primary)]/30 focus-within:border-[var(--color-primary)]/50 transition-all'>
+			<div className='flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-[var(--color-border)] bg-[var(--color-input-bg)]/60 sticky top-0 z-10'>
+				<ToolBtn
+					icon={RotateCcw}
+					label='Undo (Ctrl+Z)'
+					onClick={() => exec('undo')}
+				/>
+				<ToolBtn
+					icon={RotateCw}
+					label='Redo (Ctrl+Y)'
+					onClick={() => exec('redo')}
+				/>
+				<Divider />
 
-      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-[var(--color-border)] bg-[var(--color-input-bg)]/60 sticky top-0 z-10">
-        <ToolBtn icon={RotateCcw} label="Undo (Ctrl+Z)" onClick={() => exec('undo')} />
-        <ToolBtn icon={RotateCw}  label="Redo (Ctrl+Y)"  onClick={() => exec('redo')} />
-        <Divider />
+				<ToolBtn icon={Type} label='Paragraph' onClick={insertP} />
+				<ToolBtn icon={Heading1} label='Heading 1' onClick={insertH1} />
+				<ToolBtn icon={Heading2} label='Heading 2' onClick={insertH2} />
+				<Divider />
 
-        <ToolBtn icon={Type}     label="Paragraph"  onClick={insertP}  />
-        <ToolBtn icon={Heading1} label="Heading 1"  onClick={insertH1} />
-        <ToolBtn icon={Heading2} label="Heading 2"  onClick={insertH2} />
-        <Divider />
+				<ToolBtn
+					icon={Bold}
+					label='Bold (Ctrl+B)'
+					onClick={() => exec('bold')}
+					active={activeFormats.bold}
+				/>
+				<ToolBtn
+					icon={Italic}
+					label='Italic (Ctrl+I)'
+					onClick={() => exec('italic')}
+					active={activeFormats.italic}
+				/>
+				<ToolBtn
+					icon={Underline}
+					label='Underline (Ctrl+U)'
+					onClick={() => exec('underline')}
+					active={activeFormats.underline}
+				/>
+				<ToolBtn
+					icon={Strikethrough}
+					label='Strikethrough'
+					onClick={() => exec('strikeThrough')}
+					active={activeFormats.strikeThrough}
+				/>
+				<Divider />
 
-        <ToolBtn icon={Bold}          label="Bold (Ctrl+B)"        onClick={() => exec('bold')}          active={activeFormats.bold} />
-        <ToolBtn icon={Italic}        label="Italic (Ctrl+I)"      onClick={() => exec('italic')}        active={activeFormats.italic} />
-        <ToolBtn icon={Underline}     label="Underline (Ctrl+U)"   onClick={() => exec('underline')}     active={activeFormats.underline} />
-        <ToolBtn icon={Strikethrough} label="Strikethrough"        onClick={() => exec('strikeThrough')} active={activeFormats.strikeThrough} />
-        <Divider />
+				<FontSizeSelect onChange={(v) => exec('fontSize', v)} />
+				<Divider />
 
-        <FontSizeSelect onChange={(v) => exec('fontSize', v)} />
-        <Divider />
+				<ToolBtn
+					icon={List}
+					label='Bullet list'
+					onClick={() => exec('insertUnorderedList')}
+					active={activeFormats.insertUnorderedList}
+				/>
+				<ToolBtn
+					icon={ListOrdered}
+					label='Numbered list'
+					onClick={() => exec('insertOrderedList')}
+					active={activeFormats.insertOrderedList}
+				/>
+				<Divider />
 
-        <ToolBtn icon={List}         label="Bullet list"   onClick={() => exec('insertUnorderedList')} active={activeFormats.insertUnorderedList} />
-        <ToolBtn icon={ListOrdered}  label="Numbered list" onClick={() => exec('insertOrderedList')}  active={activeFormats.insertOrderedList} />
-        <Divider />
+				<ToolBtn
+					icon={AlignLeft}
+					label='Align left'
+					onClick={() => exec('justifyLeft')}
+					active={activeFormats.justifyLeft}
+				/>
+				<ToolBtn
+					icon={AlignCenter}
+					label='Align center'
+					onClick={() => exec('justifyCenter')}
+					active={activeFormats.justifyCenter}
+				/>
+				<ToolBtn
+					icon={AlignRight}
+					label='Align right'
+					onClick={() => exec('justifyRight')}
+					active={activeFormats.justifyRight}
+				/>
+				<Divider />
 
-        <ToolBtn icon={AlignLeft}   label="Align left"   onClick={() => exec('justifyLeft')}   active={activeFormats.justifyLeft} />
-        <ToolBtn icon={AlignCenter} label="Align center" onClick={() => exec('justifyCenter')} active={activeFormats.justifyCenter} />
-        <ToolBtn icon={AlignRight}  label="Align right"  onClick={() => exec('justifyRight')}  active={activeFormats.justifyRight} />
-        <Divider />
+				<ToolBtn icon={Quote} label='Blockquote' onClick={insertBlockquote} />
+				<ToolBtn icon={Minus} label='Divider' onClick={insertHR} />
+			</div>
 
-        <ToolBtn icon={Quote} label="Blockquote" onClick={insertBlockquote} />
-        <ToolBtn icon={Minus} label="Divider"    onClick={insertHR} />
-      </div>
+			<div className='relative flex-1'>
+				<div
+					ref={editorRef}
+					contentEditable
+					suppressContentEditableWarning
+					onInput={handleInput}
+					onKeyDown={handleKeyDown}
+					onKeyUp={handleKeyUp}
+					onMouseUp={handleMouseUp}
+					onBlur={handleBlur}
+					data-placeholder={placeholder}
+					className='assignment-editor outline-none px-5 py-4 text-[var(--color-text-primary)] text-sm leading-relaxed overflow-y-auto'
+					style={{ minHeight }}
+				/>
+			</div>
 
-      <div className="relative flex-1">
-        <div
-          ref={editorRef}
-          contentEditable
-          suppressContentEditableWarning
-          onInput={handleInput}
-          onKeyDown={handleKeyDown}
-          onKeyUp={handleKeyUp}
-          onMouseUp={handleMouseUp}
-          onBlur={handleBlur}
-          data-placeholder={placeholder}
-          className="assignment-editor outline-none px-5 py-4 text-[var(--color-text-primary)] text-sm leading-relaxed overflow-y-auto"
-          style={{ minHeight }}
-        />
-      </div>
+			<div className='flex items-center justify-end gap-4 px-4 py-1.5 border-t border-[var(--color-border)] bg-[var(--color-input-bg)]/40'>
+				<span className='text-xs text-[var(--color-text-muted)]'>
+					{wordCount} {wordCount === 1 ? 'word' : 'words'}
+				</span>
+				<span className='text-xs text-[var(--color-text-muted)]'>
+					{charCount} {charCount === 1 ? 'char' : 'chars'}
+				</span>
+			</div>
 
-      <div className="flex items-center justify-end gap-4 px-4 py-1.5 border-t border-[var(--color-border)] bg-[var(--color-input-bg)]/40">
-        <span className="text-xs text-[var(--color-text-muted)]">
-          {wordCount} {wordCount === 1 ? 'word' : 'words'}
-        </span>
-        <span className="text-xs text-[var(--color-text-muted)]">
-          {charCount} {charCount === 1 ? 'char' : 'chars'}
-        </span>
-      </div>
-
-      <style>{`
+			<style>{`
         .assignment-editor:empty:before {
           content: attr(data-placeholder);
           color: var(--color-text-muted);
@@ -263,6 +361,6 @@ export default function AssignmentWriteEditor({ value, onChange, placeholder = '
           text-decoration: underline;
         }
       `}</style>
-    </div>
-  );
+		</div>
+	);
 }
