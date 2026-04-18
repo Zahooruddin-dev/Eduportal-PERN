@@ -8,7 +8,7 @@ import {
 } from '../../../../../api/api';
 import { SpinnerIcon } from '../../../../Icons/Icon';
 import Toast from '../../../../Toast';
-import ConfirmModal from '../../../../ConfirmModal';
+import EnrollmentConfirmModals from './EnrollmentConfirmModals';
 import {
 	formatTimeRange,
 	getScheduleBlocksFromClass,
@@ -1004,32 +1004,19 @@ export default function EnrolledClasses() {
 				</div>
 			)}
 
-			<ConfirmModal
-				isOpen={confirmOpen}
-				onClose={() => {
+			<EnrollmentConfirmModals
+				confirmOpen={confirmOpen}
+				enrollConfirmOpen={enrollConfirmOpen}
+				onCloseUnenroll={() => {
 					setConfirmOpen(false);
 					setUnenrollTarget(null);
 				}}
-				onConfirm={performUnenroll}
-				title='Unenroll from class'
-				message='Are you sure you want to unenroll from this class?'
-				confirmText='Unenroll'
-				cancelText='Cancel'
-				type='warning'
-			/>
-
-			<ConfirmModal
-				isOpen={enrollConfirmOpen}
-				onClose={() => {
+				onConfirmUnenroll={performUnenroll}
+				onCloseEnroll={() => {
 					setEnrollConfirmOpen(false);
 					setEnrollTarget(null);
 				}}
-				onConfirm={performEnroll}
-				title='Enroll in class'
-				message='Are you sure you want to enroll in this class?'
-				confirmText='Enroll'
-				cancelText='Cancel'
-				type='success'
+				onConfirmEnroll={performEnroll}
 			/>
 		</div>
 	);
