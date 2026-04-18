@@ -107,11 +107,16 @@ function isValidMeetingLink(value) {
 }
 
 async function getClasses(req, res) {
+	const instituteId = req.user?.instituteId;
+	if (!instituteId) {
+		return res.status(403).json({ error: 'User is not linked to an institute.' });
+	}
+
 	try {
-		const classes = await db.getAllClassesQuery();
+		const classes = await db.getAllClassesQuery(instituteId);
 		res.json(classes);
 	} catch {
-		res.status(500).json({ message: 'Internal server error' });
+		res.status(500).json({ error: 'Failed to fetch classes.' });
 	}
 }
 async function createClasses(req, res) {

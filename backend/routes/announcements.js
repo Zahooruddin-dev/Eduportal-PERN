@@ -11,7 +11,7 @@ router.param(
 
 router.post('/', verifyToken, isTeacher, controller.postAnnouncement);
 
-router.get('/', controller.getClassAnnouncements);
+router.get('/', verifyToken, controller.getClassAnnouncements);
 
 router.get('/my', verifyToken, controller.getStudentAnnouncements);
 router.get('/notifications/my', verifyToken, controller.getUserAdminAnnouncements);

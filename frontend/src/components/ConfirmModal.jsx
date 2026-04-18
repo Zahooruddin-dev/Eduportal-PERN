@@ -12,6 +12,9 @@ export default function ConfirmModal({
   cancelText = 'Cancel',
   type = 'danger', // 'danger' or 'warning'
 }) {
+  const titleId = 'confirm-modal-title';
+  const messageId = 'confirm-modal-message';
+
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === 'Escape') onClose();
@@ -35,11 +38,17 @@ export default function ConfirmModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="max-w-md w-full rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] shadow-xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={messageId}
+        className="max-w-md w-full rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] shadow-xl"
+      >
         <div className="flex justify-between items-center p-4 border-b border-[var(--color-border)]">
           <div className="flex items-center gap-2">
             <AlertTriangle className={`h-5 w-5 ${iconColor}`} />
-            <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{title}</h2>
+            <h2 id={titleId} className="text-lg font-semibold text-[var(--color-text-primary)]">{title}</h2>
           </div>
           <button
             onClick={onClose}
@@ -50,7 +59,7 @@ export default function ConfirmModal({
           </button>
         </div>
         <div className="p-4">
-          <p className="text-[var(--color-text-secondary)]">{message}</p>
+          <p id={messageId} className="text-[var(--color-text-secondary)]">{message}</p>
           <div className="mt-6 flex justify-end gap-3">
             <button
               onClick={onClose}

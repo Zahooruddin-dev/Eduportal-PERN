@@ -1,5 +1,6 @@
 const dbAnnounce = require('../db/queryAnnouncements');
 const dbClass = require('../db/queryClasses');
+const pool = require('../db/Pool');
 
 const ADMIN_AUDIENCE_SCOPES = new Set([
 	'all',
@@ -77,7 +78,41 @@ async function postAnnouncement(req, res) {
 
 async function getClassAnnouncements(req, res) {
 	const { classId } = req.params;
+	const requesterId = req.user?.id;
+	const requesterRole = String(req.user?.role || '').toLowerCase();
+	const requesterInstituteId = req.user?.instituteId || null;
+
+	if (!requesterId || !requesterInstituteId) {
+		return res.status(403).json({ error: 'Unauthorized to access class announcements.' });
+	}
+
 	try {
+		const targetClass = await dbClass.getClassByIdQuery(classId);
+		if (!targetClass) {
+			return res.status(404).json({ error: 'Class not found.' });
+		}
+
+		if (targetClass.institute_id !== requesterInstituteId) {
+			return res.status(403).json({ error: 'Unauthorized to access class announcements.' });
+		}
+
+		if (requesterRole === 'teacher' && targetClass.teacher_id !== requesterId) {
+			return res.status(403).json({ error: 'Unauthorized to access class announcements.' });
+		}
+
+		if (requesterRole === 'student') {
+			const enrollmentCheck = await pool.query(
+				`SELECT 1
+				 FROM enrollments
+				 WHERE class_id = $1 AND student_id = $2
+				 LIMIT 1`,
+				[classId, requesterId],
+			);
+			if (!enrollmentCheck.rows.length) {
+				return res.status(403).json({ error: 'Unauthorized to access class announcements.' });
+			}
+		}
+
 		const list = await dbAnnounce.getAnnouncementsByClassQuery(classId);
 		res.status(200).json(list);
 	} catch (err) {

@@ -35,8 +35,17 @@ export default function Toast({ type = 'success', message, isOpen, onClose, dura
     warning: 'text-amber-700 dark:text-amber-300',
   };
 
+  const isUrgent = type === 'error' || type === 'warning';
+  const announcementRole = isUrgent ? 'alert' : 'status';
+  const announcementLive = isUrgent ? 'assertive' : 'polite';
+
   return (
-    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-bottom-2 fade-in duration-300">
+    <div
+      className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-bottom-2 fade-in duration-300"
+      role={announcementRole}
+      aria-live={announcementLive}
+      aria-atomic="true"
+    >
       <div className={`flex items-center gap-3 rounded-xl border p-4 shadow-lg ${bgColors[type]} max-w-sm w-full`}>
         {icons[type]}
         <p className={`text-sm font-medium ${textColors[type]} flex-1`}>{message}</p>

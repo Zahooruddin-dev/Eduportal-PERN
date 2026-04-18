@@ -21,6 +21,10 @@ function getAvatarInitial(username) {
 	return String(username || '?').charAt(0).toUpperCase();
 }
 
+function getApiErrorMessage(error, fallback = 'Something went wrong.') {
+	return error?.response?.data?.message || error?.response?.data?.error || fallback;
+}
+
 export default function EnrolledClasses() {
 	const { user } = useAuth();
 	const [enrolledClasses, setEnrolledClasses] = useState([]);
@@ -52,12 +56,12 @@ export default function EnrolledClasses() {
 		setLoadingEnrolled(true);
 		try {
 			const res = await getStudentEnrolledShedule(user.id);
-			setEnrolledClasses(res.data);
-		} catch {
+			setEnrolledClasses(Array.isArray(res.data) ? res.data : []);
+		} catch (error) {
 			setToast({
 				isOpen: true,
 				type: 'error',
-				message: 'Failed to load enrolled classes',
+				message: getApiErrorMessage(error, 'Failed to load enrolled classes.'),
 			});
 		} finally {
 			setLoadingEnrolled(false);
@@ -68,17 +72,18 @@ export default function EnrolledClasses() {
 		setLoadingAvailable(true);
 		try {
 			const res = await getClasses();
+			const classList = Array.isArray(res.data) ? res.data : [];
 			const enrolledIds = enrolledClasses.map((c) => c.class_id ?? c.id);
-			const filtered = res.data.filter(
+			const filtered = classList.filter(
 				(cls) =>
 					!enrolledIds.includes(cls.id) && !bannedClassIds.includes(cls.id),
 			);
 			setAvailableClasses(filtered);
-		} catch {
+		} catch (error) {
 			setToast({
 				isOpen: true,
 				type: 'error',
-				message: 'Failed to load available classes',
+				message: getApiErrorMessage(error, 'Failed to load available classes.'),
 			});
 		} finally {
 			setLoadingAvailable(false);
@@ -141,7 +146,7 @@ export default function EnrolledClasses() {
 			setEnrollConfirmOpen(false);
 			fetchEnrolled();
 		} catch (err) {
-			const msg = err.response?.data?.message || 'Enrollment failed';
+			const msg = getApiErrorMessage(err, 'Enrollment failed.');
 			setToast({ isOpen: true, type: 'error', message: msg });
 			setEnrollConfirmOpen(false);
 			setEnrollTarget(null);
@@ -165,10 +170,11 @@ export default function EnrolledClasses() {
 				type: 'success',
 				message: 'Successfully unenrolled',
 			});
+			setConfirmOpen(false);
 			setUnenrollTarget(null);
 			fetchEnrolled();
 		} catch (err) {
-			const msg = err.response?.data?.error || 'Unenrollment failed';
+			const msg = getApiErrorMessage(err, 'Unenrollment failed.');
 			setToast({ isOpen: true, type: 'error', message: msg });
 		} finally {
 			setUnenrollingId(null);
@@ -182,12 +188,12 @@ export default function EnrolledClasses() {
 		setLoadingAnnouncements(true);
 		try {
 			const res = await getClassAnnouncements(id);
-			setAnnouncements(res.data);
-		} catch {
+			setAnnouncements(Array.isArray(res.data) ? res.data : []);
+		} catch (error) {
 			setToast({
 				isOpen: true,
 				type: 'error',
-				message: 'Failed to load announcements',
+				message: getApiErrorMessage(error, 'Failed to load announcements.'),
 			});
 		} finally {
 			setLoadingAnnouncements(false);
@@ -209,6 +215,14 @@ export default function EnrolledClasses() {
 	const closeScheduleModal = () => {
 		setShowScheduleModal(false);
 		setSelectedClassForSchedule(null);
+	};
+
+	const handleScheduleKeyDown = (event, cls, hasSchedule) => {
+		if (!hasSchedule) return;
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			handleShowSchedule(cls);
+		}
 	};
 
 	// Lock body scroll when modal is open
@@ -313,8 +327,16 @@ export default function EnrolledClasses() {
 				)}
 
 				<div 
-					className='mt-3 rounded-xl border border-[var(--color-border)]/80 bg-[var(--color-bg)]/40 p-3 space-y-1.5 text-sm text-[var(--color-text-secondary)] cursor-pointer transition-all duration-200 hover:border-[var(--color-border)] hover:bg-[var(--color-bg)]/60 md:cursor-default md:hover:border-[var(--color-border)]/80 md:hover:bg-[var(--color-bg)]/40'
+					className='mt-3 rounded-xl border border-[var(--color-border)]/80 bg-[var(--color-bg)]/40 p-3 space-y-1.5 text-sm text-[var(--color-text-secondary)] transition-all duration-200 hover:border-[var(--color-border)] hover:bg-[var(--color-bg)]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/30'
 					onClick={() => scheduleBlocks.length > 0 && handleShowSchedule(cls)}
+					onKeyDown={(event) => handleScheduleKeyDown(event, cls, scheduleBlocks.length > 0)}
+					role={scheduleBlocks.length > 0 ? 'button' : undefined}
+					tabIndex={scheduleBlocks.length > 0 ? 0 : undefined}
+					aria-label={
+						scheduleBlocks.length > 0
+							? `View full schedule for ${cls.class_name}`
+							: undefined
+					}
 				>
 					{scheduleBlocks.length > 0 ? (
 						<>
@@ -338,7 +360,7 @@ export default function EnrolledClasses() {
 										e.stopPropagation();
 										handleShowSchedule(cls);
 									}}
-									className='pl-[3.8rem] text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors focus:outline-none md:pointer-events-none'
+									className='pl-[3.8rem] text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors focus:outline-none'
 								>
 									+ {scheduleBlocks.length - 2} more sessions
 								</button>
@@ -474,6 +496,9 @@ export default function EnrolledClasses() {
 
 			<div className='sticky top-0 z-10 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-6 shadow-sm'>
 				<div className='relative'>
+					<label htmlFor='enrolled-classes-search' className='sr-only'>
+						Search classes by class name or teacher
+					</label>
 					<svg
 						className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--color-text-muted)] pointer-events-none'
 						fill='none'
@@ -488,6 +513,7 @@ export default function EnrolledClasses() {
 						/>
 					</svg>
 					<input
+						id='enrolled-classes-search'
 						type='text'
 						placeholder='Search classes by name or teacher...'
 						value={searchQuery}
@@ -560,7 +586,7 @@ export default function EnrolledClasses() {
 			<section className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-6'>
 				<SectionHeader
 					title='Available Classes'
-					subtitle='Open classes ready for enrollment based on your current schedule.'
+					subtitle='Open classes available for enrollment in your institute.'
 					count={filteredAvailableClasses.length}
 					tone='success'
 				/>
@@ -810,7 +836,7 @@ export default function EnrolledClasses() {
 										<div className='absolute top-0 right-0 h-24 w-24 -mr-8 -mt-8 rounded-full bg-[var(--color-primary)]/5' />
 										<div className='relative z-10'>
 											<p className='text-xs font-semibold text-[var(--color-primary)] uppercase tracking-widest'>
-												📍 Location
+												Location
 											</p>
 											<p className='mt-2 text-lg font-bold text-[var(--color-text-primary)]'>
 												Room {selectedClassForSchedule.room_number}

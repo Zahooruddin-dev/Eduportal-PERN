@@ -8,7 +8,7 @@ require('dotenv').config;
 
 router.param('id', validateUuidParam('id', 'class id'));
 
-router.get('/', controller.getClasses);
+router.get('/', verifyToken, controller.getClasses);
 router.post('/', verifyToken, isTeacher, controller.createClasses);
 router.get('/mine', verifyToken, isTeacher, controller.getMyClasses);
 router.get('/:id', controller.getSpecificClass);

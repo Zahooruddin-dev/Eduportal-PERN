@@ -1,11 +1,13 @@
 const pool = require('./Pool');
 
-async function getAllClassesQuery() {
+async function getAllClassesQuery(instituteId) {
 	const { rows } = await pool.query(
 		`SELECT c.*, u.username AS teacher_name, u.profile_pic AS teacher_profile_pic
 		 FROM classes c
 		 LEFT JOIN users u ON u.id = c.teacher_id
+		 WHERE c.institute_id = $1
 		 ORDER BY c.class_name ASC`,
+		[instituteId],
 	);
 	return rows;
 }
