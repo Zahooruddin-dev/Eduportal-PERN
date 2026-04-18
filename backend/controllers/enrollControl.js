@@ -483,6 +483,80 @@ async function getBannedClassIdsForStudent(req, res) {
   }
 }
 
+async function getStudentEnrollmentOverview(req, res) {
+  const { id } = req.params;
+  const requesterRole = String(req.user?.role || '').toLowerCase();
+  const requesterInstituteId = req.user?.instituteId || null;
+
+  if (!isUuid(id)) {
+    return res.status(400).json({ error: 'Invalid student id format.' });
+  }
+
+  try {
+    if (!READABLE_STUDENT_ROLES.has(requesterRole)) {
+      return res.status(403).json({ error: 'Unauthorized to access enrollment overview.' });
+    }
+
+    const targetStudent = await getStudentById(id);
+    if (!targetStudent || targetStudent.role !== 'student') {
+      return res.status(404).json({ error: 'Student not found.' });
+    }
+
+    if (requesterRole === 'student') {
+      if (req.user.id !== id) {
+        return res.status(403).json({ error: 'Unauthorized to access enrollment overview.' });
+      }
+    } else {
+      if (!requesterInstituteId || requesterInstituteId !== targetStudent.institute_id) {
+        return res.status(403).json({ error: 'Unauthorized to access enrollment overview.' });
+      }
+
+      if (requesterRole === 'teacher') {
+        const [canReadSchedule, canReadStatus] = await Promise.all([
+          teacherCanAccessStudentSchedule({
+            teacherId: req.user.id,
+            studentId: id,
+            instituteId: requesterInstituteId,
+          }),
+          teacherCanAccessStudentStatus({
+            teacherId: req.user.id,
+            studentId: id,
+            instituteId: requesterInstituteId,
+          }),
+        ]);
+
+        if (!canReadSchedule && !canReadStatus) {
+          return res.status(403).json({ error: 'Unauthorized to access enrollment overview.' });
+        }
+      }
+    }
+
+    const [enrolledClasses, bannedClassIds, classesInInstitute] = await Promise.all([
+      db.getStudentScheduleQuery(id),
+      db.getBannedClassIdsForStudentQuery(id),
+      dbClass.getAllClassesQuery(targetStudent.institute_id),
+    ]);
+
+    const enrolledClassIds = new Set(
+      enrolledClasses.map((classItem) => classItem.class_id || classItem.id),
+    );
+    const bannedClassIdSet = new Set(bannedClassIds);
+    const availableClasses = classesInInstitute.filter(
+      (classItem) =>
+        !enrolledClassIds.has(classItem.id) && !bannedClassIdSet.has(classItem.id),
+    );
+
+    return res.status(200).json({
+      enrolledClasses,
+      bannedClassIds,
+      availableClasses,
+    });
+  } catch (err) {
+    console.error('getStudentEnrollmentOverview error:', err);
+    return res.status(500).json({ error: 'Failed to load enrollment overview.' });
+  }
+}
+
 module.exports = {
   createEnrollment,
   rooster,
@@ -493,4 +567,5 @@ module.exports = {
   unbanStudent,
   getStudentProfileForClass,
   getBannedClassIdsForStudent,
+	getStudentEnrollmentOverview,
 };

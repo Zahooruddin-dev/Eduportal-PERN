@@ -15,6 +15,7 @@ router.get('/class/:classId/student/:studentId/details', verifyToken, isTeacher,
 router.post('/class/:classId/student/:studentId/remove', verifyToken, isTeacher, controller.removeStudentFromClass);
 router.patch('/class/:classId/student/:studentId/unban', verifyToken, isTeacher, controller.unbanStudent);
 router.get('/student/:id', verifyToken, controller.getStudentSchedule);
+router.get('/student/:id/overview', verifyToken, controller.getStudentEnrollmentOverview);
 router.get('/student/:id/banned-classes', verifyToken, controller.getBannedClassIdsForStudent);
 router.delete('/student/:studentId/class/:classId', verifyToken, controller.unenrollStudent);
 

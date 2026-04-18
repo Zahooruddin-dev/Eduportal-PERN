@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../../../../context/AuthContext';
 import {
-	getStudentEnrolledShedule,
-	getStudentBannedClasses,
-	getClasses,
+	getStudentEnrollmentOverview,
 	postEnrollement,
 	unenrollStudent,
 	getClassAnnouncements,
@@ -124,52 +122,25 @@ export default function EnrolledClasses() {
 		[enrolledClasses],
 	);
 
-	const fetchEnrolled = useCallback(async () => {
+	const loadEnrollmentOverview = useCallback(async () => {
 		if (!user?.id) return;
 		setLoadingEnrolled(true);
+		setLoadingAvailable(true);
 		try {
-			const res = await getStudentEnrolledShedule(user.id);
-			setEnrolledClasses(Array.isArray(res.data) ? res.data : []);
+			const res = await getStudentEnrollmentOverview(user.id);
+			const overview = res?.data || {};
+			setEnrolledClasses(Array.isArray(overview.enrolledClasses) ? overview.enrolledClasses : []);
+			setBannedClassIds(Array.isArray(overview.bannedClassIds) ? overview.bannedClassIds : []);
+			setAvailableClasses(Array.isArray(overview.availableClasses) ? overview.availableClasses : []);
 		} catch (error) {
 			setToast({
 				isOpen: true,
 				type: 'error',
-				message: getApiErrorMessage(error, 'Failed to load enrolled classes.'),
+				message: getApiErrorMessage(error, 'Failed to load classes.'),
 			});
 		} finally {
 			setLoadingEnrolled(false);
-		}
-	}, [user?.id]);
-
-	const fetchAvailable = useCallback(async () => {
-		setLoadingAvailable(true);
-		try {
-			const res = await getClasses();
-			const classList = Array.isArray(res.data) ? res.data : [];
-			const enrolledIds = enrolledClasses.map((c) => c.class_id ?? c.id);
-			const filtered = classList.filter(
-				(cls) =>
-					!enrolledIds.includes(cls.id) && !bannedClassIds.includes(cls.id),
-			);
-			setAvailableClasses(filtered);
-		} catch (error) {
-			setToast({
-				isOpen: true,
-				type: 'error',
-				message: getApiErrorMessage(error, 'Failed to load available classes.'),
-			});
-		} finally {
 			setLoadingAvailable(false);
-		}
-	}, [enrolledClasses, bannedClassIds]);
-
-	const fetchBanned = useCallback(async () => {
-		if (!user?.id) return;
-		try {
-			const res = await getStudentBannedClasses(user.id);
-			setBannedClassIds(res.data?.bannedClassIds || []);
-		} catch {
-			setBannedClassIds([]);
 		}
 	}, [user?.id]);
 
@@ -190,15 +161,17 @@ export default function EnrolledClasses() {
 	});
 
 	useEffect(() => {
-		if (user) {
-			fetchEnrolled();
-			fetchBanned();
+		if (user?.id) {
+			loadEnrollmentOverview();
+			return;
 		}
-	}, [user, fetchEnrolled, fetchBanned]);
 
-	useEffect(() => {
-		if (!loadingEnrolled) fetchAvailable();
-	}, [loadingEnrolled, fetchAvailable]);
+		setEnrolledClasses([]);
+		setAvailableClasses([]);
+		setBannedClassIds([]);
+		setLoadingEnrolled(false);
+		setLoadingAvailable(false);
+	}, [user?.id, loadEnrollmentOverview]);
 
 	const requestEnroll = (classId) => {
 		setEnrollTarget(classId);
@@ -217,7 +190,7 @@ export default function EnrolledClasses() {
 			});
 			setEnrollTarget(null);
 			setEnrollConfirmOpen(false);
-			fetchEnrolled();
+			await loadEnrollmentOverview();
 		} catch (err) {
 			const msg = getApiErrorMessage(err, 'Enrollment failed.');
 			setToast({ isOpen: true, type: 'error', message: msg });
@@ -245,7 +218,7 @@ export default function EnrolledClasses() {
 			});
 			setConfirmOpen(false);
 			setUnenrollTarget(null);
-			fetchEnrolled();
+			await loadEnrollmentOverview();
 		} catch (err) {
 			const msg = getApiErrorMessage(err, 'Unenrollment failed.');
 			setToast({ isOpen: true, type: 'error', message: msg });
@@ -701,7 +674,11 @@ export default function EnrolledClasses() {
 			<section className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-6'>
 				<SectionHeader
 					title='Available Classes'
-					subtitle='Open classes with live seat availability and schedule conflict checks.'
+					subtitle={`Open classes with live seat availability and schedule conflict checks.${
+						bannedClassIds.length
+							? ` ${bannedClassIds.length} restricted class${bannedClassIds.length > 1 ? 'es are' : ' is'} hidden from enrollment.`
+							: ''
+					}`}
 					count={filteredAvailableClasses.length}
 					tone='success'
 				/>

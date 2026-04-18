@@ -29,6 +29,10 @@ export const getStudentEnrolledShedule = (id) => {
 	return api.get(`/api/enroll/student/${id}`);
 };
 
+export const getStudentEnrollmentOverview = (id) => {
+  return api.get(`/api/enroll/student/${id}/overview`, { cache: false });
+};
+
 export const getStudentBannedClasses = (id) => {
   return api.get(`/api/enroll/student/${id}/banned-classes`);
 };
