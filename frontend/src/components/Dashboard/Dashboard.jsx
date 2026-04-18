@@ -59,6 +59,9 @@ const AdminReports = lazy(
 const AdminRiskOverview = lazy(
 	() => import('../Sidebar/Tabs/AdminTabs/RiskOverview/AdminRiskOverview'),
 );
+const AdminAcademicCalendar = lazy(
+	() => import('../Sidebar/Tabs/AdminTabs/AcademicCalendar/AdminAcademicCalendar'),
+);
 const ReportCenter = lazy(() => import('../Sidebar/Tabs/Shared/ReportCenter'));
 /* const CommunicationCenter = lazy(() => import('../Sidebar/Tabs/Shared/CommunicationCenter'));
  */ const CommunicationCenter = lazy(
@@ -102,6 +105,7 @@ const ROLE_TAB_CONFIG = {
 		allowed: new Set([
 			'admin-user-management',
 			'admin-risk-overview',
+			'admin-academic-calendar',
 			'admin-announcements',
 			'admin-reports',
 			'profile',
@@ -260,6 +264,8 @@ export default function Dashboard() {
 					return <UserManagement />;
 				case 'admin-risk-overview':
 					return <AdminRiskOverview />;
+				case 'admin-academic-calendar':
+					return <AdminAcademicCalendar />;
 				case 'admin-announcements':
 					return <AdminAnnouncements />;
 				case 'admin-reports':

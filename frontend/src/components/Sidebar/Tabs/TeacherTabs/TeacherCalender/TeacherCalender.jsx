@@ -1,21 +1,49 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Download, ExternalLink, Pencil } from 'lucide-react';
-import { getMyClasses, updateClass } from '../../../../../api/api';
+import { CalendarDays, Copy, Download, ExternalLink, Pencil, RefreshCcw } from 'lucide-react';
+import {
+  createMyCalendarSubscription,
+  downloadMyCalendarIcs,
+  getMyCalendarEvents,
+  getMyCalendarSubscription,
+  getMyClasses,
+  rotateMyCalendarSubscription,
+  updateClass,
+} from '../../../../../api/api';
 import Toast from '../../../../Toast';
 import { SpinnerIcon } from '../../../../Icons/Icon';
 import {
-  buildCalendarEvents,
   buildGoogleCalendarDraftUrl,
   DAY_ORDER,
-  downloadIcsForEvents,
   formatTimeRange,
   groupEventsByDay,
 } from '../../../../../utils/scheduleUtils';
 import ClassEditorModal from '../ScheduleManagement/ClassEditorModal';
 
+function saveBlob(blob, fileName) {
+  const objectUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(objectUrl);
+}
+
 export default function TeacherCalender() {
   const [classes, setClasses] = useState([]);
+  const [classSessions, setClassSessions] = useState([]);
+  const [deadlines, setDeadlines] = useState([]);
+  const [exceptions, setExceptions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [busyAction, setBusyAction] = useState('');
+  const [subscriptionMeta, setSubscriptionMeta] = useState({
+    hasActiveSubscription: false,
+    expiresAt: null,
+    createdAt: null,
+    ttlDays: 90,
+  });
+  const [subscriptionLink, setSubscriptionLink] = useState(null);
   const [toast, setToast] = useState({ isOpen: false, type: 'info', message: '' });
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingClass, setEditingClass] = useState(null);
@@ -24,13 +52,26 @@ export default function TeacherCalender() {
   const loadClasses = async () => {
     setLoading(true);
     try {
-      const response = await getMyClasses();
-      setClasses(response.data || []);
+      const [classesResponse, eventsResponse, subscriptionResponse] = await Promise.all([
+        getMyClasses(),
+        getMyCalendarEvents(),
+        getMyCalendarSubscription(),
+      ]);
+      setClasses(classesResponse.data || []);
+      setClassSessions(eventsResponse.data?.classSessions || []);
+      setDeadlines(eventsResponse.data?.deadlines || []);
+      setExceptions(eventsResponse.data?.exceptions || []);
+      setSubscriptionMeta(subscriptionResponse.data || {
+        hasActiveSubscription: false,
+        expiresAt: null,
+        createdAt: null,
+        ttlDays: 90,
+      });
     } catch (error) {
       setToast({
         isOpen: true,
         type: 'error',
-        message: error.response?.data?.error || 'Failed to load your class calendar.',
+        message: error.response?.data?.message || error.response?.data?.error || 'Failed to load your class calendar.',
       });
     } finally {
       setLoading(false);
@@ -41,12 +82,79 @@ export default function TeacherCalender() {
     loadClasses();
   }, []);
 
-  const events = useMemo(() => buildCalendarEvents(classes), [classes]);
-  const groupedEvents = useMemo(() => groupEventsByDay(events), [events]);
+  const groupedEvents = useMemo(() => groupEventsByDay(classSessions), [classSessions]);
 
   const openGoogleDraft = (eventItem) => {
     const url = buildGoogleCalendarDraftUrl(eventItem);
     window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleDownloadIcs = async () => {
+    setBusyAction('download');
+    try {
+      const response = await downloadMyCalendarIcs();
+      const blob = response.data instanceof Blob
+        ? response.data
+        : new Blob([response.data], { type: 'text/calendar;charset=utf-8' });
+      saveBlob(blob, 'teacher-class-calendar.ics');
+    } catch (error) {
+      setToast({
+        isOpen: true,
+        type: 'error',
+        message: error.response?.data?.message || 'Failed to export calendar.',
+      });
+    } finally {
+      setBusyAction('');
+    }
+  };
+
+  const handleGenerateSubscription = async (rotate = false) => {
+    setBusyAction(rotate ? 'rotate' : 'generate');
+    try {
+      const response = rotate
+        ? await rotateMyCalendarSubscription()
+        : await createMyCalendarSubscription();
+      setSubscriptionLink(response.data);
+      setSubscriptionMeta((current) => ({
+        ...current,
+        hasActiveSubscription: true,
+        expiresAt: response.data?.expiresAt || current.expiresAt,
+        createdAt: response.data?.createdAt || current.createdAt,
+      }));
+      setToast({
+        isOpen: true,
+        type: 'success',
+        message: rotate
+          ? 'Subscription link rotated successfully.'
+          : 'Subscription link generated successfully.',
+      });
+    } catch (error) {
+      setToast({
+        isOpen: true,
+        type: 'error',
+        message: error.response?.data?.message || 'Failed to generate subscription link.',
+      });
+    } finally {
+      setBusyAction('');
+    }
+  };
+
+  const handleCopyLink = async () => {
+    if (!subscriptionLink?.subscribeUrl) return;
+    try {
+      await navigator.clipboard.writeText(subscriptionLink.subscribeUrl);
+      setToast({
+        isOpen: true,
+        type: 'success',
+        message: 'Subscription URL copied to clipboard.',
+      });
+    } catch {
+      setToast({
+        isOpen: true,
+        type: 'error',
+        message: 'Failed to copy subscription URL.',
+      });
+    }
   };
 
   const openEdit = (classId) => {
@@ -103,13 +211,75 @@ export default function TeacherCalender() {
 
         <button
           type='button'
-          onClick={() => downloadIcsForEvents(events, 'teacher-class-calendar.ics')}
-          disabled={events.length === 0}
+          onClick={handleDownloadIcs}
+          disabled={classSessions.length === 0 || busyAction === 'download'}
           className='inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 disabled:cursor-not-allowed disabled:opacity-50'
         >
           <Download size={16} />
-          Export .ics
+          {busyAction === 'download' ? 'Exporting...' : 'Export .ics'}
         </button>
+      </div>
+
+      <div className='mb-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4'>
+        <div className='flex flex-wrap items-center justify-between gap-3'>
+          <div>
+            <p className='text-sm font-semibold text-[var(--color-text-primary)]'>Google Calendar Subscribe</p>
+            <p className='text-xs text-[var(--color-text-muted)]'>
+              Generate a subscription link so Google Calendar stays synced with your classes and deadlines.
+            </p>
+          </div>
+          <div className='flex flex-wrap items-center gap-2'>
+            <button
+              type='button'
+              onClick={() => handleGenerateSubscription(false)}
+              disabled={busyAction === 'generate' || busyAction === 'rotate'}
+              className='inline-flex items-center gap-1 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 disabled:opacity-60'
+            >
+              <ExternalLink size={13} />
+              {busyAction === 'generate' ? 'Generating...' : 'Generate Link'}
+            </button>
+            <button
+              type='button'
+              onClick={() => handleGenerateSubscription(true)}
+              disabled={busyAction === 'generate' || busyAction === 'rotate'}
+              className='inline-flex items-center gap-1 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 disabled:opacity-60'
+            >
+              <RefreshCcw size={13} />
+              {busyAction === 'rotate' ? 'Rotating...' : 'Rotate'}
+            </button>
+          </div>
+        </div>
+
+        <div className='mt-3 text-xs text-[var(--color-text-muted)]'>
+          Active subscription: {subscriptionMeta.hasActiveSubscription ? 'Yes' : 'No'}
+          {subscriptionMeta.expiresAt ? ` • Expires: ${new Date(subscriptionMeta.expiresAt).toLocaleString()}` : ''}
+        </div>
+
+        {subscriptionLink?.subscribeUrl && (
+          <div className='mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-3'>
+            <p className='text-xs font-medium text-[var(--color-text-primary)]'>Subscription URL</p>
+            <p className='mt-1 break-all text-xs text-[var(--color-text-secondary)]'>{subscriptionLink.subscribeUrl}</p>
+            <div className='mt-2 flex flex-wrap gap-2'>
+              <button
+                type='button'
+                onClick={handleCopyLink}
+                className='inline-flex items-center gap-1 rounded-lg border border-[var(--color-border)] px-2.5 py-1 text-xs text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60'
+              >
+                <Copy size={12} />
+                Copy URL
+              </button>
+              {subscriptionLink.webcalUrl && (
+                <a
+                  href={subscriptionLink.webcalUrl}
+                  className='inline-flex items-center gap-1 rounded-lg border border-[var(--color-border)] px-2.5 py-1 text-xs text-[var(--color-primary)] hover:bg-[var(--color-border)]/60'
+                >
+                  <ExternalLink size={12} />
+                  Open webcal link
+                </a>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className='mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3'>
@@ -119,15 +289,15 @@ export default function TeacherCalender() {
         </div>
         <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4'>
           <p className='text-xs uppercase tracking-wide text-[var(--color-text-muted)]'>Weekly Sessions</p>
-          <p className='mt-1 text-2xl font-semibold text-[var(--color-text-primary)]'>{events.length}</p>
+          <p className='mt-1 text-2xl font-semibold text-[var(--color-text-primary)]'>{classSessions.length}</p>
         </div>
         <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4'>
-          <p className='text-xs uppercase tracking-wide text-[var(--color-text-muted)]'>Editing</p>
-          <p className='mt-1 text-sm font-medium text-[var(--color-text-primary)]'>Inline class updates</p>
+          <p className='text-xs uppercase tracking-wide text-[var(--color-text-muted)]'>Deadlines / Exceptions</p>
+          <p className='mt-1 text-sm font-medium text-[var(--color-text-primary)]'>{deadlines.length} / {exceptions.length}</p>
         </div>
       </div>
 
-      {events.length === 0 ? (
+      {classSessions.length === 0 ? (
         <div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center'>
           <CalendarDays className='mx-auto mb-2 text-[var(--color-text-muted)]' size={28} />
           <p className='text-[var(--color-text-muted)]'>No schedule blocks available yet.</p>
@@ -152,7 +322,7 @@ export default function TeacherCalender() {
                         <p className='text-xs text-[var(--color-text-secondary)]'>{eventItem.subject}</p>
                       )}
                       <p className='mt-1 text-xs text-[var(--color-text-muted)]'>
-                        {formatTimeRange(eventItem.start_time, eventItem.end_time)}
+                        {formatTimeRange(eventItem.start_time || eventItem.startTime, eventItem.end_time || eventItem.endTime)}
                       </p>
                       {eventItem.room_number && (
                         <p className='text-xs text-[var(--color-text-muted)]'>Room: {eventItem.room_number}</p>

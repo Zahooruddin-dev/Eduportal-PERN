@@ -145,7 +145,8 @@ async function getClassByIdQuery(id) {
 }
 
 async function deleteClassByIdQuery(id) {
-	await pool.query('DELETE FROM classes WHERE id = $1', [id]);
+	const { rowCount } = await pool.query('DELETE FROM classes WHERE id = $1', [id]);
+	return rowCount;
 }
 
 async function getClassesByTeacherIdQuery(teacherId) {

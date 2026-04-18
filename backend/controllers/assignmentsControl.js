@@ -9,6 +9,68 @@ function isValidUUID(id) {
 		String(id),
 	);
 }
+
+function normalizeDueDate(value) {
+	if (value === undefined || value === null || value === '') return null;
+	const text = String(value).trim();
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
+	return text;
+}
+
+function normalizeDueAt(value) {
+	if (value === undefined || value === null || value === '') return null;
+	const date = new Date(value);
+	if (Number.isNaN(date.getTime())) return null;
+	return date.toISOString();
+}
+
+function resolveDueFields(payload = {}) {
+	const hasDueDate = payload.dueDate !== undefined;
+	const hasDueAt = payload.dueAt !== undefined;
+	if (!hasDueDate && !hasDueAt) {
+		return { dueDate: undefined, dueAt: undefined, error: null };
+	}
+
+	const normalizedDate = normalizeDueDate(payload.dueDate);
+	const normalizedAt = normalizeDueAt(payload.dueAt);
+
+	if (hasDueDate && !normalizedDate) {
+		return { dueDate: null, dueAt: null, error: 'dueDate must be in YYYY-MM-DD format.' };
+	}
+	if (hasDueAt && !normalizedAt) {
+		return { dueDate: null, dueAt: null, error: 'dueAt must be a valid date-time.' };
+	}
+
+	if (normalizedAt) {
+		return {
+			dueDate: normalizedDate || normalizedAt.slice(0, 10),
+			dueAt: normalizedAt,
+			error: null,
+		};
+	}
+
+	if (normalizedDate) {
+		return {
+			dueDate: normalizedDate,
+			dueAt: `${normalizedDate}T23:59:00.000Z`,
+			error: null,
+		};
+	}
+
+	return { dueDate: null, dueAt: null, error: null };
+}
+
+function canManageClass(user, targetClass) {
+	if (!user || !targetClass) return false;
+	if (user.role === 'teacher') {
+		return targetClass.teacher_id === user.id;
+	}
+	if (user.role === 'admin') {
+		return targetClass.institute_id === user.instituteId;
+	}
+	return false;
+}
+
 async function addAttachment(req, res) {
 	const { assignmentId } = req.params;
 	const { title, type, content } = req.body;
@@ -144,12 +206,17 @@ async function getSubmissionsForTeacher(req, res) {
 	const { assignmentId } = req.params;
 	if (!isValidUUID(assignmentId))
 		return res.status(400).json({ error: 'Invalid or missing assignmentId' });
-	// teacher only – check permission via assignment's class
 	try {
+		const assignment = await db.getAssignmentByIdQuery(assignmentId);
+		if (!assignment)
+			return res.status(404).json({ error: 'Assignment not found' });
+		const targetClass = await dbClass.getClassByIdQuery(assignment.class_id);
+		if (!canManageClass(req.user, targetClass)) {
+			return res.status(403).json({ error: 'Unauthorized' });
+		}
+
 		const submissions =
 			await db.getSubmissionsByAssignmentQuery(assignmentId);
-		// Also include existing grades from `grades` table for each student
-		// We can merge later in frontend, or here
 		const grades = await db.getGradesForAssignmentQuery(assignmentId);
 		const gradeMap = {};
 		grades.forEach((g) => (gradeMap[g.student_id] = g));
@@ -191,10 +258,9 @@ async function getAssignments(req, res) {
 	if (!isValidUUID(classId))
 		return res.status(400).json({ error: 'Invalid or missing classId' });
 	try {
-		// Check teacher permission (if user is teacher, ensure they teach this class)
-		if (req.user.role === 'teacher') {
+		if (req.user.role === 'teacher' || req.user.role === 'admin') {
 			const targetClass = await dbClass.getClassByIdQuery(classId);
-			if (!targetClass || targetClass.teacher_id !== req.user.id) {
+			if (!canManageClass(req.user, targetClass)) {
 				return res.status(403).json({ error: 'Unauthorized' });
 			}
 		}
@@ -210,13 +276,18 @@ async function createAssignment(req, res) {
 	const { classId } = req.params;
 	if (!isValidUUID(classId))
 		return res.status(400).json({ error: 'Invalid or missing classId' });
-	const { title, description, type, maxScore, dueDate } = req.body;
+	const { title, description, type, maxScore } = req.body;
 	if (!title || maxScore === undefined) {
 		return res.status(400).json({ error: 'Title and max score required' });
 	}
 	try {
+		const dueFields = resolveDueFields(req.body);
+		if (dueFields.error) {
+			return res.status(400).json({ error: dueFields.error });
+		}
+
 		const targetClass = await dbClass.getClassByIdQuery(classId);
-		if (!targetClass || targetClass.teacher_id !== req.user.id) {
+		if (!canManageClass(req.user, targetClass)) {
 			return res.status(403).json({ error: 'Unauthorized' });
 		}
 		const assignment = await db.createAssignmentQuery({
@@ -225,7 +296,8 @@ async function createAssignment(req, res) {
 			description,
 			type: type || 'assignment',
 			maxScore,
-			dueDate,
+			dueDate: dueFields.dueDate || null,
+			dueAt: dueFields.dueAt || null,
 		});
 		res.status(201).json(assignment);
 	} catch (err) {
@@ -238,23 +310,32 @@ async function updateAssignment(req, res) {
 	const { assignmentId } = req.params;
 	if (!isValidUUID(assignmentId))
 		return res.status(400).json({ error: 'Invalid or missing assignmentId' });
-	const { title, description, type, maxScore, dueDate } = req.body;
+	const { title, description, type, maxScore } = req.body;
 	try {
+		const existing = await db.getAssignmentByIdQuery(assignmentId);
+		if (!existing)
+			return res.status(404).json({ error: 'Assignment not found' });
+
+		const targetClass = await dbClass.getClassByIdQuery(existing.class_id);
+		if (!canManageClass(req.user, targetClass)) {
+			return res.status(403).json({ error: 'Unauthorized' });
+		}
+
+		const dueFields = resolveDueFields(req.body);
+		if (dueFields.error) {
+			return res.status(400).json({ error: dueFields.error });
+		}
+
 		const assignment = await db.updateAssignmentQuery(assignmentId, {
 			title,
 			description,
 			type,
 			maxScore,
-			dueDate,
+			dueDate: dueFields.dueDate,
+			dueAt: dueFields.dueAt,
 		});
 		if (!assignment)
 			return res.status(404).json({ error: 'Assignment not found' });
-		// Ensure teacher owns the class (via assignment's class)
-		const classId = assignment.class_id;
-		const targetClass = await dbClass.getClassByIdQuery(classId);
-		if (!targetClass || targetClass.teacher_id !== req.user.id) {
-			return res.status(403).json({ error: 'Unauthorized' });
-		}
 		res.json(assignment);
 	} catch (err) {
 		console.error(err);
@@ -267,19 +348,11 @@ async function deleteAssignment(req, res) {
 	if (!isValidUUID(assignmentId))
 		return res.status(400).json({ error: 'Invalid or missing assignmentId' });
 	try {
-		// Fetch assignment first to check permission
 		const assignment = await db.getAssignmentByIdQuery(assignmentId);
 		if (!assignment)
 			return res.status(404).json({ error: 'Assignment not found' });
-		const rows = await pool.query(
-			'SELECT class_id FROM assignments WHERE id = $1',
-			[assignmentId],
-		);
-		if (rows.rows.length === 0)
-			return res.status(404).json({ error: 'Assignment not found' });
-		const classId = rows.rows[0].class_id;
-		const targetClass = await dbClass.getClassByIdQuery(classId);
-		if (!targetClass || targetClass.teacher_id !== req.user.id) {
+		const targetClass = await dbClass.getClassByIdQuery(assignment.class_id);
+		if (!canManageClass(req.user, targetClass)) {
 			return res.status(403).json({ error: 'Unauthorized' });
 		}
 		const deleted = await db.deleteAssignmentQuery(assignmentId);
@@ -297,6 +370,13 @@ async function getAssignmentGrades(req, res) {
 	if (!isValidUUID(assignmentId))
 		return res.status(400).json({ error: 'Invalid or missing assignmentId' });
 	try {
+		const assignment = await db.getAssignmentByIdQuery(assignmentId);
+		if (!assignment)
+			return res.status(404).json({ error: 'Assignment not found' });
+		const targetClass = await dbClass.getClassByIdQuery(assignment.class_id);
+		if (!canManageClass(req.user, targetClass)) {
+			return res.status(403).json({ error: 'Unauthorized' });
+		}
 		const grades = await db.getGradesForAssignmentQuery(assignmentId);
 		res.json(grades);
 	} catch (err) {
@@ -314,7 +394,6 @@ async function submitGrades(req, res) {
 	try {
 		if (!isValidUUID(assignmentId))
 			return res.status(400).json({ error: 'Invalid or missing assignmentId' });
-		// Verify assignment exists and teacher has permission (using assignment's class)
 		const rows = await pool.query(
 			'SELECT class_id, max_score FROM assignments WHERE id = $1',
 			[assignmentId],
@@ -324,7 +403,7 @@ async function submitGrades(req, res) {
 		const classId = rows.rows[0].class_id;
 		const assignmentMaxScore = rows.rows[0].max_score;
 		const targetClass = await dbClass.getClassByIdQuery(classId);
-		if (!targetClass || targetClass.teacher_id !== req.user.id) {
+		if (!canManageClass(req.user, targetClass)) {
 			return res.status(403).json({ error: 'Unauthorized' });
 		}
 

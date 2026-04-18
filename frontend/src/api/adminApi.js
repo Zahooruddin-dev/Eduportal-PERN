@@ -57,3 +57,35 @@ export const deleteAdminAnnouncement = (announcementId) => {
 export const linkParentStudent = (parentUserId, payload) => {
 	return api.patch(`/api/admin/parents/${parentUserId}/link-student`, payload);
 };
+
+export const listAcademicTerms = () => {
+	return api.get('/api/admin/academic/terms');
+};
+
+export const createAcademicTerm = (payload) => {
+	return api.post('/api/admin/academic/terms', payload);
+};
+
+export const updateAcademicTerm = (termId, payload) => {
+	return api.patch(`/api/admin/academic/terms/${termId}`, payload);
+};
+
+export const deleteAcademicTerm = (termId) => {
+	return api.delete(`/api/admin/academic/terms/${termId}`);
+};
+
+export const listAcademicExceptions = (params = {}) => {
+	return api.get('/api/admin/academic/exceptions', { params });
+};
+
+export const createAcademicException = (payload) => {
+	return api.post('/api/admin/academic/exceptions', payload);
+};
+
+export const updateAcademicException = (exceptionId, payload) => {
+	return api.patch(`/api/admin/academic/exceptions/${exceptionId}`, payload);
+};
+
+export const deleteAcademicException = (exceptionId) => {
+	return api.delete(`/api/admin/academic/exceptions/${exceptionId}`);
+};

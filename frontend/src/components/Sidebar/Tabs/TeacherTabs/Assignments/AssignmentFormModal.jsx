@@ -12,7 +12,12 @@ export default function AssignmentFormModal({
 		description: initialData?.description || '',
 		type: initialData?.type || 'assignment',
 		maxScore: initialData?.max_score || 100,
-		dueDate: initialData?.due_date ? initialData.due_date.split('T')[0] : '',
+		dueDate: (initialData?.due_at || initialData?.due_date)
+			? String(initialData.due_at || initialData.due_date).split('T')[0]
+			: '',
+		dueTime: initialData?.due_at
+			? new Date(initialData.due_at).toISOString().slice(11, 16)
+			: '23:59',
 	}));
 	const [formError, setFormError] = useState('');
 
@@ -75,12 +80,19 @@ export default function AssignmentFormModal({
 			return;
 		}
 
+		const hasDueDate = Boolean(form.dueDate);
+		const selectedDueTime = form.dueTime || '23:59';
+		const dueAt = hasDueDate
+			? new Date(`${form.dueDate}T${selectedDueTime}:00`).toISOString()
+			: null;
+
 		const assignmentData = {
 			title: form.title.trim(),
 			description: form.description.trim(),
 			type: form.type,
 			maxScore: parseFloat(form.maxScore),
-			dueDate: form.dueDate || null,
+			dueDate: hasDueDate ? form.dueDate : null,
+			dueAt,
 		};
 		onSubmit({ assignmentData, attachments });
 	};
@@ -137,7 +149,7 @@ export default function AssignmentFormModal({
 								/>
 							</div>
 
-							<div className='grid grid-cols-1 gap-3 sm:grid-cols-3'>
+							<div className='grid grid-cols-1 gap-3 sm:grid-cols-4'>
 								<div>
 									<label className='mb-1 block text-sm font-medium text-[var(--color-text-primary)]'>Type</label>
 									<select
@@ -171,6 +183,17 @@ export default function AssignmentFormModal({
 										value={form.dueDate}
 										onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
 										className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25'
+									/>
+								</div>
+
+								<div>
+									<label className='mb-1 block text-sm font-medium text-[var(--color-text-primary)]'>Due Time</label>
+									<input
+										type='time'
+										value={form.dueTime}
+										onChange={(e) => setForm({ ...form, dueTime: e.target.value })}
+										disabled={!form.dueDate}
+										className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 disabled:opacity-60'
 									/>
 								</div>
 							</div>

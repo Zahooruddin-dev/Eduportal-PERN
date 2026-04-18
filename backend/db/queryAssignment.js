@@ -27,26 +27,29 @@ async function deleteAttachmentQuery(attachmentId, assignmentId) {
 
 // Assignment CRUD
 async function createAssignmentQuery(assignment) {
-	const { classId, title, description, type, maxScore, dueDate } = assignment;
+	const { classId, title, description, type, maxScore, dueDate, dueAt } = assignment;
 	const { rows } = await pool.query(
-		`INSERT INTO assignments (class_id, title, description, type, max_score, due_date)
-         VALUES ($1, $2, $3, $4, $5, $6)
+		`INSERT INTO assignments (class_id, title, description, type, max_score, due_date, due_at)
+	         VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING *`,
-		[classId, title, description, type, maxScore, dueDate || null],
+		[classId, title, description, type, maxScore, dueDate || null, dueAt || null],
 	);
 	return rows[0];
 }
 
 async function getAssignmentsByClassQuery(classId) {
 	const { rows } = await pool.query(
-		`SELECT * FROM assignments WHERE class_id = $1 ORDER BY due_date ASC, created_at ASC`,
+		`SELECT *
+		 FROM assignments
+		 WHERE class_id = $1
+		 ORDER BY COALESCE(due_at, due_date::timestamp) ASC, created_at ASC`,
 		[classId],
 	);
 	return rows;
 }
 
 async function updateAssignmentQuery(id, updates) {
-	const { title, description, type, maxScore, dueDate } = updates;
+	const { title, description, type, maxScore, dueDate, dueAt } = updates;
 	const { rows } = await pool.query(
 		`UPDATE assignments
          SET title = COALESCE($1, title),
@@ -54,10 +57,11 @@ async function updateAssignmentQuery(id, updates) {
              type = COALESCE($3, type),
              max_score = COALESCE($4, max_score),
              due_date = COALESCE($5, due_date),
+             due_at = COALESCE($6, due_at),
              updated_at = NOW()
-         WHERE id = $6
+         WHERE id = $7
          RETURNING *`,
-		[title, description, type, maxScore, dueDate, id],
+		[title, description, type, maxScore, dueDate, dueAt, id],
 	);
 	return rows[0];
 }
@@ -172,7 +176,7 @@ async function getGradesForAssignmentQuery(assignmentId) {
 
 async function getGradesForStudentQuery(studentId) {
 	const { rows } = await pool.query(
-		`SELECT a.class_id, a.title as assignment_title, a.type, a.max_score, a.due_date,
+		`SELECT a.class_id, a.title as assignment_title, a.type, a.max_score, a.due_date, a.due_at,
 		        g.grade AS score,
 				COALESCE(g.max_grade, a.max_score) AS max_grade,
 				g.feedback,
@@ -180,7 +184,7 @@ async function getGradesForStudentQuery(studentId) {
          FROM grades g
 		 JOIN assignments a ON g.assignment_id::text = a.id::text
 		 WHERE g.student_id::text = $1::text
-         ORDER BY a.due_date DESC`,
+	         ORDER BY COALESCE(a.due_at, a.due_date::timestamp) DESC`,
 		[studentId],
 	);
 	return rows;
@@ -188,7 +192,7 @@ async function getGradesForStudentQuery(studentId) {
 
 async function getStudentGradesForClassQuery(studentId, classId) {
 	const { rows } = await pool.query(
-		`SELECT a.id as assignment_id, a.title, a.type, a.max_score, a.due_date,
+		`SELECT a.id as assignment_id, a.title, a.type, a.max_score, a.due_date, a.due_at,
 		        g.grade AS score,
 				g.feedback,
 				g.max_grade
@@ -197,7 +201,7 @@ async function getStudentGradesForClassQuery(studentId, classId) {
 			ON g.assignment_id::text = a.id::text
 			AND g.student_id::text = $1::text
 		 WHERE a.class_id::text = $2::text
-         ORDER BY a.due_date ASC`,
+	         ORDER BY COALESCE(a.due_at, a.due_date::timestamp) ASC`,
 		[studentId, classId],
 	);
 	return rows;

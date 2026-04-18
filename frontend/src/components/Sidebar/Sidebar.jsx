@@ -76,6 +76,7 @@ const parentNavItems = [
 const adminNavItems = [
 	{ id: 'admin-user-management', label: 'User Management', icon: Users },
 	{ id: 'admin-risk-overview', label: 'Risk Overview', icon: BarChart },
+	{ id: 'admin-academic-calendar', label: 'Academic Calendar', icon: Calendar },
 	{ id: 'admin-announcements', label: 'Announcements', icon: Megaphone },
 	{ id: 'admin-reports', label: 'Reports', icon: FileText },
 ];

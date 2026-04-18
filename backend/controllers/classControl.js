@@ -120,6 +120,10 @@ async function getClasses(req, res) {
 	}
 }
 async function createClasses(req, res) {
+	if (req.user.role !== 'teacher') {
+		return res.status(403).json({ error: 'Only teachers can create class schedules.' });
+	}
+
 	const {
 		class_name,
 		schedule_days,
@@ -183,6 +187,10 @@ async function createClasses(req, res) {
 }
 
 async function updateClass(req, res) {
+	if (req.user.role !== 'teacher') {
+		return res.status(403).json({ error: 'Only teachers can update class schedules.' });
+	}
+
 	const { id } = req.params;
 	if (!isUuid(id)) {
 		return res.status(400).json({ error: 'Invalid class id format.' });
@@ -264,7 +272,27 @@ async function deleteClass(req, res) {
 		return res.status(400).json({ error: 'Invalid class id format.' });
 	}
 	try {
-		await db.deleteClassByIdQuery(id);
+		const existingClass = await db.getClassByIdQuery(id);
+		if (!existingClass) {
+			return res.status(404).json({ error: 'Class not found.' });
+		}
+
+		if (req.user.role === 'teacher' && existingClass.teacher_id !== req.user.id) {
+			return res.status(403).json({ error: 'Unauthorized to delete this class.' });
+		}
+
+		if (req.user.role === 'admin' && existingClass.institute_id !== req.user.instituteId) {
+			return res.status(403).json({ error: 'Unauthorized to delete this class.' });
+		}
+
+		if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
+			return res.status(403).json({ error: 'Unauthorized to delete this class.' });
+		}
+
+		const deleted = await db.deleteClassByIdQuery(id);
+		if (!deleted) {
+			return res.status(404).json({ error: 'Class not found.' });
+		}
 		res.status(200).json({ message: 'Class deleted successfully' });
 	} catch (err) {
 		if (err.code === '22P02') {
@@ -282,6 +310,11 @@ async function getSpecificClass(req, res) {
 		const subjectClass = await db.getClassByIdQuery(id);
 		if (!subjectClass)
 			return res.status(404).json({ error: 'Class not found' });
+
+		if (!req.user || subjectClass.institute_id !== req.user.instituteId) {
+			return res.status(403).json({ error: 'Unauthorized' });
+		}
+
 		res.status(200).json(subjectClass);
 	} catch (err) {
 		if (err.code === '22P02') {
@@ -291,6 +324,10 @@ async function getSpecificClass(req, res) {
 	}
 }
 async function editSpecificClass(req, res) {
+	if (req.user.role !== 'teacher') {
+		return res.status(403).json({ error: 'Only teachers can edit class schedules.' });
+	}
+
 	const { id } = req.params;
 	if (!isUuid(id)) {
 		return res.status(400).json({ error: 'Invalid class id format.' });

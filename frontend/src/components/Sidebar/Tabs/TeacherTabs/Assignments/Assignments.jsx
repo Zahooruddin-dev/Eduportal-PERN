@@ -60,13 +60,16 @@ export default function TeacherAssignments() {
 		const endOfWeek = new Date(now);
 		endOfWeek.setDate(now.getDate() + 7);
 		const dueSoon = assignments.filter((assignment) => {
-			if (!assignment.due_date) return false;
-			const due = new Date(assignment.due_date);
+			if (!assignment.due_at && !assignment.due_date) return false;
+			const due = new Date(assignment.due_at || assignment.due_date);
+			if (Number.isNaN(due.getTime())) return false;
 			return due >= now && due <= endOfWeek;
 		}).length;
 		const overdue = assignments.filter((assignment) => {
-			if (!assignment.due_date) return false;
-			return new Date(assignment.due_date) < now;
+			if (!assignment.due_at && !assignment.due_date) return false;
+			const due = new Date(assignment.due_at || assignment.due_date);
+			if (Number.isNaN(due.getTime())) return false;
+			return due < now;
 		}).length;
 
 		return { total, dueSoon, overdue };
@@ -362,9 +365,9 @@ export default function TeacherAssignments() {
 											<span className='rounded-full border border-[var(--color-border)] px-2 py-0.5'>
 												Max Score: {assignment.max_score}
 											</span>
-											{assignment.due_date && (
+											{(assignment.due_at || assignment.due_date) && (
 												<span className='rounded-full border border-[var(--color-border)] px-2 py-0.5'>
-													Due: {new Date(assignment.due_date).toLocaleDateString()}
+													Due: {new Date(assignment.due_at || assignment.due_date).toLocaleString()}
 												</span>
 											)}
 										</div>

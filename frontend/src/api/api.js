@@ -29,6 +29,26 @@ export const getStudentEnrolledShedule = (id) => {
 	return api.get(`/api/enroll/student/${id}`);
 };
 
+export const getMyCalendarEvents = () => {
+  return api.get('/api/calendar/my/events');
+};
+
+export const downloadMyCalendarIcs = () => {
+  return api.get('/api/calendar/my.ics', { responseType: 'blob' });
+};
+
+export const getMyCalendarSubscription = () => {
+  return api.get('/api/calendar/my/subscription');
+};
+
+export const createMyCalendarSubscription = () => {
+  return api.post('/api/calendar/my/subscription');
+};
+
+export const rotateMyCalendarSubscription = () => {
+  return api.post('/api/calendar/my/subscription/rotate');
+};
+
 export const getStudentEnrollmentOverview = (id) => {
   return api.get(`/api/enroll/student/${id}/overview`, { cache: false });
 };

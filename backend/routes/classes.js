@@ -11,7 +11,7 @@ router.param('id', validateUuidParam('id', 'class id'));
 router.get('/', verifyToken, controller.getClasses);
 router.post('/', verifyToken, isTeacher, controller.createClasses);
 router.get('/mine', verifyToken, isTeacher, controller.getMyClasses);
-router.get('/:id', controller.getSpecificClass);
+router.get('/:id', verifyToken, controller.getSpecificClass);
 router.put('/:id', verifyToken, isTeacher, controller.updateClass);
 router.delete('/:id', verifyToken, isTeacher, controller.deleteClass);
 

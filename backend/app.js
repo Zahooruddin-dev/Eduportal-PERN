@@ -17,6 +17,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const communicationRoutes = require('./routes/communicationRoutes');
 const parentRoutes = require('./routes/parentRoutes');
+const calendarRoutes = require('./routes/calendarRoutes');
 const { validateUuidParam } = require('./middleware/uuidParamMiddleware');
 const { ensureAdminSchema } = require('./db/ensureAdminSchema');
 const { initializeChatSocket } = require('./socket/chatSocket');
@@ -57,6 +58,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/communication', communicationRoutes);
 app.use('/api/parent', parentRoutes);
+app.use('/api/calendar', calendarRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/gradebook', gradebookRoutes);
 

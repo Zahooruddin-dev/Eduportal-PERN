@@ -32,6 +32,7 @@ This package contains the Express + PostgreSQL API for Mizuka Portal. It serves 
 - `/api/reports`: report and complaint workflows
 - `/api/admin`: institute admin actions
 - `/api/communication`: inbox, contacts, messages
+- `/api/calendar`: calendar events, ICS exports, and Google subscribe feed links
 
 ## Environment Variables
 
@@ -70,6 +71,27 @@ If port 3000 is in use:
 ```powershell
 $env:PORT='3001'; npm run server
 ```
+
+## Calendar and Academic Controls
+
+- Run `backend/sql/calendarIntegrationAndAcademicControls.sql` before using calendar feeds and academic term/exception endpoints.
+- Assignment endpoints now support both `dueDate` and `dueAt` fields.
+- Calendar routes include:
+	- `GET /api/calendar/my/events`
+	- `GET /api/calendar/my.ics`
+	- `GET /api/calendar/my/subscription`
+	- `POST /api/calendar/my/subscription`
+	- `POST /api/calendar/my/subscription/rotate`
+	- `GET /api/calendar/public/:token.ics`
+- Admin academic routes include:
+	- `GET /api/admin/academic/terms`
+	- `POST /api/admin/academic/terms`
+	- `PATCH /api/admin/academic/terms/:termId`
+	- `DELETE /api/admin/academic/terms/:termId`
+	- `GET /api/admin/academic/exceptions`
+	- `POST /api/admin/academic/exceptions`
+	- `PATCH /api/admin/academic/exceptions/:exceptionId`
+	- `DELETE /api/admin/academic/exceptions/:exceptionId`
 
 ## Validation and Security Notes
 
