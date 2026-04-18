@@ -360,7 +360,11 @@ export default function TeacherCalender() {
                   ))}
                 </div>
               ) : (
-                <p className='text-sm text-[var(--color-text-muted)]'>No sessions.</p>
+                <div className='flex min-h-[150px] flex-col items-center justify-center rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-input-bg)]/50 px-4 text-center'>
+                  <CalendarDays className='mb-2 text-[var(--color-text-muted)]' size={18} />
+                  <p className='text-sm font-medium text-[var(--color-text-secondary)]'>No sessions on {day}</p>
+                  <p className='mt-1 text-xs text-[var(--color-text-muted)]'>Use this window to prep upcoming classes.</p>
+                </div>
               )}
             </section>
           ))}
