@@ -91,6 +91,14 @@ function getNextScheduleBlock(blocks) {
 	return bestCandidate;
 }
 
+const DESKTOP_BREAKPOINT_QUERY = '(min-width: 1024px)';
+const DESKTOP_INLINE_VISIBLE_SESSIONS = 5;
+
+function getInitialDesktopView() {
+	if (typeof window === 'undefined') return false;
+	return window.matchMedia(DESKTOP_BREAKPOINT_QUERY).matches;
+}
+
 export default function EnrolledClasses() {
 	const { user } = useAuth();
 	const [enrolledClasses, setEnrolledClasses] = useState([]);
@@ -116,6 +124,7 @@ export default function EnrolledClasses() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [showScheduleModal, setShowScheduleModal] = useState(false);
 	const [selectedClassForSchedule, setSelectedClassForSchedule] = useState(null);
+	const [isDesktopView, setIsDesktopView] = useState(getInitialDesktopView);
 
 	const enrolledScheduleBlocks = useMemo(
 		() => enrolledClasses.flatMap((enrolledClass) => getScheduleBlocksFromClass(enrolledClass)),
@@ -172,6 +181,25 @@ export default function EnrolledClasses() {
 		setLoadingEnrolled(false);
 		setLoadingAvailable(false);
 	}, [user?.id, loadEnrollmentOverview]);
+
+	useEffect(() => {
+		if (typeof window === 'undefined') return undefined;
+
+		const mediaQuery = window.matchMedia(DESKTOP_BREAKPOINT_QUERY);
+		const updateDesktopView = (event) => {
+			setIsDesktopView(event.matches);
+		};
+
+		setIsDesktopView(mediaQuery.matches);
+
+		if (typeof mediaQuery.addEventListener === 'function') {
+			mediaQuery.addEventListener('change', updateDesktopView);
+			return () => mediaQuery.removeEventListener('change', updateDesktopView);
+		}
+
+		mediaQuery.addListener(updateDesktopView);
+		return () => mediaQuery.removeListener(updateDesktopView);
+	}, []);
 
 	const requestEnroll = (classId) => {
 		setEnrollTarget(classId);
@@ -263,8 +291,13 @@ export default function EnrolledClasses() {
 		setSelectedClassForSchedule(null);
 	};
 
-	const handleScheduleKeyDown = (event, cls, hasSchedule) => {
-		if (!hasSchedule) return;
+	const handleScheduleKeyDown = (
+		event,
+		cls,
+		hasSchedule,
+		allowModalOpen = true,
+	) => {
+		if (!hasSchedule || !allowModalOpen) return;
 		if (event.key === 'Enter' || event.key === ' ') {
 			event.preventDefault();
 			handleShowSchedule(cls);
@@ -326,11 +359,25 @@ export default function EnrolledClasses() {
 	);
 
 	const ClassCard = ({ cls, enrolled = false }) => {
+		const [showAllDesktopSessions, setShowAllDesktopSessions] = useState(false);
 		const id = cls.class_id ?? cls.id;
 		const isLoadingEnroll = enrollingId === id;
 		const isLoadingUnenroll = unenrollingId === id;
 		const scheduleBlocks = getScheduleBlocksFromClass(cls);
 		const nextScheduleBlock = getNextScheduleBlock(scheduleBlocks);
+		const defaultVisibleSessions = isDesktopView
+			? DESKTOP_INLINE_VISIBLE_SESSIONS
+			: 2;
+		const visibleScheduleBlocks =
+			isDesktopView && showAllDesktopSessions
+				? scheduleBlocks
+				: scheduleBlocks.slice(0, defaultVisibleSessions);
+		const remainingSessionsCount = Math.max(
+			scheduleBlocks.length - defaultVisibleSessions,
+			0,
+		);
+		const shouldShowMoreSessionsAction = remainingSessionsCount > 0;
+		const canOpenScheduleModal = !isDesktopView && scheduleBlocks.length > 0;
 		const conflictWithCurrentSchedule =
 			!enrolled && hasScheduleConflict(scheduleBlocks, enrolledScheduleBlocks);
 		const maxStudents = Number(cls.max_students);
@@ -401,19 +448,26 @@ export default function EnrolledClasses() {
 
 				<div 
 					className='mt-3 rounded-xl border border-[var(--color-border)]/80 bg-[var(--color-bg)]/40 p-3 space-y-1.5 text-sm text-[var(--color-text-secondary)] transition-all duration-200 hover:border-[var(--color-border)] hover:bg-[var(--color-bg)]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/30'
-					onClick={() => scheduleBlocks.length > 0 && handleShowSchedule(cls)}
-					onKeyDown={(event) => handleScheduleKeyDown(event, cls, scheduleBlocks.length > 0)}
-					role={scheduleBlocks.length > 0 ? 'button' : undefined}
-					tabIndex={scheduleBlocks.length > 0 ? 0 : undefined}
+					onClick={() => canOpenScheduleModal && handleShowSchedule(cls)}
+					onKeyDown={(event) =>
+						handleScheduleKeyDown(
+							event,
+							cls,
+							scheduleBlocks.length > 0,
+							canOpenScheduleModal,
+						)
+					}
+					role={canOpenScheduleModal ? 'button' : undefined}
+					tabIndex={canOpenScheduleModal ? 0 : undefined}
 					aria-label={
-						scheduleBlocks.length > 0
+						canOpenScheduleModal
 							? `View full schedule for ${cls.class_name}`
 							: undefined
 					}
 				>
 					{scheduleBlocks.length > 0 ? (
 						<>
-							{scheduleBlocks.slice(0, 2).map((block, index) => (
+							{visibleScheduleBlocks.map((block, index) => (
 								<p
 									key={`${block.day}-${block.start_time}-${index}`}
 									className='flex items-center gap-1.5'
@@ -426,16 +480,24 @@ export default function EnrolledClasses() {
 									</span>
 								</p>
 							))}
-							{scheduleBlocks.length > 2 && (
+							{shouldShowMoreSessionsAction && (
 								<button
 									type='button'
 									onClick={(e) => {
 										e.stopPropagation();
+										if (isDesktopView) {
+											setShowAllDesktopSessions((previous) => !previous);
+											return;
+										}
 										handleShowSchedule(cls);
 									}}
 									className='pl-[3.8rem] text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors focus:outline-none'
 								>
-									+ {scheduleBlocks.length - 2} more sessions
+									{isDesktopView
+										? showAllDesktopSessions
+											? 'Show fewer sessions'
+											: `+ ${remainingSessionsCount} more sessions`
+										: `+ ${remainingSessionsCount} more sessions`}
 								</button>
 							)}
 						</>
