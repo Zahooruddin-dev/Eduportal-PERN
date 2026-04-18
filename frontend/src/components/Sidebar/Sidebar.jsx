@@ -375,14 +375,18 @@ export default function Sidebar({
 		try {
 			const response = await getCommunicationUnreadCount();
 			setCommunicationUnreadCount(Number(response.data?.unreadCount || 0));
-		} catch (error) {}
+		} catch {
+			return;
+		}
 	}, []);
 
 	const loadAdminNotificationUnread = useCallback(async () => {
 		try {
 			const response = await getAdminNotificationUnreadSummary({ limit: 1 });
 			setAdminNotificationUnreadCount(Number(response.data?.unreadCount || 0));
-		} catch (error) {}
+		} catch {
+			return;
+		}
 	}, []);
 
 	useEffect(() => {
@@ -391,7 +395,9 @@ export default function Sidebar({
 		const supportsCommunication =
 			user.role === 'student' || user.role === 'teacher';
 		if (supportsCommunication) {
-			loadCommunicationUnread();
+			const initialLoadTimeout = window.setTimeout(() => {
+				loadCommunicationUnread();
+			}, 0);
 			const interval = setInterval(loadCommunicationUnread, 12000);
 			const handleUnreadEvent = (event) => {
 				setCommunicationUnreadCount(Number(event.detail?.count || 0));
@@ -413,6 +419,7 @@ export default function Sidebar({
 			}
 
 			return () => {
+				clearTimeout(initialLoadTimeout);
 				clearInterval(interval);
 				window.removeEventListener('communication-unread', handleUnreadEvent);
 				if (socketRef.current) {
@@ -431,12 +438,15 @@ export default function Sidebar({
 			user.role === 'teacher' ||
 			user.role === 'parent';
 		if (supportsNotifications) {
-			loadAdminNotificationUnread();
+			const initialLoadTimeout = window.setTimeout(() => {
+				loadAdminNotificationUnread();
+			}, 0);
 			const interval = setInterval(loadAdminNotificationUnread, 15000);
 			const onFocus = () => loadAdminNotificationUnread();
 			window.addEventListener('focus', onFocus);
 
 			return () => {
+				clearTimeout(initialLoadTimeout);
 				clearInterval(interval);
 				window.removeEventListener('focus', onFocus);
 			};

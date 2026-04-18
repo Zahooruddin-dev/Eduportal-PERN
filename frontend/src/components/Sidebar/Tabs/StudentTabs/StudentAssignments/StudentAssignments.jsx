@@ -43,7 +43,7 @@ export default function StudentAssignments() {
               pendingCount++;
             }
           }
-        } catch (err) {
+        } catch {
           // If no submission found, treat as pending
           const due = assignment.due_date ? new Date(assignment.due_date) : null;
           if (due && due < now) {
@@ -60,7 +60,7 @@ export default function StudentAssignments() {
         overdue: overdueCount,
         submitted: submittedCount,
       };
-    } catch (err) {
+    } catch {
       return {
         total: 0,
         pending: 0,
