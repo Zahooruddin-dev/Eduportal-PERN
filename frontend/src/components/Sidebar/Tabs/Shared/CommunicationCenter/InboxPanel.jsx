@@ -1,13 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { Clock3, Inbox, Loader2 } from 'lucide-react';
 import { formatDateTime, formatMessagePreview }  from './utils/utilis';
 
 export function InboxPanel({ inbox, inboxLoading, selectedConversation, onSelect }) {
 	const [query, setQuery] = useState('');
 	const [unreadOnly, setUnreadOnly] = useState(false);
+	const deferredQuery = useDeferredValue(query);
+	const unreadTotal = useMemo(
+		() => inbox.reduce((sum, item) => sum + Number(item.unread_count || 0), 0),
+		[inbox],
+	);
 
 	const filteredInbox = useMemo(() => {
-		const normalized = query.trim().toLowerCase();
+		const normalized = deferredQuery.trim().toLowerCase();
 		return inbox.filter((item) => {
 			if (unreadOnly && Number(item.unread_count || 0) <= 0) return false;
 			if (!normalized) return true;
@@ -15,7 +20,7 @@ export function InboxPanel({ inbox, inboxLoading, selectedConversation, onSelect
 			const preview = String(item.last_message_content || '').toLowerCase();
 			return username.includes(normalized) || preview.includes(normalized);
 		});
-	}, [inbox, query, unreadOnly]);
+	}, [deferredQuery, inbox, unreadOnly]);
 
 	return (
 		<div className='flex h-full flex-col'>
@@ -28,18 +33,21 @@ export function InboxPanel({ inbox, inboxLoading, selectedConversation, onSelect
 						<Inbox size={18} strokeWidth={2} />
 						Inbox
 					</h2>
+					<span className='rounded-md border border-[var(--color-border)] bg-[var(--color-input-bg)] px-2 py-0.5 text-[10px] font-semibold text-[var(--color-text-muted)]'>
+						{unreadTotal} unread
+					</span>
 				</div>
 				<div className='mt-3 flex items-center gap-2'>
 					<input
 						type='text'
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
-						placeholder='Search conversation'
-						className='w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 transition'
+						placeholder='Search conversations'
+						className='w-full rounded-md border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 transition'
 					/>
 					<button
 						onClick={() => setUnreadOnly((prev) => !prev)}
-						className={`shrink-0 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition ${
+						className={`shrink-0 rounded-md border px-2.5 py-1.5 text-xs font-medium transition ${
 							unreadOnly
 								? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
 								: 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/30'
@@ -81,14 +89,14 @@ export function InboxPanel({ inbox, inboxLoading, selectedConversation, onSelect
 								<li key={item.conversation_id}>
 									<button
 										onClick={() => onSelect(item)}
-										className={`w-full px-4 py-3 text-left transition-colors ${
+										className={`w-full border-l-2 px-4 py-3 text-left transition-colors ${
 											isActive
-												? 'bg-[var(--color-primary)]/10'
-												: 'hover:bg-[var(--color-border)]/30'
+												? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10'
+												: 'border-transparent hover:bg-[var(--color-border)]/30'
 										}`}
 									>
 										<div className='flex items-start gap-3'>
-											<div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+											<div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${
 												isActive
 													? 'bg-[var(--color-primary)] text-white'
 													: 'bg-[var(--color-primary)]/15 text-[var(--color-primary)]'
@@ -102,7 +110,7 @@ export function InboxPanel({ inbox, inboxLoading, selectedConversation, onSelect
 													</p>
 													<div className='flex shrink-0 items-center gap-1.5'>
 														{hasUnread && (
-															<span className='flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-primary)] px-1.5 text-[10px] font-bold text-white'>
+															<span className='flex h-5 min-w-5 items-center justify-center rounded-md bg-[var(--color-primary)] px-1.5 text-[10px] font-bold text-white'>
 																{item.unread_count}
 															</span>
 														)}
