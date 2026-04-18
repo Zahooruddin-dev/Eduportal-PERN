@@ -430,7 +430,7 @@ export default function Sidebar({
 			const token = localStorage.getItem('token');
 			if (token && !socketRef.current) {
 				socketRef.current = io(
-					import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000',
+					import.meta.env.VITE_BACKEND_URL || undefined,
 					{
 						auth: { token },
 						transports: ['websocket', 'polling'],

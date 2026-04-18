@@ -35,7 +35,7 @@ export function useSocket({ userId, onNewMessage, onMessageUpdated, onMessageDel
 		const token = localStorage.getItem('token');
 		if (!token) return;
 
-		const socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000', {
+		const socket = io(import.meta.env.VITE_BACKEND_URL || undefined, {
 			auth: { token },
 			transports: ['websocket', 'polling'],
 		});
