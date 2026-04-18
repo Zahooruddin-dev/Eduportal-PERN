@@ -4,7 +4,6 @@ import { useTheme } from '../../hooks/useTheme';
 import {
 	Menu,
 	ChevronLeft,
-	ChevronRight,
 	Bell,
 	Calendar,
 	BookOpen,
@@ -80,6 +79,13 @@ const adminNavItems = [
 	{ id: 'admin-announcements', label: 'Announcements', icon: Megaphone },
 	{ id: 'admin-reports', label: 'Reports', icon: FileText },
 ];
+
+const MOBILE_DRAWER_ID = 'mobile-navigation-drawer';
+const MOBILE_DRAWER_TITLE_ID = 'mobile-navigation-drawer-title';
+const MOBILE_DRAWER_TRANSITION_MS = 300;
+const EDGE_SWIPE_START_MAX_X = 24;
+const SWIPE_THRESHOLD_PX = 72;
+const SWIPE_VERTICAL_TOLERANCE_PX = 48;
 
 function NavTooltip({ label, visible }) {
 	return (
@@ -178,13 +184,14 @@ function SidebarBody({
 	toggle,
 	onClose,
 	onLogout,
+	mobileCloseButtonRef,
+	mobileTitleId,
 	showCloseX = false,
 }) {
 	const isCollapsed = collapsed && !isMobile;
 
 	return (
-		<aside className='flex flex-col h-full bg-[var(--color-surface)] border-r border-[var(--color-border)]'>
-			{/* Header (unchanged) */}
+		<aside className='flex h-full flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)]'>
 			<div
 				className={`flex items-center border-b border-[var(--color-border)] h-16 shrink-0 px-3 gap-2 transition-all duration-300`}
 			>
@@ -197,7 +204,10 @@ function SidebarBody({
 					<div
 						className={`overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'}`}
 					>
-						<p className='text-sm font-semibold text-[var(--color-text-primary)] whitespace-nowrap leading-tight'>
+						<p
+							id={isMobile ? mobileTitleId : undefined}
+							className='text-sm font-semibold text-[var(--color-text-primary)] whitespace-nowrap leading-tight'
+						>
 							Mizuka Portal
 						</p>
 						<p className='text-[10px] text-[var(--color-text-muted)] capitalize whitespace-nowrap leading-tight'>
@@ -207,6 +217,8 @@ function SidebarBody({
 				</div>
 				{isMobile || showCloseX ? (
 					<button
+						type='button'
+						ref={isMobile ? mobileCloseButtonRef : undefined}
 						onClick={onClose}
 						aria-label='Close navigation'
 						className='p-1.5 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 transition-colors duration-150 shrink-0 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]'
@@ -216,6 +228,7 @@ function SidebarBody({
 				) : (
 					!collapsed && (
 						<button
+							type='button'
 							onClick={() => onClose()}
 							aria-label='Collapse sidebar'
 							className='p-1.5 rounded-lg relative z-10 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border)]/60 transition-all duration-150 shrink-0 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]'
@@ -226,7 +239,6 @@ function SidebarBody({
 				)}
 			</div>
 
-			{/* Menu label (unchanged) */}
 			<div
 				className={`overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? 'max-h-0 opacity-0 pt-0 px-0' : 'max-h-10 opacity-100 pt-4 px-4 pb-1'}`}
 			>
@@ -235,7 +247,6 @@ function SidebarBody({
 				</p>
 			</div>
 
-			{/* Navigation (unchanged) */}
 			<nav className='flex-1 py-2 overflow-y-auto overflow-x-hidden'>
 				{navItems.map((item) => (
 					<NavItem
@@ -249,9 +260,7 @@ function SidebarBody({
 				))}
 			</nav>
 
-			{/* ========== IMPROVED FOOTER ========== */}
 			<div className='border-t border-[var(--color-border)] bg-[var(--color-surface)]/50 backdrop-blur-sm p-4 shrink-0 space-y-3 shadow-[0_-4px_6px_-2px_rgba(0,0,0,0.03)]'>
-				{/* Profile button - enhanced */}
 				<button
 					type='button'
 					onClick={() => {
@@ -263,8 +272,8 @@ function SidebarBody({
             focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2
             ${
 							activeTab === 'profile'
-								? 'bg-gradient-to-r from-[var(--color-primary)]/15 to-transparent ring-1 ring-[var(--color-primary)]/30 shadow-sm'
-								: 'hover:bg-[var(--color-border)]/50 hover:shadow-md hover:scale-[1.01]'
+								? 'bg-[var(--color-primary)]/10 ring-1 ring-[var(--color-primary)]/30 shadow-sm'
+								: 'hover:bg-[var(--color-border)]/50 hover:shadow-sm'
 						}
             ${isCollapsed ? 'justify-center' : ''}
           `}
@@ -276,7 +285,7 @@ function SidebarBody({
 							className='w-9 h-9 rounded-full object-cover ring-2 ring-[var(--color-primary)]/40 shrink-0 transition-all duration-200 group-hover:ring-[var(--color-primary)]'
 						/>
 					) : (
-						<div className='w-9 h-9 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-hover)] flex items-center justify-center text-white text-base font-bold shadow-md shrink-0'>
+						<div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)] text-base font-bold text-white shadow-sm'>
 							{user?.username?.charAt(0).toUpperCase()}
 						</div>
 					)}
@@ -295,7 +304,6 @@ function SidebarBody({
 					</div>
 				</button>
 
-				{/* Action buttons - redesigned as pill-shaped icons with labels */}
 				<div
 					className={`flex gap-2 transition-all duration-300 ${isCollapsed ? 'flex-col items-center' : ''}`}
 				>
@@ -360,8 +368,8 @@ export default function Sidebar({
 	const [communicationUnreadCount, setCommunicationUnreadCount] = useState(0);
 	const [adminNotificationUnreadCount, setAdminNotificationUnreadCount] =
 		useState(0);
-	const [mobileOpen, setMobileOpen] = useState(false);
-	const [mobileClosing, setMobileClosing] = useState(false);
+	const [mobileDrawerMounted, setMobileDrawerMounted] = useState(false);
+	const [mobileDrawerVisible, setMobileDrawerVisible] = useState(false);
 	const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
 	const [toast, setToast] = useState({
 		isOpen: false,
@@ -370,6 +378,20 @@ export default function Sidebar({
 	});
 	const { theme, toggle } = useTheme();
 	const socketRef = useRef(null);
+	const mobileTriggerRef = useRef(null);
+	const mobileSurfaceRef = useRef(null);
+	const mobileCloseButtonRef = useRef(null);
+	const lastFocusedElementRef = useRef(null);
+	const edgeSwipeRef = useRef({
+		tracking: false,
+		startX: 0,
+		startY: 0,
+	});
+	const drawerSwipeRef = useRef({
+		tracking: false,
+		startX: 0,
+		startY: 0,
+	});
 
 	const loadCommunicationUnread = useCallback(async () => {
 		try {
@@ -478,37 +500,281 @@ export default function Sidebar({
 		});
 	}, [baseNavItems, communicationUnreadCount, adminNotificationUnreadCount]);
 
-	const openMobile = useCallback(() => {
-		setMobileClosing(false);
-		setMobileOpen(true);
-	}, []);
+	const activeTabLabel = useMemo(() => {
+		const activeItem = navItems.find((item) => item.id === activeTab);
+		return activeItem?.label || 'Dashboard';
+	}, [activeTab, navItems]);
 
 	const closeMobile = useCallback(() => {
-		setMobileClosing(true);
-		setTimeout(() => {
-			setMobileOpen(false);
-			setMobileClosing(false);
-		}, 260);
+		setMobileDrawerVisible(false);
+	}, []);
+
+	const openMobile = useCallback(
+		(event) => {
+			if (event?.currentTarget) {
+				mobileTriggerRef.current = event.currentTarget;
+			}
+
+			if (mobileDrawerMounted) {
+				setMobileDrawerVisible(true);
+				return;
+			}
+
+			setMobileDrawerMounted(true);
+		},
+		[mobileDrawerMounted],
+	);
+
+	const handleDrawerTouchStart = useCallback((event) => {
+		const touch = event.touches?.[0];
+		if (!touch) return;
+
+		drawerSwipeRef.current = {
+			tracking: true,
+			startX: touch.clientX,
+			startY: touch.clientY,
+		};
+	}, []);
+
+	const handleDrawerTouchMove = useCallback(
+		(event) => {
+			const swipe = drawerSwipeRef.current;
+			if (!swipe.tracking) return;
+
+			const touch = event.touches?.[0];
+			if (!touch) return;
+
+			const deltaX = touch.clientX - swipe.startX;
+			const deltaY = Math.abs(touch.clientY - swipe.startY);
+
+			if (
+				deltaY > SWIPE_VERTICAL_TOLERANCE_PX &&
+				deltaY > Math.abs(deltaX)
+			) {
+				drawerSwipeRef.current.tracking = false;
+				return;
+			}
+
+			if (deltaX <= -SWIPE_THRESHOLD_PX) {
+				drawerSwipeRef.current.tracking = false;
+				closeMobile();
+			}
+		},
+		[closeMobile],
+	);
+
+	const handleDrawerTouchEnd = useCallback(() => {
+		drawerSwipeRef.current.tracking = false;
 	}, []);
 
 	useEffect(() => {
-		const handleKey = (e) => {
-			if (e.key === 'Escape' && mobileOpen) closeMobile();
-		};
-		document.addEventListener('keydown', handleKey);
-		return () => document.removeEventListener('keydown', handleKey);
-	}, [mobileOpen, closeMobile]);
+		if (!mobileDrawerMounted) return;
+
+		const raf = window.requestAnimationFrame(() => {
+			setMobileDrawerVisible(true);
+		});
+
+		return () => window.cancelAnimationFrame(raf);
+	}, [mobileDrawerMounted]);
 
 	useEffect(() => {
-		if (mobileOpen) {
-			document.body.style.overflow = 'hidden';
-		} else {
-			document.body.style.overflow = '';
-		}
+		const handleResize = () => {
+			if (window.matchMedia('(min-width: 1024px)').matches) {
+				setMobileDrawerVisible(false);
+				setMobileDrawerMounted(false);
+			}
+		};
+
+		window.addEventListener('resize', handleResize);
+		return () => window.removeEventListener('resize', handleResize);
+	}, []);
+
+	useEffect(() => {
+		if (!mobileDrawerMounted) return;
+
+		const handleKey = (event) => {
+			if (event.key === 'Escape') {
+				closeMobile();
+			}
+		};
+
+		document.addEventListener('keydown', handleKey);
+		return () => document.removeEventListener('keydown', handleKey);
+	}, [mobileDrawerMounted, closeMobile]);
+
+	useEffect(() => {
+		document.body.style.overflow = mobileDrawerMounted ? 'hidden' : '';
+
 		return () => {
 			document.body.style.overflow = '';
 		};
-	}, [mobileOpen]);
+	}, [mobileDrawerMounted]);
+
+	useEffect(() => {
+		if (!mobileDrawerMounted) return;
+
+		const drawerSurface = mobileSurfaceRef.current;
+		if (!drawerSurface) return;
+
+		const handleTransitionEnd = (event) => {
+			if (event.target !== drawerSurface || event.propertyName !== 'transform') {
+				return;
+			}
+
+			if (!mobileDrawerVisible) {
+				setMobileDrawerMounted(false);
+			}
+		};
+
+		drawerSurface.addEventListener('transitionend', handleTransitionEnd);
+
+		return () => {
+			drawerSurface.removeEventListener('transitionend', handleTransitionEnd);
+		};
+	}, [mobileDrawerMounted, mobileDrawerVisible]);
+
+	useEffect(() => {
+		if (!mobileDrawerMounted || mobileDrawerVisible) return;
+
+		const closeTimer = window.setTimeout(() => {
+			setMobileDrawerMounted(false);
+		}, MOBILE_DRAWER_TRANSITION_MS + 80);
+
+		return () => window.clearTimeout(closeTimer);
+	}, [mobileDrawerMounted, mobileDrawerVisible]);
+
+	useEffect(() => {
+		if (!mobileDrawerMounted || !mobileDrawerVisible) return;
+
+		lastFocusedElementRef.current =
+			document.activeElement instanceof HTMLElement
+				? document.activeElement
+				: mobileTriggerRef.current;
+
+		const focusTimer = window.setTimeout(() => {
+			const fallbackFocusable = mobileSurfaceRef.current?.querySelector(
+				'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+			);
+			const focusTarget = mobileCloseButtonRef.current || fallbackFocusable;
+
+			if (focusTarget instanceof HTMLElement) {
+				focusTarget.focus();
+			}
+		}, 30);
+
+		return () => window.clearTimeout(focusTimer);
+	}, [mobileDrawerMounted, mobileDrawerVisible]);
+
+	useEffect(() => {
+		if (mobileDrawerMounted) return;
+
+		const focusTarget =
+			lastFocusedElementRef.current || mobileTriggerRef.current;
+		if (focusTarget && typeof focusTarget.focus === 'function') {
+			focusTarget.focus();
+		}
+	}, [mobileDrawerMounted]);
+
+	useEffect(() => {
+		if (!mobileDrawerMounted || !mobileDrawerVisible) return;
+
+		const drawerSurface = mobileSurfaceRef.current;
+		if (!drawerSurface) return;
+
+		const handleTrapFocus = (event) => {
+			if (event.key !== 'Tab') return;
+
+			const focusableElements = Array.from(
+				drawerSurface.querySelectorAll(
+					'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+				),
+			).filter((element) => element.getAttribute('aria-hidden') !== 'true');
+
+			if (!focusableElements.length) {
+				event.preventDefault();
+				return;
+			}
+
+			const first = focusableElements[0];
+			const last = focusableElements[focusableElements.length - 1];
+			const activeElement = document.activeElement;
+
+			if (event.shiftKey && activeElement === first) {
+				event.preventDefault();
+				last.focus();
+				return;
+			}
+
+			if (!event.shiftKey && activeElement === last) {
+				event.preventDefault();
+				first.focus();
+			}
+		};
+
+		drawerSurface.addEventListener('keydown', handleTrapFocus);
+		return () => drawerSurface.removeEventListener('keydown', handleTrapFocus);
+	}, [mobileDrawerMounted, mobileDrawerVisible]);
+
+	useEffect(() => {
+		const handleEdgeSwipeStart = (event) => {
+			if (mobileDrawerMounted || window.innerWidth >= 1024) return;
+
+			const touch = event.touches?.[0];
+			if (!touch || touch.clientX > EDGE_SWIPE_START_MAX_X) return;
+
+			edgeSwipeRef.current = {
+				tracking: true,
+				startX: touch.clientX,
+				startY: touch.clientY,
+			};
+		};
+
+		const handleEdgeSwipeMove = (event) => {
+			const swipe = edgeSwipeRef.current;
+			if (!swipe.tracking || mobileDrawerMounted || window.innerWidth >= 1024) {
+				return;
+			}
+
+			const touch = event.touches?.[0];
+			if (!touch) return;
+
+			const deltaX = touch.clientX - swipe.startX;
+			const deltaY = Math.abs(touch.clientY - swipe.startY);
+
+			if (
+				deltaY > SWIPE_VERTICAL_TOLERANCE_PX &&
+				deltaY > Math.abs(deltaX)
+			) {
+				edgeSwipeRef.current.tracking = false;
+				return;
+			}
+
+			if (deltaX >= SWIPE_THRESHOLD_PX) {
+				edgeSwipeRef.current.tracking = false;
+				openMobile();
+			}
+		};
+
+		const handleEdgeSwipeStop = () => {
+			edgeSwipeRef.current.tracking = false;
+		};
+
+		window.addEventListener('touchstart', handleEdgeSwipeStart, {
+			passive: true,
+		});
+		window.addEventListener('touchmove', handleEdgeSwipeMove, {
+			passive: true,
+		});
+		window.addEventListener('touchend', handleEdgeSwipeStop);
+		window.addEventListener('touchcancel', handleEdgeSwipeStop);
+
+		return () => {
+			window.removeEventListener('touchstart', handleEdgeSwipeStart);
+			window.removeEventListener('touchmove', handleEdgeSwipeMove);
+			window.removeEventListener('touchend', handleEdgeSwipeStop);
+			window.removeEventListener('touchcancel', handleEdgeSwipeStop);
+		};
+	}, [mobileDrawerMounted, openMobile]);
 
 	const handleLogoutClick = useCallback(() => {
 		setConfirmLogoutOpen(true);
@@ -532,15 +798,32 @@ export default function Sidebar({
 
 	return (
 		<>
-			<button
-				type='button'
-				onClick={openMobile}
-				aria-label='Open navigation menu'
-				aria-expanded={mobileOpen}
-				className='lg:hidden fixed top-4 left-4 z-30 flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-secondary)] shadow-sm transition-all duration-150 hover:text-[var(--color-text-primary)] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]'
-			>
-				<Menu size={18} aria-hidden='true' />
-			</button>
+			<div className='fixed inset-x-0 top-0 z-30 border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur-sm supports-[backdrop-filter]:bg-[var(--color-surface)]/85 lg:hidden'>
+				<div className='flex h-14 items-center gap-3 px-4'>
+					<button
+						ref={mobileTriggerRef}
+						type='button'
+						onClick={openMobile}
+						aria-label='Open navigation menu'
+						aria-haspopup='dialog'
+						aria-controls={MOBILE_DRAWER_ID}
+						aria-expanded={mobileDrawerMounted && mobileDrawerVisible}
+						className='inline-flex h-9 items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-medium text-[var(--color-text-secondary)] shadow-sm transition-colors duration-150 hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]'
+					>
+						<Menu size={16} aria-hidden='true' />
+						<span>Menu</span>
+					</button>
+
+					<div className='min-w-0'>
+						<p className='text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]'>
+							Mizuka Portal
+						</p>
+						<p className='truncate text-sm font-medium text-[var(--color-text-primary)]'>
+							{activeTabLabel}
+						</p>
+					</div>
+				</div>
+			</div>
 
 			{collapsed && (
 				<button
@@ -567,21 +850,30 @@ export default function Sidebar({
 				/>
 			</div>
 
-			{mobileOpen && (
+			{mobileDrawerMounted && (
 				<div className='lg:hidden fixed inset-0 z-40 flex'>
 					<div
 						aria-hidden='true'
 						onClick={closeMobile}
 						className={`
-              absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-260
-              ${mobileClosing ? 'opacity-0' : 'opacity-100'}
+              absolute inset-0 bg-black/45 backdrop-blur-sm transition-opacity duration-300 motion-reduce:transition-none
+              ${mobileDrawerVisible ? 'opacity-100' : 'opacity-0'}
             `}
 					/>
 					<div
+						id={MOBILE_DRAWER_ID}
+						ref={mobileSurfaceRef}
+						role='dialog'
+						aria-modal='true'
+						aria-labelledby={MOBILE_DRAWER_TITLE_ID}
+						onTouchStart={handleDrawerTouchStart}
+						onTouchMove={handleDrawerTouchMove}
+						onTouchEnd={handleDrawerTouchEnd}
+						onTouchCancel={handleDrawerTouchEnd}
 						className={`
-              relative flex h-full w-72
-              transition-transform duration-260 ease-[cubic-bezier(0.22,1,0.36,1)]
-              ${mobileClosing ? '-translate-x-full' : 'translate-x-0'}
+              relative flex h-full w-[min(20rem,86vw)] max-w-[20rem]
+              transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none
+              ${mobileDrawerVisible ? 'translate-x-0' : '-translate-x-full'}
             `}
 					>
 						<SidebarBody
@@ -589,6 +881,8 @@ export default function Sidebar({
 							collapsed={false}
 							isMobile={true}
 							onClose={closeMobile}
+							mobileCloseButtonRef={mobileCloseButtonRef}
+							mobileTitleId={MOBILE_DRAWER_TITLE_ID}
 							showCloseX={true}
 						/>
 					</div>

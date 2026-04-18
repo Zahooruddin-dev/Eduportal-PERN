@@ -74,6 +74,18 @@ const ParentProfileCenter = lazy(
 	() => import('../Sidebar/Tabs/ParentTabs/ParentProfileCenter'),
 );
 
+const SIDEBAR_COLLAPSE_STORAGE_KEY = 'mizuka:sidebar-collapsed';
+
+function getInitialSidebarCollapsed() {
+	if (typeof window === 'undefined') return false;
+
+	try {
+		return window.localStorage.getItem(SIDEBAR_COLLAPSE_STORAGE_KEY) === '1';
+	} catch {
+		return false;
+	}
+}
+
 function TabLoadingFallback() {
 	return (
 		<div className='p-6'>
@@ -146,7 +158,7 @@ export default function Dashboard() {
 	const { user } = useAuth();
 	const navigate = useNavigate();
 	const { tab } = useParams();
-	const [collapsed, setCollapsed] = useState(false);
+	const [collapsed, setCollapsed] = useState(getInitialSidebarCollapsed);
 	const [popupState, setPopupState] = useState({
 		isOpen: false,
 		items: [],
@@ -176,6 +188,17 @@ export default function Dashboard() {
 			navigate(`/dashboard/${roleConfig.defaultTab}`, { replace: true });
 		}
 	}, [navigate, roleConfig, tab]);
+
+	useEffect(() => {
+		try {
+			window.localStorage.setItem(
+				SIDEBAR_COLLAPSE_STORAGE_KEY,
+				collapsed ? '1' : '0',
+			);
+		} catch {
+			return;
+		}
+	}, [collapsed]);
 
 	useEffect(() => {
 		const supportsPopupRole =
