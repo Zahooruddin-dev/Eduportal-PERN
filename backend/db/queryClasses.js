@@ -2,10 +2,16 @@ const pool = require('./Pool');
 
 async function getAllClassesQuery(instituteId) {
 	const { rows } = await pool.query(
-		`SELECT c.*, u.username AS teacher_name, u.profile_pic AS teacher_profile_pic
+		`SELECT
+			c.*,
+			u.username AS teacher_name,
+			u.profile_pic AS teacher_profile_pic,
+			COUNT(e.student_id)::int AS enrolled_count
 		 FROM classes c
 		 LEFT JOIN users u ON u.id = c.teacher_id
+		 LEFT JOIN enrollments e ON e.class_id = c.id
 		 WHERE c.institute_id = $1
+		 GROUP BY c.id, u.username, u.profile_pic
 		 ORDER BY c.class_name ASC`,
 		[instituteId],
 	);

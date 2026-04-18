@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../../../../context/AuthContext';
 import {
 	getStudentEnrolledShedule,
@@ -23,6 +23,74 @@ function getAvatarInitial(username) {
 
 function getApiErrorMessage(error, fallback = 'Something went wrong.') {
 	return error?.response?.data?.message || error?.response?.data?.error || fallback;
+}
+
+function toMinutes(timeValue) {
+	const match = /^(\d{1,2}):(\d{2})/.exec(String(timeValue || '').trim());
+	if (!match) return null;
+	const hour = Number(match[1]);
+	const minute = Number(match[2]);
+	if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+	return hour * 60 + minute;
+}
+
+function scheduleBlocksOverlap(firstBlock, secondBlock) {
+	if (firstBlock.day !== secondBlock.day) return false;
+	const firstStart = toMinutes(firstBlock.start_time);
+	const firstEnd = toMinutes(firstBlock.end_time);
+	const secondStart = toMinutes(secondBlock.start_time);
+	const secondEnd = toMinutes(secondBlock.end_time);
+	if ([firstStart, firstEnd, secondStart, secondEnd].some((value) => value === null)) {
+		return false;
+	}
+	return firstStart < secondEnd && secondStart < firstEnd;
+}
+
+function hasScheduleConflict(candidateBlocks, existingBlocks) {
+	if (!candidateBlocks.length || !existingBlocks.length) return false;
+	return candidateBlocks.some((candidateBlock) =>
+		existingBlocks.some((existingBlock) =>
+			scheduleBlocksOverlap(candidateBlock, existingBlock),
+		),
+	);
+}
+
+function getNextScheduleBlock(blocks) {
+	if (!Array.isArray(blocks) || !blocks.length) return null;
+
+	const dayMap = {
+		Sunday: 0,
+		Monday: 1,
+		Tuesday: 2,
+		Wednesday: 3,
+		Thursday: 4,
+		Friday: 5,
+		Saturday: 6,
+	};
+
+	const now = new Date();
+	const todayIndex = now.getDay();
+	const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+	let bestCandidate = null;
+
+	for (const block of blocks) {
+		const blockDayIndex = dayMap[block.day];
+		const blockStartMinutes = toMinutes(block.start_time);
+		if (blockDayIndex === undefined || blockStartMinutes === null) continue;
+
+		let dayOffset = (blockDayIndex - todayIndex + 7) % 7;
+		if (dayOffset === 0 && blockStartMinutes <= currentMinutes) {
+			dayOffset = 7;
+		}
+
+		const distanceInMinutes = dayOffset * 24 * 60 + blockStartMinutes;
+		if (!bestCandidate || distanceInMinutes < bestCandidate.distanceInMinutes) {
+			bestCandidate = { ...block, distanceInMinutes };
+		}
+	}
+
+	return bestCandidate;
 }
 
 export default function EnrolledClasses() {
@@ -50,6 +118,11 @@ export default function EnrolledClasses() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [showScheduleModal, setShowScheduleModal] = useState(false);
 	const [selectedClassForSchedule, setSelectedClassForSchedule] = useState(null);
+
+	const enrolledScheduleBlocks = useMemo(
+		() => enrolledClasses.flatMap((enrolledClass) => getScheduleBlocksFromClass(enrolledClass)),
+		[enrolledClasses],
+	);
 
 	const fetchEnrolled = useCallback(async () => {
 		if (!user?.id) return;
@@ -284,6 +357,15 @@ export default function EnrolledClasses() {
 		const isLoadingEnroll = enrollingId === id;
 		const isLoadingUnenroll = unenrollingId === id;
 		const scheduleBlocks = getScheduleBlocksFromClass(cls);
+		const nextScheduleBlock = getNextScheduleBlock(scheduleBlocks);
+		const conflictWithCurrentSchedule =
+			!enrolled && hasScheduleConflict(scheduleBlocks, enrolledScheduleBlocks);
+		const maxStudents = Number(cls.max_students);
+		const enrolledCount = Number(cls.enrolled_count || 0);
+		const hasSeatLimit = Number.isFinite(maxStudents) && maxStudents > 0;
+		const seatsLeft = hasSeatLimit ? Math.max(maxStudents - enrolledCount, 0) : null;
+		const classIsFull = !enrolled && hasSeatLimit && seatsLeft <= 0;
+		const disableEnroll = isLoadingEnroll || conflictWithCurrentSchedule || classIsFull;
 
 		return (
 			<article className='group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm transition-[border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:border-[var(--color-primary)]/35 hover:shadow-md'>
@@ -293,10 +375,22 @@ export default function EnrolledClasses() {
 						<h3 className='truncate text-base sm:text-lg font-semibold text-[var(--color-text-primary)]'>
 							{cls.class_name}
 						</h3>
-						{enrolled && (
+						{enrolled ? (
 							<span className='shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20'>
 								Enrolled
 							</span>
+						) : (
+							hasSeatLimit && (
+								<span
+									className={`shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${
+										classIsFull
+											? 'bg-[var(--color-danger-soft)] text-[var(--color-danger)] border-[var(--color-danger)]/30'
+											: 'bg-[var(--color-success-soft)] text-[var(--color-success)] border-[var(--color-success)]/30'
+									}`}
+								>
+									{classIsFull ? 'Class full' : `${seatsLeft} seats left`}
+								</span>
+							)
 						)}
 					</div>
 
@@ -324,6 +418,12 @@ export default function EnrolledClasses() {
 							</p>
 						</div>
 					</div>
+				)}
+
+				{!enrolled && (cls.subject || cls.grade_level) && (
+					<p className='mt-3 text-xs font-medium text-[var(--color-text-muted)]'>
+						{[cls.subject, cls.grade_level].filter(Boolean).join(' • ')}
+					</p>
 				)}
 
 				<div 
@@ -379,7 +479,18 @@ export default function EnrolledClasses() {
 							<span>{cls.room_number}</span>
 						</p>
 					)}
+					{nextScheduleBlock && (
+						<p className='pt-1 text-xs font-medium text-[var(--color-text-muted)]'>
+							Next session: {nextScheduleBlock.day} {formatTimeRange(nextScheduleBlock.start_time, nextScheduleBlock.end_time)}
+						</p>
+					)}
 				</div>
+
+				{!enrolled && conflictWithCurrentSchedule && (
+					<p className='mt-3 rounded-lg border border-[var(--color-danger)]/30 bg-[var(--color-danger-soft)] px-3 py-2 text-xs font-medium text-[var(--color-danger)]'>
+						Schedule conflict detected with one of your enrolled classes.
+					</p>
+				)}
 
 				{!enrolled && cls.description && (
 					<p className='mt-3 text-sm leading-relaxed text-[var(--color-text-muted)] line-clamp-2'>
@@ -445,11 +556,15 @@ export default function EnrolledClasses() {
 					<button
 						type='button'
 						onClick={() => requestEnroll(id)}
-						disabled={isLoadingEnroll}
+						disabled={disableEnroll}
 						className='w-full rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-[background-color,transform,box-shadow] duration-200 ease-out hover:-translate-y-px hover:bg-[var(--color-primary-hover)] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]'
 					>
 						{isLoadingEnroll ? (
 							<SpinnerIcon className='mx-auto h-4 w-4 animate-spin' />
+						) : conflictWithCurrentSchedule ? (
+							'Schedule conflict'
+						) : classIsFull ? (
+							'Class full'
 						) : (
 							'Enroll now'
 						)}
@@ -586,7 +701,7 @@ export default function EnrolledClasses() {
 			<section className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-6'>
 				<SectionHeader
 					title='Available Classes'
-					subtitle='Open classes available for enrollment in your institute.'
+					subtitle='Open classes with live seat availability and schedule conflict checks.'
 					count={filteredAvailableClasses.length}
 					tone='success'
 				/>
