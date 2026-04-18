@@ -6,7 +6,7 @@ const tabs = [
 	{ id: 'chat', label: 'Chat', Icon: MessageSquare },
 ];
 
-export function MobileTabBar({ activeTab, onTabChange, unreadCount, hasConversation }) {
+export function MobileTabBar({ activeTab, onTabChange, unreadCount }) {
 	const bottomInset = 'max(env(safe-area-inset-bottom), 0px)';
 
 	return (
@@ -20,21 +20,17 @@ export function MobileTabBar({ activeTab, onTabChange, unreadCount, hasConversat
 					const TabIcon = tab.Icon;
 					const isActive = activeTab === id;
 					const showBadge = id === 'inbox' && unreadCount > 0;
-					const isDisabled = id === 'chat' && !hasConversation;
 
 					return (
 						<button
 							key={id}
 							type='button'
-							onClick={() => !isDisabled && onTabChange(id)}
-							disabled={isDisabled}
+							onClick={() => onTabChange(id)}
 							aria-label={label}
 							className={`relative flex flex-1 flex-col items-center gap-1 py-3 transition-colors ${
-								isDisabled
-									? 'cursor-default opacity-40'
-									: isActive
-										? 'text-[var(--color-primary)]'
-										: 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
+								isActive
+									? 'text-[var(--color-primary)]'
+									: 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
 							}`}
 						>
 							<div className='relative'>
