@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
 	searchCommunicationContacts,
 	getTeacherCommunicationProfile,
@@ -6,20 +7,32 @@ import {
 	getCommunicationInbox,
 	getConversationMessages,
 	markConversationRead,
-	getCommunicationUnreadCount,
 	sendCommunicationMessage,
 	editCommunicationMessage,
 	deleteCommunicationMessage,
 } from '../../../../../../api/api';
 import { useSocket } from './useSocket';
 
+function useDebouncedValue(value, delay) {
+	const [debounced, setDebounced] = useState(value);
+	useEffect(() => {
+		const id = setTimeout(() => setDebounced(value), delay);
+		return () => clearTimeout(id);
+	}, [delay, value]);
+	return debounced;
+}
+
+function sortMessagesByCreatedAt(list) {
+	return [...list].sort(
+		(a, b) =>
+			new Date(a?.created_at || 0).getTime() -
+			new Date(b?.created_at || 0).getTime(),
+	);
+}
+
 export function useCommunication({ user, openToast }) {
-	const [inbox, setInbox] = useState([]);
-	const [contacts, setContacts] = useState([]);
-	const [messages, setMessages] = useState([]);
-	const [inboxLoading, setInboxLoading] = useState(true);
-	const [contactsLoading, setContactsLoading] = useState(false);
-	const [messagesLoading, setMessagesLoading] = useState(false);
+	const queryClient = useQueryClient();
+	const [unreadCount, setUnreadCount] = useState(0);
 	const [sending, setSending] = useState(false);
 	const [selectedConversation, setSelectedConversation] = useState(null);
 	const [searchText, setSearchText] = useState('');
@@ -31,7 +44,6 @@ export function useCommunication({ user, openToast }) {
 	const [replyTo, setReplyTo] = useState(null);
 	const [editingMessageId, setEditingMessageId] = useState(null);
 	const [editingText, setEditingText] = useState('');
-	const [unreadCount, setUnreadCount] = useState(0);
 	const [profileModalOpen, setProfileModalOpen] = useState(false);
 	const [teacherProfile, setTeacherProfile] = useState(null);
 	const [teacherProfileLoading, setTeacherProfileLoading] = useState(false);
@@ -39,8 +51,17 @@ export function useCommunication({ user, openToast }) {
 	const messageViewportRef = useRef(null);
 	const stickToBottomRef = useRef(true);
 	const activeConversationIdRef = useRef(null);
-	const latestMessageLoadRef = useRef(0);
-	const initialLoadDoneRef = useRef(false);
+	const inboxRefreshTimeoutRef = useRef(null);
+
+	const debouncedSearchText = useDebouncedValue(searchText, 250);
+	const debouncedSubjectText = useDebouncedValue(subjectText, 250);
+	const effectiveSearchRole =
+		user?.role === 'student' ? 'teacher' : searchRole;
+	const selectedConversationId = selectedConversation?.conversationId || null;
+	const inboxQueryKey = useMemo(
+		() => ['communication', 'inbox', user?.id],
+		[user?.id],
+	);
 
 	const emitUnreadEvent = useCallback((count) => {
 		window.dispatchEvent(
@@ -56,130 +77,217 @@ export function useCommunication({ user, openToast }) {
 		[emitUnreadEvent],
 	);
 
+	const scheduleInboxRefresh = useCallback(() => {
+		if (!user?.id) return;
+		if (inboxRefreshTimeoutRef.current) return;
+		inboxRefreshTimeoutRef.current = setTimeout(() => {
+			inboxRefreshTimeoutRef.current = null;
+			queryClient.invalidateQueries({ queryKey: inboxQueryKey });
+		}, 650);
+	}, [inboxQueryKey, queryClient, user?.id]);
+
+	const inboxQuery = useQuery({
+		queryKey: inboxQueryKey,
+		enabled: Boolean(user?.id),
+		staleTime: 6000,
+		refetchInterval: 25000,
+		queryFn: async () => {
+			const res = await getCommunicationInbox();
+			return Array.isArray(res.data) ? res.data : [];
+		},
+	});
+
+	const contactsQuery = useQuery({
+		queryKey: [
+			'communication',
+			'contacts',
+			user?.id,
+			effectiveSearchRole,
+			debouncedSearchText,
+			debouncedSubjectText,
+		],
+		enabled: Boolean(user?.id),
+		staleTime: 15000,
+		queryFn: async () => {
+			const res = await searchCommunicationContacts({
+				role: effectiveSearchRole,
+				search: debouncedSearchText,
+				subject: debouncedSubjectText,
+			});
+			return Array.isArray(res.data) ? res.data : [];
+		},
+	});
+
+	const messagesQuery = useQuery({
+		queryKey: ['communication', 'messages', selectedConversationId],
+		enabled: Boolean(user?.id && selectedConversationId),
+		staleTime: 4000,
+		queryFn: async () => {
+			if (!selectedConversationId) return [];
+			const res = await getConversationMessages(selectedConversationId, {
+				limit: 200,
+			});
+			return Array.isArray(res.data) ? res.data : [];
+		},
+	});
+
+	const inbox = useMemo(
+		() => (Array.isArray(inboxQuery.data) ? inboxQuery.data : []),
+		[inboxQuery.data],
+	);
+	const contactsRaw = useMemo(
+		() => (Array.isArray(contactsQuery.data) ? contactsQuery.data : []),
+		[contactsQuery.data],
+	);
+	const messages = useMemo(
+		() => (Array.isArray(messagesQuery.data) ? messagesQuery.data : []),
+		[messagesQuery.data],
+	);
+
+	const inboxLoading = inboxQuery.isLoading;
+	const contactsLoading = contactsQuery.isFetching;
+	const messagesLoading =
+		Boolean(selectedConversationId) &&
+		(messagesQuery.isLoading || messagesQuery.isFetching);
+
+	const updateInboxWithMessage = useCallback(
+		(incoming) => {
+			if (!incoming?.conversation_id || !user?.id) return;
+			queryClient.setQueryData(inboxQueryKey, (prev = []) => {
+				if (!Array.isArray(prev)) return prev;
+				const index = prev.findIndex(
+					(item) => item.conversation_id === incoming.conversation_id,
+				);
+				if (index === -1) {
+					scheduleInboxRefresh();
+					return prev;
+				}
+				const current = prev[index];
+				const isActive =
+					activeConversationIdRef.current === incoming.conversation_id;
+				const fromCurrentUser = incoming.sender_id === user.id;
+				const nextUnread = fromCurrentUser || isActive
+					? 0
+					: Number(current.unread_count || 0) + 1;
+				const updated = {
+					...current,
+					last_message_id: incoming.id || current.last_message_id,
+					last_message_content: incoming.content,
+					last_message_sender_id:
+						incoming.sender_id || current.last_message_sender_id,
+					last_message_created_at:
+						incoming.created_at || current.last_message_created_at,
+					last_message_is_deleted:
+						incoming.is_deleted ?? current.last_message_is_deleted,
+					last_message_at:
+						incoming.created_at || incoming.updated_at || current.last_message_at,
+					updated_at: incoming.updated_at || current.updated_at,
+					unread_count: nextUnread,
+				};
+				const next = [...prev];
+				next.splice(index, 1);
+				next.unshift(updated);
+				return next;
+			});
+		},
+		[inboxQueryKey, queryClient, scheduleInboxRefresh, user?.id],
+	);
+
 	const upsertMessage = useCallback((incoming) => {
-		setMessages((prev) => {
-			const idx = prev.findIndex((m) => m.id === incoming.id);
-			if (idx === -1) return [...prev, incoming];
-			const copy = [...prev];
-			copy[idx] = incoming;
-			return copy;
-		});
-	}, []);
+		if (!incoming?.conversation_id) return;
+		queryClient.setQueryData(
+			['communication', 'messages', incoming.conversation_id],
+			(prev = []) => {
+				if (!Array.isArray(prev)) return [incoming];
+				const idx = prev.findIndex((m) => m.id === incoming.id);
+				if (idx === -1) return sortMessagesByCreatedAt([...prev, incoming]);
+				const copy = [...prev];
+				copy[idx] = { ...copy[idx], ...incoming };
+				return sortMessagesByCreatedAt(copy);
+			},
+		);
+	}, [queryClient]);
 
 	const softDeleteMessage = useCallback((incoming) => {
-		setMessages((prev) =>
-			prev.map((m) =>
-				m.id === incoming.id
-					? {
-							...m,
-							content: incoming.content,
-							is_deleted: incoming.is_deleted,
-							updated_at: incoming.updated_at,
-						}
-					: m,
-			),
+		if (!incoming?.conversation_id) return;
+		queryClient.setQueryData(
+			['communication', 'messages', incoming.conversation_id],
+			(prev = []) =>
+				Array.isArray(prev)
+					? prev.map((m) =>
+								m.id === incoming.id
+									? {
+											...m,
+											content: incoming.content,
+											is_deleted: incoming.is_deleted,
+											updated_at: incoming.updated_at,
+										}
+									: m,
+						)
+					: prev,
 		);
-	}, []);
-
-	const loadInbox = useCallback(
-		async ({ silent = false } = {}) => {
-			if (!silent) setInboxLoading(true);
-			try {
-				const res = await getCommunicationInbox();
-				const list = Array.isArray(res.data) ? res.data : [];
-				setInbox(list);
-				const total = list.reduce((s, i) => s + Number(i.unread_count || 0), 0);
-				syncUnreadCount(total);
-			} catch (err) {
-				if (!silent)
-					openToast(
-						'error',
-						err?.response?.data?.message || 'Failed to load inbox.',
-					);
-			} finally {
-				if (!silent) setInboxLoading(false);
-			}
-		},
-		[openToast, syncUnreadCount],
-	);
+	}, [queryClient]);
 
 	const loadContacts = useCallback(
 		async ({ silent = false } = {}) => {
-			if (!silent) setContactsLoading(true);
 			try {
-				const res = await searchCommunicationContacts({
-					role: user?.role === 'student' ? 'teacher' : searchRole,
-					search: searchText,
-					subject: subjectText,
-				});
-				setContacts(Array.isArray(res.data) ? res.data : []);
+				if (silent) {
+					queryClient.invalidateQueries({
+						queryKey: ['communication', 'contacts', user?.id],
+					});
+					return;
+				}
+				await contactsQuery.refetch();
 			} catch (err) {
 				if (!silent)
 					openToast(
 						'error',
 						err?.response?.data?.message || 'Failed to load contacts.',
 					);
-			} finally {
-				if (!silent) setContactsLoading(false);
 			}
 		},
-		[openToast, searchRole, searchText, subjectText, user?.role],
+		[contactsQuery, openToast, queryClient, user?.id],
 	);
 
 	const markRead = useCallback(
 		async (conversationId) => {
 			if (!conversationId) return;
+			queryClient.setQueryData(inboxQueryKey, (prev = []) => {
+				if (!Array.isArray(prev)) return prev;
+				return prev.map((item) =>
+					item.conversation_id === conversationId
+						? { ...item, unread_count: 0 }
+						: item,
+				);
+			});
 			try {
 				await markConversationRead(conversationId);
 			} catch {
-				return;
-			}
-			loadInbox({ silent: true });
-		},
-		[loadInbox],
-	);
-
-	const loadMessages = useCallback(
-		async (conversationId) => {
-			const loadId = latestMessageLoadRef.current + 1;
-			latestMessageLoadRef.current = loadId;
-			setMessagesLoading(true);
-			try {
-				const res = await getConversationMessages(conversationId, {
-					limit: 200,
-				});
-				if (latestMessageLoadRef.current !== loadId) return;
-				if (activeConversationIdRef.current !== conversationId) return;
-				setMessages(Array.isArray(res.data) ? res.data : []);
-			} catch (err) {
-				if (latestMessageLoadRef.current !== loadId) return;
-				openToast(
-					'error',
-					err?.response?.data?.message || 'Failed to load messages.',
-				);
-			} finally {
-				if (latestMessageLoadRef.current === loadId) {
-					setMessagesLoading(false);
-				}
+				scheduleInboxRefresh();
 			}
 		},
-		[openToast],
+		[inboxQueryKey, queryClient, scheduleInboxRefresh],
 	);
 
 	const handleNewSocketMessage = useCallback(
 		(msg, activeConversationId) => {
+			updateInboxWithMessage(msg);
 			if (msg.conversation_id === activeConversationId) {
 				upsertMessage(msg);
 			}
+			if (msg.conversation_id !== activeConversationId) {
+				scheduleInboxRefresh();
+			}
 		},
-		[upsertMessage],
+		[scheduleInboxRefresh, updateInboxWithMessage, upsertMessage],
 	);
 
 	const handleUnreadCountUpdated = useCallback(
 		(count) => {
 			syncUnreadCount(count);
+			scheduleInboxRefresh();
 		},
-		[syncUnreadCount],
+		[scheduleInboxRefresh, syncUnreadCount],
 	);
 
 	const {
@@ -193,7 +301,7 @@ export function useCommunication({ user, openToast }) {
 		onMessageUpdated: upsertMessage,
 		onMessageDeleted: softDeleteMessage,
 		onUnreadCountUpdated: handleUnreadCountUpdated,
-		loadInbox,
+		onInboxRefresh: scheduleInboxRefresh,
 	});
 
 	const selectConversation = useCallback(
@@ -206,18 +314,18 @@ export function useCommunication({ user, openToast }) {
 			setEditingText('');
 			setActiveConversationId(conversationId);
 			joinConversationRoom(conversationId);
-			await loadMessages(conversationId);
+			queryClient.invalidateQueries({
+				queryKey: ['communication', 'messages', conversationId],
+			});
 			markReadViaSocket(conversationId);
-			await markRead(conversationId);
-			await loadInbox({ silent: true });
+			markRead(conversationId);
 			return true;
 		},
 		[
 			joinConversationRoom,
-			loadInbox,
-			loadMessages,
 			markRead,
 			markReadViaSocket,
+			queryClient,
 			setActiveConversationId,
 		],
 	);
@@ -274,17 +382,24 @@ export function useCommunication({ user, openToast }) {
 				openToast('error', result?.message || 'Failed to send message.');
 				return;
 			}
+			if (result?.message) {
+				upsertMessage(result.message);
+				updateInboxWithMessage(result.message);
+			}
 			setDraft('');
 			setReplyTo(null);
-			loadInbox({ silent: true });
+			scheduleInboxRefresh();
 		});
 		if (sentViaSocket) return;
 		try {
-			await sendCommunicationMessage(payload);
+			const res = await sendCommunicationMessage(payload);
+			if (res?.data) {
+				upsertMessage(res.data);
+				updateInboxWithMessage(res.data);
+			}
 			setDraft('');
 			setReplyTo(null);
-			await loadMessages(conversationId);
-			await loadInbox({ silent: true });
+			scheduleInboxRefresh();
 		} catch (err) {
 			openToast(
 				'error',
@@ -295,13 +410,14 @@ export function useCommunication({ user, openToast }) {
 		}
 	}, [
 		draft,
-		loadInbox,
-		loadMessages,
 		openToast,
 		replyTo?.id,
+		scheduleInboxRefresh,
 		selectedConversation?.conversationId,
 		sendViaSocket,
 		sending,
+		updateInboxWithMessage,
+		upsertMessage,
 	]);
 
 	const handleEditMessage = useCallback(
@@ -315,9 +431,10 @@ export function useCommunication({ user, openToast }) {
 					content: editingText.trim(),
 				});
 				upsertMessage(res.data);
+				updateInboxWithMessage(res.data);
 				setEditingMessageId(null);
 				setEditingText('');
-				await loadInbox({ silent: true });
+				scheduleInboxRefresh();
 			} catch (err) {
 				openToast(
 					'error',
@@ -325,7 +442,7 @@ export function useCommunication({ user, openToast }) {
 				);
 			}
 		},
-		[editingText, loadInbox, openToast, upsertMessage],
+		[editingText, openToast, scheduleInboxRefresh, updateInboxWithMessage, upsertMessage],
 	);
 
 	const handleDeleteMessage = useCallback(
@@ -334,9 +451,15 @@ export function useCommunication({ user, openToast }) {
 			try {
 				await deleteCommunicationMessage(messageId);
 				if (selectedConversation?.conversationId) {
-					await loadMessages(selectedConversation.conversationId);
+					await queryClient.invalidateQueries({
+						queryKey: [
+							'communication',
+							'messages',
+							selectedConversation.conversationId,
+						],
+					});
 				}
-				await loadInbox({ silent: true });
+				scheduleInboxRefresh();
 			} catch (err) {
 				openToast(
 					'error',
@@ -344,7 +467,7 @@ export function useCommunication({ user, openToast }) {
 				);
 			}
 		},
-		[loadInbox, loadMessages, openToast, selectedConversation?.conversationId],
+		[openToast, queryClient, scheduleInboxRefresh, selectedConversation?.conversationId],
 	);
 
 	const handleCopyMessage = useCallback(
@@ -389,11 +512,17 @@ export function useCommunication({ user, openToast }) {
 
 	const sortedContacts = useMemo(
 		() =>
-			[...contacts].sort((a, b) =>
+			[...contactsRaw].sort((a, b) =>
 				String(a?.username || '').localeCompare(String(b?.username || '')),
 			),
-		[contacts],
+		[contactsRaw],
 	);
+
+	useEffect(() => {
+		if (!Array.isArray(inbox)) return;
+		const total = inbox.reduce((s, i) => s + Number(i.unread_count || 0), 0);
+		syncUnreadCount(total);
+	}, [inbox, syncUnreadCount]);
 
 	useEffect(() => {
 		activeConversationIdRef.current =
@@ -401,24 +530,12 @@ export function useCommunication({ user, openToast }) {
 	}, [selectedConversation?.conversationId]);
 
 	useEffect(() => {
-		if (initialLoadDoneRef.current) return;
-		initialLoadDoneRef.current = true;
-		loadInbox();
-		loadContacts();
-		getCommunicationUnreadCount()
-			.then((res) => syncUnreadCount(Number(res.data?.unreadCount || 0)))
-			.catch(() => {});
-	}, [loadContacts, loadInbox, syncUnreadCount]);
-
-	useEffect(() => {
-		const id = setInterval(() => {
-			loadInbox({ silent: true });
-			getCommunicationUnreadCount()
-				.then((res) => syncUnreadCount(Number(res.data?.unreadCount || 0)))
-				.catch(() => {});
-		}, 12000);
-		return () => clearInterval(id);
-	}, [loadInbox, syncUnreadCount]);
+		return () => {
+			if (inboxRefreshTimeoutRef.current) {
+				clearTimeout(inboxRefreshTimeoutRef.current);
+			}
+		};
+	}, []);
 
 	useEffect(() => {
 		const el = messageViewportRef.current;
