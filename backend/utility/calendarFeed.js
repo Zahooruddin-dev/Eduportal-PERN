@@ -142,30 +142,53 @@ function escapeIcs(value) {
 }
 
 function normalizeScheduleBlocks(item) {
-	if (Array.isArray(item.schedule_blocks) && item.schedule_blocks.length > 0) {
-		return item.schedule_blocks
-			.map((block) => ({
-				dayCode: normalizeDayValue(block.day),
-				startTime: normalizeTimeValue(block.start, null),
-				endTime: normalizeTimeValue(block.end, null),
-			}))
-			.filter((block) => block.dayCode && block.startTime && block.endTime);
+	let parsedBlocks = [];
+	let scheduleBlocks = item.schedule_blocks;
+
+	if (typeof scheduleBlocks === 'string') {
+		try {
+			scheduleBlocks = JSON.parse(scheduleBlocks);
+		} catch {
+			scheduleBlocks = [];
+		}
 	}
 
-	if (Array.isArray(item.schedule_days) && item.start_time && item.end_time) {
-		const start = normalizeTimeValue(item.start_time, null);
-		const end = normalizeTimeValue(item.end_time, null);
-		if (!start || !end) return [];
-		return item.schedule_days
-			.map((day) => ({
-				dayCode: normalizeDayValue(day),
-				startTime: start,
-				endTime: end,
-			}))
-			.filter((block) => block.dayCode);
+	if (Array.isArray(scheduleBlocks) && scheduleBlocks.length > 0) {
+		parsedBlocks = scheduleBlocks
+			.map((block) => {
+				const dayCode = normalizeDayValue(block?.day);
+				const startTime = normalizeTimeValue(block?.start || block?.start_time, null);
+				const endTime = normalizeTimeValue(block?.end || block?.end_time, null);
+				if (!dayCode || !startTime || !endTime || startTime >= endTime) return null;
+				return { dayCode, startTime, endTime };
+			})
+			.filter(Boolean);
 	}
 
-	return [];
+	if (parsedBlocks.length > 0) {
+		return parsedBlocks;
+	}
+
+	const start = normalizeTimeValue(item.start_time || item.startTime, null);
+	const end = normalizeTimeValue(item.end_time || item.endTime, null);
+	if (!start || !end || start >= end) return [];
+
+	const rawDays = Array.isArray(item.schedule_days)
+		? item.schedule_days
+		: String(item.schedule_days || '')
+				.split(',')
+				.map((value) => value.trim())
+				.filter(Boolean);
+
+	if (!rawDays.length) return [];
+
+	return rawDays
+		.map((day) => ({
+			dayCode: normalizeDayValue(day),
+			startTime: start,
+			endTime: end,
+		}))
+		.filter((block) => block.dayCode);
 }
 
 function buildInstructionalExceptionMap(exceptions) {
