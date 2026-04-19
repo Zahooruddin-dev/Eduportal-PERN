@@ -21,8 +21,8 @@ async function createUserInInstituteQuery({
 	passwordHash,
 	role,
 	instituteId,
-}) {
-	const { rows } = await pool.query(
+}, executor = pool) {
+	const { rows } = await executor.query(
 		`INSERT INTO users (username, email, password_hash, role, institute_id)
 		 VALUES ($1, $2, $3, $4, $5)
 		 RETURNING id, username, email, role, institute_id, created_at, profile_pic`,
@@ -70,6 +70,8 @@ async function listInstituteUsersQuery({
 				u.username ILIKE $${paramIndex}
 				OR u.email ILIKE $${paramIndex}
 				OR COALESCE(pp.child_full_name, '') ILIKE $${paramIndex}
+				OR COALESCE(tp.preferred_grade_label, '') ILIKE $${paramIndex}
+				OR COALESCE(array_to_string(tp.subjects, ', '), '') ILIKE $${paramIndex}
 			)`);
 		values.push(`%${search}%`);
 		paramIndex += 1;
@@ -79,7 +81,9 @@ async function listInstituteUsersQuery({
 		? 'FROM users u'
 		: `FROM users u
 		   LEFT JOIN parent_profiles pp ON pp.user_id = u.id
-		   LEFT JOIN users linked ON linked.id = pp.child_student_id`;
+		   LEFT JOIN users linked ON linked.id = pp.child_student_id
+		   LEFT JOIN teacher_profiles tp ON tp.user_id = u.id
+		   LEFT JOIN classes tpc ON tpc.id = tp.preferred_class_id`;
 
 	const whereClause = clauses.join(' AND ');
 
@@ -102,6 +106,10 @@ async function listInstituteUsersQuery({
 		   u.role,
 		   u.profile_pic,
 		   u.created_at,
+		   tp.subjects AS teacher_subjects,
+		   tp.preferred_class_id AS teacher_preferred_class_id,
+		   tp.preferred_grade_label AS teacher_preferred_grade_label,
+		   tpc.class_name AS teacher_preferred_class_name,
 		   pp.child_full_name,
 		   pp.child_grade,
 		   pp.relationship_to_child,

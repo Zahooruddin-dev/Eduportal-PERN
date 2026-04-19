@@ -1,12 +1,13 @@
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
 const pool = require('../db/Pool');
 const adminDb = require('../db/queryAdmin');
 const authDb = require('../db/queryAuth');
 const { sendResetEmail } = require('../utility/emailSender');
 const { isUuid } = require('../middleware/uuidParamMiddleware');
 const { getCacheValue, setCacheValue, deleteCacheByPrefix } = require('../utility/ttlCache');
+const { validatePasswordStrength } = require('../utility/passwordPolicy');
+const { issueAuthSession } = require('../utility/authSession');
 
 const MAX_USER_SEARCH_LENGTH = 120;
 const DEFAULT_USER_LIST_LIMIT = 25;
@@ -15,22 +16,6 @@ const RISK_OVERVIEW_CACHE_MS = Number(process.env.RISK_OVERVIEW_CACHE_MS || 45 *
 
 function normalizeEmail(value) {
 	return String(value || '').trim().toLowerCase();
-}
-
-function signToken(user) {
-	return jwt.sign(
-		{
-			id: user.id,
-			role: user.role,
-			username: user.username,
-			email: user.email,
-			profile: user.profile_pic || null,
-			createdAt: user.created_at,
-			instituteId: user.institute_id,
-		},
-		process.env.JWT_SECRET,
-		{ expiresIn: '1d' },
-	);
 }
 
 function toUserPayload(user) {
@@ -43,6 +28,43 @@ function toUserPayload(user) {
 		createdAt: user.created_at,
 		instituteId: user.institute_id,
 	};
+}
+
+function normalizeTeacherProfile(rawProfile) {
+	const profile = rawProfile || {};
+	const rawSubjects = Array.isArray(profile.subjects)
+		? profile.subjects
+		: String(profile.subjects || '').split(',');
+	const subjects = [];
+	for (let i = 0; i < rawSubjects.length; i += 1) {
+		const value = String(rawSubjects[i] || '').trim();
+		if (!value) continue;
+		if (!subjects.includes(value)) {
+			subjects.push(value);
+		}
+	}
+
+	const classId = String(profile.selectedClassId || profile.classId || '').trim();
+	const otherGrade = String(profile.otherGrade || '').trim();
+
+	return {
+		subjects,
+		classId: classId || null,
+		otherGrade: otherGrade || null,
+	};
+}
+
+function validateTeacherProfile(profile) {
+	if (!Array.isArray(profile.subjects) || profile.subjects.length === 0) {
+		return 'At least one subject is required for teacher accounts.';
+	}
+	if (!profile.classId && !profile.otherGrade) {
+		return null;
+	}
+	if (!profile.classId && profile.otherGrade.length < 2) {
+		return 'Other grade must be at least 2 characters.';
+	}
+	return null;
 }
 
 function generateTempPassword(length = 12) {
@@ -118,8 +140,9 @@ async function bootstrapAdmin(req, res) {
 		return res.status(400).json({ message: 'Institute name, username, email, and password are required.' });
 	}
 
-	if (password.length < 8) {
-		return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+	const passwordValidation = validatePasswordStrength(password, 'admin');
+	if (!passwordValidation.ok) {
+		return res.status(400).json({ message: passwordValidation.message });
 	}
 
 	const passwordHash = await bcrypt.hash(password, 10);
@@ -144,10 +167,10 @@ async function bootstrapAdmin(req, res) {
 
 		await client.query('COMMIT');
 		const user = userResult.rows[0];
-		const token = signToken(user);
+		const session = await issueAuthSession(res, user, req);
 		return res.status(201).json({
 			message: 'Admin bootstrap completed.',
-			token,
+			token: session.accessToken,
 			user: toUserPayload(user),
 			institute,
 		});
@@ -169,16 +192,25 @@ async function createTeacher(req, res) {
 	const username = String(req.body?.username || '').trim();
 	const email = normalizeEmail(req.body?.email);
 	const password = String(req.body?.password || '');
+	const teacherProfile = normalizeTeacherProfile(req.body?.teacherProfile);
 
 	if (!username || !email || !password) {
 		return res.status(400).json({ message: 'Username, email, and password are required.' });
 	}
 
-	if (password.length < 8) {
-		return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+	const passwordValidation = validatePasswordStrength(password, 'teacher');
+	if (!passwordValidation.ok) {
+		return res.status(400).json({ message: passwordValidation.message });
 	}
 
+	const teacherProfileValidationMessage = validateTeacherProfile(teacherProfile);
+	if (teacherProfileValidationMessage) {
+		return res.status(400).json({ message: teacherProfileValidationMessage });
+	}
+
+	const client = await pool.connect();
 	try {
+		await client.query('BEGIN');
 		const passwordHash = await bcrypt.hash(password, 10);
 		const user = await adminDb.createUserInInstituteQuery({
 			username,
@@ -186,16 +218,34 @@ async function createTeacher(req, res) {
 			passwordHash,
 			role: 'teacher',
 			instituteId: institute.id,
-		});
+		}, client);
+
+		const savedTeacherProfile = await authDb.upsertTeacherProfileByUserId(
+			{
+				userId: user.id,
+				instituteId: institute.id,
+				subjects: teacherProfile.subjects,
+				classId: teacherProfile.classId,
+				otherGrade: teacherProfile.otherGrade,
+			},
+			client,
+		);
+
+		await client.query('COMMIT');
+
 		return res.status(201).json({
 			message: 'Teacher account created.',
 			user: toUserPayload(user),
+			teacherProfile: savedTeacherProfile,
 		});
 	} catch (error) {
+		await client.query('ROLLBACK');
 		if (error.code === '23505') {
 			return res.status(400).json({ message: 'Email already exists.' });
 		}
 		return res.status(500).json({ message: error.message });
+	} finally {
+		client.release();
 	}
 }
 
@@ -247,11 +297,12 @@ async function bulkCreateStudents(req, res) {
 				continue;
 			}
 
-			if (!password || password.length < 8) {
+			const passwordValidation = validatePasswordStrength(password, 'student');
+			if (!passwordValidation.ok) {
 				skipped.push({
 					row: i + 1,
 					email,
-					reason: 'password must be at least 8 characters',
+					reason: passwordValidation.message,
 				});
 				continue;
 			}
@@ -387,8 +438,9 @@ async function acceptAdminInvite(req, res) {
 		return res.status(400).json({ message: 'Token, username, and password are required.' });
 	}
 
-	if (password.length < 8) {
-		return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+	const passwordValidation = validatePasswordStrength(password, 'admin');
+	if (!passwordValidation.ok) {
+		return res.status(400).json({ message: passwordValidation.message });
 	}
 
 	const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
@@ -422,10 +474,10 @@ async function acceptAdminInvite(req, res) {
 		);
 
 		await client.query('COMMIT');
-		const signedToken = signToken(user);
+		const session = await issueAuthSession(res, user, req);
 		return res.status(201).json({
 			message: 'Admin account created from invite.',
-			token: signedToken,
+			token: session.accessToken,
 			user: toUserPayload(user),
 		});
 	} catch (error) {
@@ -615,8 +667,9 @@ async function resetUserPasswordByAdmin(req, res) {
 
 		if (method === 'temporary') {
 			const newPassword = String(req.body?.newPassword || '');
-			if (newPassword.length < 8) {
-				return res.status(400).json({ message: 'New password must be at least 8 characters.' });
+			const passwordValidation = validatePasswordStrength(newPassword, targetUser.role);
+			if (!passwordValidation.ok) {
+				return res.status(400).json({ message: passwordValidation.message });
 			}
 			const passwordHash = await bcrypt.hash(newPassword, 10);
 			await pool.query(
@@ -627,9 +680,9 @@ async function resetUserPasswordByAdmin(req, res) {
 			return res.status(200).json({ message: 'Temporary password set successfully.' });
 		}
 
-		const code = Math.floor(100000 + Math.random() * 900000).toString();
+		const code = crypto.randomInt(100000, 1000000).toString();
 		const expires = new Date(Date.now() + 15 * 60000);
-		await authDb.saveResetCode(targetUser.email, code, expires);
+		await authDb.saveResetCode(targetUser.email, code, expires, req.ip || null);
 		await sendResetEmail(targetUser.email, code);
 		return res.status(200).json({ message: 'Reset code sent successfully.' });
 	} catch (error) {

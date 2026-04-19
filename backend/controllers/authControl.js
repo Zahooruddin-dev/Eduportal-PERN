@@ -1,8 +1,18 @@
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const db = require('../db/queryAuth');
 const { sendResetEmail } = require('../utility/emailSender');
 const { deleteCacheByPrefix } = require('../utility/ttlCache');
+const { validatePasswordStrength } = require('../utility/passwordPolicy');
+const {
+	clearRefreshCookie,
+	getRefreshTokenFromRequest,
+	issueAuthSession,
+	revokeAuthSessionByToken,
+	rotateAuthSession,
+	signAccessToken,
+	getRequestIp,
+} = require('../utility/authSession');
 
 function normalizeEmail(value) {
 	return String(value || '').trim().toLowerCase();
@@ -18,6 +28,30 @@ function normalizeParentProfile(rawProfile) {
 		alternatePhone: String(profile.alternatePhone || '').trim(),
 		address: String(profile.address || '').trim(),
 		notes: String(profile.notes || '').trim(),
+	};
+}
+
+function normalizeTeacherProfile(rawProfile) {
+	const profile = rawProfile || {};
+	const rawSubjects = Array.isArray(profile.subjects)
+		? profile.subjects
+		: String(profile.subjects || '').split(',');
+	const subjects = [];
+	for (let i = 0; i < rawSubjects.length; i += 1) {
+		const value = String(rawSubjects[i] || '').trim();
+		if (!value) continue;
+		if (!subjects.includes(value)) {
+			subjects.push(value);
+		}
+	}
+
+	const classId = String(profile.selectedClassId || profile.classId || '').trim();
+	const otherGrade = String(profile.otherGrade || '').trim();
+
+	return {
+		subjects,
+		classId: classId || null,
+		otherGrade: otherGrade || null,
 	};
 }
 
@@ -37,6 +71,42 @@ function validateRequiredParentProfile(profile) {
 	return null;
 }
 
+function validateTeacherProfile(profile) {
+	if (!Array.isArray(profile.subjects) || profile.subjects.length === 0) {
+		return 'At least one subject is required for teacher accounts.';
+	}
+	if (!profile.classId && !profile.otherGrade) {
+		return null;
+	}
+	if (!profile.classId && profile.otherGrade.length < 2) {
+		return 'Other grade must be at least 2 characters.';
+	}
+	return null;
+}
+
+function toUserPayload(user, { parentProfile = null, teacherProfile = null } = {}) {
+	return {
+		id: user.id,
+		username: user.username,
+		role: user.role,
+		email: user.email,
+		profile: user.profile_pic,
+		createdAt: user.created_at,
+		instituteId: user.institute_id,
+		parentProfile,
+		teacherProfile,
+	};
+}
+
+async function getRegisterOptions(req, res) {
+	try {
+		const classes = await db.listRegistrationClassesQuery();
+		return res.status(200).json({ classes });
+	} catch (error) {
+		return res.status(500).json({ message: error.message });
+	}
+}
+
 async function login(req, res) {
 	const email = normalizeEmail(req.body?.email);
 	const password = String(req.body?.password || '');
@@ -54,38 +124,18 @@ async function login(req, res) {
 		if (!actualMatch)
 			return res.status(401).json({ message: 'Invalid Email or Password' });
 
-		const parentProfile =
-			user.role === 'parent'
-				? await db.getParentProfileByUserId(user.id)
-				: null;
-
-		const token = jwt.sign(
-			{
-				id: user.id,
-				role: user.role,
-				username: user.username,
-				email: user.email,
-				profile: user.profile_pic,
-				createdAt: user.created_at,
-				instituteId: user.institute_id,
-			},
-			process.env.JWT_SECRET,
-			{ expiresIn: '1d' },
-		);
+		const parentProfile = user.role === 'parent'
+			? await db.getParentProfileByUserId(user.id)
+			: null;
+		const teacherProfile = user.role === 'teacher'
+			? await db.getTeacherProfileByUserId(user.id)
+			: null;
+		const session = await issueAuthSession(res, user, req);
 
 		res.json({
 			message: 'Login Successful',
-			token,
-			user: {
-				id: user.id,
-				username: user.username,
-				role: user.role,
-				email: user.email,
-				profile: user.profile_pic,
-				createdAt: user.created_at,
-				instituteId: user.institute_id,
-				parentProfile,
-			},
+			token: session.accessToken,
+			user: toUserPayload(user, { parentProfile, teacherProfile }),
 		});
 	} catch (error) {
 		res.status(500).json({ message: error.message });
@@ -97,10 +147,10 @@ async function register(req, res) {
 	const normalizedRole = String(role || 'student').trim().toLowerCase();
 	const normalizedUsername = String(username || '').trim();
 	const normalizedEmail = normalizeEmail(email);
-	if (!['student', 'teacher', 'admin', 'parent'].includes(normalizedRole)) {
+	if (!['student', 'teacher', 'parent'].includes(normalizedRole)) {
 		return res
 			.status(403)
-			.json({ message: 'Supported account types are student, teacher, parent, and admin.' });
+			.json({ message: 'Supported account types are student, teacher, and parent.' });
 	}
 	if (!normalizedUsername || !normalizedEmail || !password) {
 		return res
@@ -112,6 +162,10 @@ async function register(req, res) {
 		normalizedRole === 'parent'
 			? normalizeParentProfile(req.body?.parentProfile)
 			: null;
+	const teacherProfile =
+		normalizedRole === 'teacher'
+			? normalizeTeacherProfile(req.body?.teacherProfile)
+			: null;
 
 	if (normalizedRole === 'parent') {
 		const parentProfileValidationMessage = validateRequiredParentProfile(parentProfile);
@@ -120,10 +174,16 @@ async function register(req, res) {
 		}
 	}
 
-	if (password.length < 8) {
-		return res
-			.status(400)
-			.json({ message: 'Password must be at least 8 characters.' });
+	if (normalizedRole === 'teacher') {
+		const teacherProfileValidationMessage = validateTeacherProfile(teacherProfile);
+		if (teacherProfileValidationMessage) {
+			return res.status(400).json({ message: teacherProfileValidationMessage });
+		}
+	}
+
+	const passwordValidation = validatePasswordStrength(password, normalizedRole);
+	if (!passwordValidation.ok) {
+		return res.status(400).json({ message: passwordValidation.message });
 	}
 	try {
 		const password_hash = await bcrypt.hash(password, 10);
@@ -134,37 +194,25 @@ async function register(req, res) {
 			normalizedRole,
 			null,
 			parentProfile,
+			teacherProfile,
 		);
-		const savedParentProfile =
-			normalizedRole === 'parent'
-				? await db.getParentProfileByUserId(newUser.id)
-				: null;
-
-		const token = jwt.sign(
-			{
-				id: newUser.id,
-				role: newUser.role,
-				username: newUser.username,
-				email: newUser.email,
-				profile: newUser.profile_pic,
-				createdAt: newUser.created_at,
-				instituteId: newUser.institute_id,
-			},
-			process.env.JWT_SECRET,
-			{ expiresIn: '1d' },
-		);
+		const savedParentProfile = normalizedRole === 'parent'
+			? await db.getParentProfileByUserId(newUser.id)
+			: null;
+		const savedTeacherProfile = normalizedRole === 'teacher'
+			? await db.getTeacherProfileByUserId(newUser.id)
+			: null;
+		const session = await issueAuthSession(res, newUser, req);
 		res
 			.status(201)
-			.json({ message: 'User Registered Successfully', token, user: {
-				id: newUser.id,
-				username: newUser.username,
-				role: newUser.role,
-				email: newUser.email,
-				profile: newUser.profile_pic,
-				createdAt: newUser.created_at,
-				instituteId: newUser.institute_id,
-				parentProfile: savedParentProfile,
-			} });
+			.json({
+				message: 'User Registered Successfully',
+				token: session.accessToken,
+				user: toUserPayload(newUser, {
+					parentProfile: savedParentProfile,
+					teacherProfile: savedTeacherProfile,
+				}),
+			});
 	} catch (error) {
 		if (error.code === '23505')
 			return res.status(400).json({ message: 'Email Already exists' });
@@ -227,19 +275,7 @@ async function changeUsername(req, res) {
 		const updatedUser = await db.updateUsername(id, newUsername, imagePath);
 		if (!updatedUser) return res.status(404).json({ message: 'User not found' });
 
-		const token = jwt.sign(
-			{
-				id: updatedUser.id,
-				role: updatedUser.role,
-				username: updatedUser.username,
-				email: updatedUser.email,
-				createdAt: updatedUser.created_at,
-				profile: updatedUser.profile_pic,
-				instituteId: updatedUser.institute_id,
-			},
-			process.env.JWT_SECRET,
-			{ expiresIn: '1d' },
-		);
+		const token = signAccessToken(updatedUser);
 
 		res.json({
 			message: 'Profile updated!',
@@ -268,14 +304,15 @@ async function changePassword(req, res) {
 		return res
 			.status(400)
 			.json({ message: 'Both current and new password are required.' });
-	if (newPassword.length < 8)
-		return res
-			.status(400)
-			.json({ message: 'New password must be at least 8 characters.' });
 
 	try {
 		const user = await db.getUserByEmail(req.user.email);
 		if (!user) return res.status(404).json({ message: 'User not found.' });
+
+		const passwordValidation = validatePasswordStrength(newPassword, user.role);
+		if (!passwordValidation.ok) {
+			return res.status(400).json({ message: passwordValidation.message });
+		}
 
 		const match = await bcrypt.compare(currentPassword, user.password_hash);
 		if (!match)
@@ -285,8 +322,10 @@ async function changePassword(req, res) {
 
 		const newHash = await bcrypt.hash(newPassword, 10);
 		await db.updatePasswordQuery(userId, newHash);
+		await db.revokeAllRefreshSessionsByUserIdQuery(userId, 'password_changed');
+		clearRefreshCookie(res);
 
-		res.status(200).json({ message: 'Password changed successfully.' });
+		res.status(200).json({ message: 'Password changed successfully. Please sign in again.' });
 	} catch (error) {
 		console.error('changePassword error:', error);
 		res.status(500).json({ message: 'Failed to change password.' });
@@ -315,6 +354,10 @@ async function deleteUser(req, res) {
 		if (!actualMatch)
 			return res.status(401).json({ message: 'Invalid Email or Password' });
 
+		await db.revokeAllRefreshSessionsByUserIdQuery(req.user.id, 'account_deleted');
+		await revokeAuthSessionByToken(getRefreshTokenFromRequest(req), 'account_deleted');
+		clearRefreshCookie(res);
+
 		const deleted = await db.deleteUserByIdQuery(req.user.id);
 		res.status(200).json({ message: 'User Deleted', deleted });
 	} catch (error) {
@@ -330,25 +373,36 @@ async function resetPassword(req, res) {
 	if (!email || !code || !newPassword) {
 		return res.status(400).json({ message: 'Email, code, and new password are required.' });
 	}
-	if (newPassword.length < 8) {
-		return res.status(400).json({ message: 'New password must be at least 8 characters.' });
-	}
-
 	try {
-		const resetEntry = await db.verifyResetCode(email, code);
-
-		if (!resetEntry) {
+		const user = await db.getUserByEmail(email);
+		if (!user) {
 			return res.status(400).json({ message: 'Invalid or expired code.' });
 		}
+
+		const passwordValidation = validatePasswordStrength(newPassword, user.role);
+		if (!passwordValidation.ok) {
+			return res.status(400).json({ message: passwordValidation.message });
+		}
+
+		const resetResult = await db.verifyResetCode(email, code);
+		if (!resetResult.ok) {
+			if (resetResult.reason === 'attempts_exceeded') {
+				return res.status(400).json({ message: 'Code invalid or expired. Request a new code.' });
+			}
+			return res.status(400).json({ message: 'Invalid or expired code.' });
+		}
+
 		const salt = await bcrypt.genSalt(10);
 		const hashedPassword = await bcrypt.hash(newPassword, salt);
 		await db.updateUserPassword(email, hashedPassword);
 		await db.deleteResetCode(email);
-		return res.status(200).json({ message: 'reset password done' });
+		await db.revokeAllRefreshSessionsByUserIdQuery(user.id, 'password_reset');
+		return res.status(200).json({ message: 'Password reset done' });
 	} catch (error) {
 		res.status(500).json({ message: error.message });
 	}
 }
+
 async function requestPasswordReset(req, res) {
 	const email = normalizeEmail(req.body?.email);
 
@@ -356,24 +410,53 @@ async function requestPasswordReset(req, res) {
 		return res.status(400).json({ message: 'Email is required.' });
 	}
 
+	const genericResponse = { message: 'If an account exists, a code has been sent.' };
+
 	try {
 		const user = await db.getUserByEmail(email);
 		if (!user) {
-			return res
-				.status(200)
-				.json({ message: 'If an account exists, a code was send' });
-		} // we send 200 even if the user doesn't exist to stopp hackers from guessing the emails
-		const code = Math.floor(100000 + Math.random() * 900000).toString();
+			return res.status(200).json(genericResponse);
+		}
+		const code = crypto.randomInt(100000, 1000000).toString();
 		const expires = new Date(Date.now() + 15 * 60000);
-		await db.saveResetCode(email, code, expires);
+		await db.saveResetCode(email, code, expires, getRequestIp(req));
 		await sendResetEmail(user.email, code);
 
-		return res.status(200).json({ message: 'reset code sent' });
+		return res.status(200).json(genericResponse);
 	} catch (error) {
 		res.status(500).json({ message: error.message });
 	}
 }
+
+async function refreshSession(req, res) {
+	try {
+		const rawRefreshToken = getRefreshTokenFromRequest(req);
+		const rotated = await rotateAuthSession(res, req, rawRefreshToken);
+		if (!rotated) {
+			clearRefreshCookie(res);
+			return res.status(401).json({ message: 'Unauthorized' });
+		}
+
+		return res.status(200).json({ token: rotated.accessToken });
+	} catch (error) {
+		clearRefreshCookie(res);
+		return res.status(500).json({ message: error.message });
+	}
+}
+
+async function logout(req, res) {
+	try {
+		const rawRefreshToken = getRefreshTokenFromRequest(req);
+		await revokeAuthSessionByToken(rawRefreshToken, 'logout');
+		clearRefreshCookie(res);
+		return res.status(200).json({ message: 'Logged out successfully.' });
+	} catch (error) {
+		return res.status(500).json({ message: error.message });
+	}
+}
+
 module.exports = {
+	getRegisterOptions,
 	login,
 	register,
 	changeUsername,
@@ -381,6 +464,8 @@ module.exports = {
 	deleteUser,
 	resetPassword,
 	requestPasswordReset,
+	refreshSession,
+	logout,
 	getMyParentProfile,
 	updateMyParentProfile,
 };

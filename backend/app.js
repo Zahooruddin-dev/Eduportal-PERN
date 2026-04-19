@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const http = require('http');
 const { Server } = require('socket.io');
 
@@ -24,8 +25,39 @@ const { initializeChatSocket } = require('./socket/chatSocket');
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+function normalizeOrigin(origin) {
+	return String(origin || '').trim().replace(/\/$/, '');
+}
+
+const allowedOrigins = Array.from(
+	new Set(
+		String(process.env.FRONTEND_URL || 'http://localhost:5173')
+			.split(',')
+			.map((origin) => normalizeOrigin(origin))
+			.filter(Boolean),
+	),
+);
+
+const corsOptions = {
+	origin(origin, callback) {
+		if (!origin) {
+			return callback(null, true);
+		}
+		const normalized = normalizeOrigin(origin);
+		if (allowedOrigins.includes(normalized)) {
+			return callback(null, true);
+		}
+		return callback(new Error('CORS origin denied'));
+	},
+	credentials: true,
+	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+	allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Setup-Secret'],
+};
+
+app.set('trust proxy', 1);
+app.use(helmet());
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '1mb' }));
 
 const uuidParamLabels = {
 	id: 'id',
@@ -77,10 +109,12 @@ async function startServer() {
 	try {
 		await ensureAdminSchema();
 		const server = http.createServer(app);
+		const socketOrigins = allowedOrigins.length === 1 ? allowedOrigins[0] : allowedOrigins;
 		const io = new Server(server, {
 			cors: {
-				origin: '*',
+				origin: socketOrigins,
 				methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+				credentials: true,
 			},
 		});
 		app.set('io', io);
