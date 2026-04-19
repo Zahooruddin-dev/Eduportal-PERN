@@ -6,10 +6,19 @@ CREATE TABLE IF NOT EXISTS teacher_profiles (
     subjects TEXT[] NOT NULL,
     preferred_class_id UUID REFERENCES classes(id) ON DELETE SET NULL,
     preferred_grade_label VARCHAR(100),
+    bio TEXT,
+    office_hours TEXT,
+    meeting_link TEXT,
+    focus_areas TEXT[],
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     CONSTRAINT teacher_profiles_subjects_not_empty CHECK (cardinality(subjects) > 0)
 );
+
+ALTER TABLE teacher_profiles ADD COLUMN IF NOT EXISTS bio TEXT;
+ALTER TABLE teacher_profiles ADD COLUMN IF NOT EXISTS office_hours TEXT;
+ALTER TABLE teacher_profiles ADD COLUMN IF NOT EXISTS meeting_link TEXT;
+ALTER TABLE teacher_profiles ADD COLUMN IF NOT EXISTS focus_areas TEXT[];
 
 CREATE TABLE IF NOT EXISTS auth_refresh_tokens (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
