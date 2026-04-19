@@ -55,6 +55,8 @@ router.put('/change-password', verifyToken, authController.changePassword);
 router.delete('/delete', verifyToken, authController.deleteUser);
 router.get('/parent-profile', verifyToken, authController.getMyParentProfile);
 router.put('/parent-profile', verifyToken, authController.updateMyParentProfile);
+router.get('/teacher-profile', verifyToken, authController.getMyTeacherProfile);
+router.put('/teacher-profile', verifyToken, authController.updateMyTeacherProfile);
 
 router.post('/request-reset', resetRequestLimiter, authController.requestPasswordReset);
 router.post('/reset-password', resetConfirmLimiter, authController.resetPassword);

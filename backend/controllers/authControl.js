@@ -36,6 +36,9 @@ function normalizeTeacherProfile(rawProfile) {
 	const rawSubjects = Array.isArray(profile.subjects)
 		? profile.subjects
 		: String(profile.subjects || '').split(',');
+	const rawFocusAreas = Array.isArray(profile.focusAreas)
+		? profile.focusAreas
+		: String(profile.focusAreas || '').split(',');
 	const subjects = [];
 	for (let i = 0; i < rawSubjects.length; i += 1) {
 		const value = String(rawSubjects[i] || '').trim();
@@ -44,14 +47,29 @@ function normalizeTeacherProfile(rawProfile) {
 			subjects.push(value);
 		}
 	}
+	const focusAreas = [];
+	for (let i = 0; i < rawFocusAreas.length; i += 1) {
+		const value = String(rawFocusAreas[i] || '').trim();
+		if (!value) continue;
+		if (!focusAreas.includes(value)) {
+			focusAreas.push(value);
+		}
+	}
 
 	const classId = String(profile.selectedClassId || profile.classId || '').trim();
 	const otherGrade = String(profile.otherGrade || '').trim();
+	const bio = String(profile.bio || '').trim();
+	const officeHours = String(profile.officeHours || '').trim();
+	const meetingLink = String(profile.meetingLink || '').trim();
 
 	return {
 		subjects,
 		classId: classId || null,
 		otherGrade: otherGrade || null,
+		bio: bio || null,
+		officeHours: officeHours || null,
+		meetingLink: meetingLink || null,
+		focusAreas,
 	};
 }
 
@@ -264,6 +282,65 @@ async function updateMyParentProfile(req, res) {
 	}
 }
 
+async function getMyTeacherProfile(req, res) {
+	if (req.user?.role !== 'teacher') {
+		return res.status(403).json({ message: 'Only teacher accounts can access teacher profile details.' });
+	}
+
+	try {
+		const teacherProfile = await db.getTeacherProfileByUserId(req.user.id);
+		if (!teacherProfile) {
+			return res.status(404).json({ message: 'Teacher profile not found.' });
+		}
+
+		return res.status(200).json(teacherProfile);
+	} catch (error) {
+		return res.status(500).json({ message: error.message });
+	}
+}
+
+async function updateMyTeacherProfile(req, res) {
+	if (req.user?.role !== 'teacher') {
+		return res.status(403).json({ message: 'Only teacher accounts can update teacher profile details.' });
+	}
+
+	const normalizedTeacherProfile = normalizeTeacherProfile(req.body);
+	const teacherProfileValidationMessage = validateTeacherProfile(normalizedTeacherProfile);
+	if (teacherProfileValidationMessage) {
+		return res.status(400).json({ message: teacherProfileValidationMessage });
+	}
+
+	try {
+		let instituteId = req.user?.instituteId || req.user?.institute_id || null;
+		if (!instituteId) {
+			const currentUser = await db.getUserById(req.user.id);
+			instituteId = currentUser?.institute_id || null;
+		}
+		if (!instituteId) {
+			return res.status(400).json({ message: 'Institute context is required to update teacher profile.' });
+		}
+
+		const updatedProfile = await db.upsertTeacherProfileByUserId({
+			userId: req.user.id,
+			instituteId,
+			subjects: normalizedTeacherProfile.subjects,
+			classId: normalizedTeacherProfile.classId,
+			otherGrade: normalizedTeacherProfile.otherGrade,
+			bio: normalizedTeacherProfile.bio,
+			officeHours: normalizedTeacherProfile.officeHours,
+			meetingLink: normalizedTeacherProfile.meetingLink,
+			focusAreas: normalizedTeacherProfile.focusAreas,
+		});
+
+		return res.status(200).json({
+			message: 'Teacher profile updated successfully.',
+			teacherProfile: updatedProfile,
+		});
+	} catch (error) {
+		return res.status(500).json({ message: error.message });
+	}
+}
+
 async function changeUsername(req, res) {
 	const id = req.user.id;
 	const { newUsername } = req.body;
@@ -468,4 +545,6 @@ module.exports = {
 	logout,
 	getMyParentProfile,
 	updateMyParentProfile,
+	getMyTeacherProfile,
+	updateMyTeacherProfile,
 };
