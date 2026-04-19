@@ -9,7 +9,8 @@ import {
 import Login from './Auth/Login';
 import Register from './Auth/Register';
 import ProtectedRoute from './utils/ProtectedRoute';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './context/useAuth';
 import ForgotPassword from './Auth/ForgotPassword';
 import Dashboard from './components/Dashboard/Dashboard';
 import Toast from './components/Toast';

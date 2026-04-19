@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { getRegisterOptions, registerUser } from '../api/authApi';
 import { acceptAdminInvite } from '../api/adminApi';
 import { SpinnerIcon, EyeIcon } from '../components/Icons/Icon';

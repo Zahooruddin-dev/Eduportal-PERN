@@ -1,5 +1,5 @@
 import { createElement, useState, useRef, useEffect } from 'react';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '../../../context/useAuth';
 import { updateUsername, changePassword, deleteUser } from '../../../api/authApi';
 import { SpinnerIcon, EyeIcon } from '../../Icons/Icon';
 import { User, Key, Trash2, Camera } from 'lucide-react';

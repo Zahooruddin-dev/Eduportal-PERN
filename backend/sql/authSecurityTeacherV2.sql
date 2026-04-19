@@ -46,10 +46,22 @@ ALTER TABLE password_resets ADD COLUMN IF NOT EXISTS consumed_at TIMESTAMP WITH 
 ALTER TABLE password_resets ADD COLUMN IF NOT EXISTS last_attempt_at TIMESTAMP WITH TIME ZONE;
 ALTER TABLE password_resets ADD COLUMN IF NOT EXISTS request_ip VARCHAR(100);
 
-UPDATE password_resets
-SET code_hash = encode(digest(code, 'sha256'), 'hex')
-WHERE code IS NOT NULL
-  AND code_hash IS NULL;
+DO $$
+BEGIN
+        IF EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                    AND table_name = 'password_resets'
+                    AND column_name = 'code'
+        ) THEN
+                UPDATE password_resets
+                SET code_hash = encode(digest(code, 'sha256'), 'hex')
+                WHERE code IS NOT NULL
+                    AND code_hash IS NULL;
+        END IF;
+END
+$$;
 
 DELETE FROM password_resets
 WHERE code_hash IS NULL;

@@ -7,7 +7,7 @@ import {
 	Trash2,
 	X,
 } from 'lucide-react';
-import { useAuth } from '../../../../context/AuthContext';
+import { useAuth } from '../../../../context/useAuth';
 import {
 	getResourceComments,
 	createResourceComment,

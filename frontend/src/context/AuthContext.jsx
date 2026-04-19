@@ -1,8 +1,7 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {jwtDecode} from 'jwt-decode';
 import { logoutSession, refreshSession } from '../api/authApi';
-
-const AuthContext = createContext(null);
+import { AuthContext } from './authContextObject';
 
 const TOKEN_KEY = 'token';
 
@@ -119,10 +118,4 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
 };

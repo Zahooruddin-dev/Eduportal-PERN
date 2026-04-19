@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '../../../../../context/AuthContext';
+import { useAuth } from '../../../../../context/useAuth';
 import { getMyClasses } from '../../../../../api/api';
 import { SpinnerIcon } from '../../../../Icons/Icon';
 import ResourceManager from './ResourceManager';

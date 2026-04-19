@@ -1,7 +1,7 @@
 // Dashboard.jsx
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import Sidebar from '../Sidebar/Sidebar';
 import {
 	getAdminNotificationUnreadSummary,

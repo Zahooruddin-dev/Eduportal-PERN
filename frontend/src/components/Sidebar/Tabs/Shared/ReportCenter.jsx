@@ -26,7 +26,7 @@ import {
   getReportMeta,
   getReportTargets,
 } from '../../../../api/api';
-import { useAuth } from '../../../../context/AuthContext';
+import { useAuth } from '../../../../context/useAuth';
 import Toast from '../../../Toast';
 
 const TYPE_META = {

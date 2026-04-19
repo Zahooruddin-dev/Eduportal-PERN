@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BookOpen, AlertCircle, CheckCircle, Clock } from 'lucide-react';
-import { useAuth } from '../../../../../context/AuthContext';
+import { useAuth } from '../../../../../context/useAuth';
 import { getStudentEnrolledShedule, getClassAssignments, getMyAssignmentSubmission } from '../../../../../api/api';
 import { SpinnerIcon } from '../../../../Icons/Icon';
 import StudentAssignmentView from './StudentAssignmentView';
