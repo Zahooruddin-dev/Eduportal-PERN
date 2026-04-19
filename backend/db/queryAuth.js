@@ -33,6 +33,10 @@ async function getTeacherProfileByUserId(userId, executor = pool) {
 			tp.subjects,
 			tp.preferred_class_id,
 			tp.preferred_grade_label,
+			tp.bio,
+			tp.office_hours,
+			tp.meeting_link,
+			tp.focus_areas,
 			tp.created_at,
 			tp.updated_at,
 			c.class_name AS preferred_class_name
@@ -51,6 +55,10 @@ async function upsertTeacherProfileByUserId(payload, executor = pool) {
 	const classIdCandidate = String(payload?.classId || '').trim();
 	const classId = classIdCandidate || null;
 	const otherGrade = String(payload?.otherGrade || '').trim() || null;
+	const bio = String(payload?.bio || '').trim() || null;
+	const officeHours = String(payload?.officeHours || '').trim() || null;
+	const meetingLink = String(payload?.meetingLink || '').trim() || null;
+	const focusAreas = uniqueTextArray(payload?.focusAreas);
 
 	if (!subjects.length) {
 		throw new Error('At least one subject is required for teacher accounts.');
@@ -82,15 +90,23 @@ async function upsertTeacherProfileByUserId(payload, executor = pool) {
 			subjects,
 			preferred_class_id,
 			preferred_grade_label,
+			bio,
+			office_hours,
+			meeting_link,
+			focus_areas,
 			created_at,
 			updated_at
 		)
-		VALUES ($1, $2, $3::text[], $4, $5, NOW(), NOW())
+		VALUES ($1, $2, $3::text[], $4, $5, $6, $7, $8, $9::text[], NOW(), NOW())
 		ON CONFLICT (user_id)
 		DO UPDATE SET
 			subjects = EXCLUDED.subjects,
 			preferred_class_id = EXCLUDED.preferred_class_id,
 			preferred_grade_label = EXCLUDED.preferred_grade_label,
+			bio = EXCLUDED.bio,
+			office_hours = EXCLUDED.office_hours,
+			meeting_link = EXCLUDED.meeting_link,
+			focus_areas = EXCLUDED.focus_areas,
 			updated_at = NOW()`,
 		[
 			userId,
@@ -98,6 +114,10 @@ async function upsertTeacherProfileByUserId(payload, executor = pool) {
 			subjects,
 			validatedClassId,
 			validatedClassId ? null : otherGrade,
+			bio,
+			officeHours,
+			meetingLink,
+			focusAreas.length ? focusAreas : null,
 		],
 	);
 
@@ -165,6 +185,10 @@ async function registerQuery(
 					subjects: teacherProfile?.subjects,
 					classId: teacherProfile?.classId,
 					otherGrade: teacherProfile?.otherGrade,
+					bio: teacherProfile?.bio,
+					officeHours: teacherProfile?.officeHours,
+					meetingLink: teacherProfile?.meetingLink,
+					focusAreas: teacherProfile?.focusAreas,
 				},
 				client,
 			);
