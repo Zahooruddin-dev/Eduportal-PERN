@@ -50,6 +50,14 @@ export const updateParentProfile = (data) => {
 	return api.put('/api/auth/parent-profile', data);
 };
 
+export const getTeacherProfile = () => {
+	return api.get('/api/auth/teacher-profile');
+};
+
+export const updateTeacherProfile = (data) => {
+	return api.put('/api/auth/teacher-profile', data);
+};
+
 export const getParentLinkedStudentOverview = ({ refresh = false } = {}) => {
 	return api.get('/api/parent/linked-student', {
 		params: refresh ? { refresh: 1 } : undefined,

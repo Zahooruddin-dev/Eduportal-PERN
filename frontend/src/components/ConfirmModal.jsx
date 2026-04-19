@@ -1,5 +1,5 @@
 // src/components/ConfirmModal.jsx
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 
 export default function ConfirmModal({
@@ -9,9 +9,12 @@ export default function ConfirmModal({
   title = 'Confirm Action',
   message = 'Are you sure you want to proceed?',
   confirmText = 'Confirm',
+  confirmLoadingText = 'Working...',
   cancelText = 'Cancel',
   type = 'danger', // 'danger' or 'warning'
+  children,
 }) {
+  const [isConfirming, setIsConfirming] = useState(false);
   const titleId = 'confirm-modal-title';
   const messageId = 'confirm-modal-message';
 
@@ -30,6 +33,19 @@ export default function ConfirmModal({
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  const handleConfirm = async () => {
+    if (isConfirming) return;
+    setIsConfirming(true);
+    try {
+      const result = await onConfirm?.();
+      if (result !== false) {
+        onClose();
+      }
+    } finally {
+      setIsConfirming(false);
+    }
+  };
 
   const iconColor = type === 'danger' ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400';
   const confirmBtnClass = type === 'danger'
@@ -52,6 +68,7 @@ export default function ConfirmModal({
           </div>
           <button
             onClick={onClose}
+              disabled={isConfirming}
             className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
             aria-label="Close"
           >
@@ -60,21 +77,21 @@ export default function ConfirmModal({
         </div>
         <div className="p-4">
           <p id={messageId} className="text-[var(--color-text-secondary)]">{message}</p>
+          {children}
           <div className="mt-6 flex justify-end gap-3">
             <button
               onClick={onClose}
+              disabled={isConfirming}
               className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border)]/50 transition-colors"
             >
               {cancelText}
             </button>
             <button
-              onClick={() => {
-                onConfirm();
-                onClose();
-              }}
+              onClick={handleConfirm}
+              disabled={isConfirming}
               className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${confirmBtnClass}`}
             >
-              {confirmText}
+              {isConfirming ? confirmLoadingText : confirmText}
             </button>
           </div>
         </div>
