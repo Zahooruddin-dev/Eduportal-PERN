@@ -7,6 +7,19 @@ export const loginUser = (data) => {
 export const registerUser = (data) => {
 	return api.post('/api/auth/register', data);
 };
+
+export const getRegisterOptions = () => {
+	return api.get('/api/auth/register/options', { cache: false });
+};
+
+export const refreshSession = () => {
+	return api.post('/api/auth/refresh', {}, { cache: false, skipAuthRefresh: true });
+};
+
+export const logoutSession = () => {
+	return api.post('/api/auth/logout', {}, { cache: false, skipAuthRefresh: true });
+};
+
 export const updateUsername = (data) => {
 	return api.put('/api/auth/update-profile', data, {
 		headers: {

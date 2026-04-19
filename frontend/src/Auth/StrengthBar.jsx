@@ -1,21 +1,23 @@
 
- const StrengthBar = ({ password }) => {
+ const StrengthBar = ({ password, minLength = 10 }) => {
 	const calc = (p) => {
 		let s = 0;
-		if (p.length >= 8) s++;
+		if (p.length >= minLength) s++;
 		if (/[A-Z]/.test(p)) s++;
+		if (/[a-z]/.test(p)) s++;
 		if (/[0-9]/.test(p)) s++;
 		if (/[^A-Za-z0-9]/.test(p)) s++;
-		return s;
+		return Math.min(s, 5);
 	};
 	const score = calc(password);
-	const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+	const labels = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Excellent'];
 	const colors = [
 		'',
 		'bg-red-500',
 		'bg-amber-400',
 		'bg-yellow-400',
 		'bg-emerald-500',
+		'bg-emerald-600',
 	];
 
 	if (!password) return null;
@@ -27,7 +29,7 @@
 				role='img'
 				aria-label={`Password strength: ${labels[score]}`}
 			>
-				{[1, 2, 3, 4].map((i) => (
+				{[1, 2, 3, 4, 5].map((i) => (
 					<div
 						key={i}
 						className={`h-1 flex-1 rounded-full transition-all duration-300 ${i <= score ? colors[score] : 'bg-[var(--color-border)]'}`}

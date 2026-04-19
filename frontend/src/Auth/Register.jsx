@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { registerUser } from '../api/authApi';
+import { getRegisterOptions, registerUser } from '../api/authApi';
 import { acceptAdminInvite } from '../api/adminApi';
 import { SpinnerIcon, EyeIcon } from '../components/Icons/Icon';
 import { StrengthBar } from './StrengthBar';
@@ -21,6 +21,10 @@ export default function Register() {
     email: '',
     password: '',
     confirm: '',
+    teacherSubjectInput: '',
+    teacherSubjects: [],
+    teacherClassId: '',
+    teacherOtherGrade: '',
     childFullName: '',
     childGrade: '',
     relationshipToChild: '',
@@ -33,12 +37,81 @@ export default function Register() {
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [registerClasses, setRegisterClasses] = useState([]);
+  const [loadingRegisterOptions, setLoadingRegisterOptions] = useState(false);
+
+  const requiredPasswordLength = useMemo(() => {
+    if (isAdminInviteSignup || accountType === 'teacher') {
+      return 12;
+    }
+    return 10;
+  }, [accountType, isAdminInviteSignup]);
+
+  useEffect(() => {
+    if (isAdminInviteSignup) {
+      return;
+    }
+
+    let isMounted = true;
+    setLoadingRegisterOptions(true);
+
+    getRegisterOptions()
+      .then((response) => {
+        if (!isMounted) return;
+        setRegisterClasses(Array.isArray(response?.data?.classes) ? response.data.classes : []);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setRegisterClasses([]);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoadingRegisterOptions(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAdminInviteSignup]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     if (fieldErrors[name]) setFieldErrors((prev) => ({ ...prev, [name]: '' }));
     if (error) setError('');
+  };
+
+  const addTeacherSubject = () => {
+    const nextSubject = form.teacherSubjectInput.trim();
+    if (!nextSubject) {
+      return;
+    }
+
+    const exists = form.teacherSubjects.some(
+      (subject) => subject.toLowerCase() === nextSubject.toLowerCase(),
+    );
+    if (exists) {
+      setFieldErrors((prev) => ({ ...prev, teacherSubjects: 'Subject already added' }));
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      teacherSubjects: [...prev.teacherSubjects, nextSubject],
+      teacherSubjectInput: '',
+    }));
+    setFieldErrors((prev) => ({ ...prev, teacherSubjects: '', teacherSubjectInput: '' }));
+  };
+
+  const removeTeacherSubject = (subjectToRemove) => {
+    setForm((prev) => ({
+      ...prev,
+      teacherSubjects: prev.teacherSubjects.filter((subject) => subject !== subjectToRemove),
+    }));
+    if (fieldErrors.teacherSubjects) {
+      setFieldErrors((prev) => ({ ...prev, teacherSubjects: '' }));
+    }
   };
 
   const validate = () => {
@@ -51,9 +124,32 @@ export default function Register() {
         errs.email = 'Enter a valid email';
     }
     if (!form.password) errs.password = 'Password is required';
-    else if (form.password.length < 8) errs.password = 'At least 8 characters required';
+    else if (form.password.length < requiredPasswordLength) {
+      errs.password = `At least ${requiredPasswordLength} characters required`;
+    } else if (form.password.length > 72) {
+      errs.password = 'Password must be at most 72 characters';
+    } else if (
+      !/[A-Z]/.test(form.password)
+      || !/[a-z]/.test(form.password)
+      || !/[0-9]/.test(form.password)
+      || !/[^A-Za-z0-9]/.test(form.password)
+    ) {
+      errs.password = 'Use uppercase, lowercase, number, and special character';
+    }
     if (!form.confirm) errs.confirm = 'Please confirm your password';
     else if (form.confirm !== form.password) errs.confirm = 'Passwords do not match';
+
+    if (!isAdminInviteSignup && accountType === 'teacher') {
+      if (!form.teacherSubjects.length) {
+        errs.teacherSubjects = 'At least one subject is required';
+      }
+      if (!form.teacherClassId) {
+        errs.teacherClassId = 'Select a class or choose Other';
+      }
+      if (form.teacherClassId === 'other' && !form.teacherOtherGrade.trim()) {
+        errs.teacherOtherGrade = 'Please enter the class/grade';
+      }
+    }
 
     if (!isAdminInviteSignup && accountType === 'parent') {
       if (!form.childFullName.trim()) errs.childFullName = 'Child full name is required';
@@ -86,6 +182,18 @@ export default function Register() {
             email: form.email,
             password: form.password,
             role: accountType,
+            ...(accountType === 'teacher'
+              ? {
+                  teacherProfile: {
+                    subjects: form.teacherSubjects,
+                    selectedClassId:
+                      form.teacherClassId && form.teacherClassId !== 'other'
+                        ? form.teacherClassId
+                        : null,
+                    otherGrade: form.teacherClassId === 'other' ? form.teacherOtherGrade : '',
+                  },
+                }
+              : {}),
             ...(accountType === 'parent'
               ? {
                   parentProfile: {
@@ -157,13 +265,13 @@ export default function Register() {
           {fieldErrors[name]}
         </p>
       )}
-      {name === 'password' && <StrengthBar password={form.password} />}
+      {name === 'password' && <StrengthBar password={form.password} minLength={requiredPasswordLength} />}
     </div>
   );
 
   return (
     <main className='min-h-screen bg-[var(--color-bg)] flex items-center justify-center px-4 py-12'>
-      <div className='w-full max-w-md'>
+      <div className='w-full max-w-lg'>
         <div className='mb-8 text-center'>
           <div className='inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[var(--color-primary)] mb-5'>
             <svg
@@ -234,9 +342,17 @@ export default function Register() {
                   id='accountType'
                   value={accountType}
                   onChange={(e) => {
-                    setAccountType(e.target.value);
-                    if (fieldErrors.accountType) {
-                      setFieldErrors((prev) => ({ ...prev, accountType: '' }));
+                    const nextType = e.target.value;
+                    setAccountType(nextType);
+                    setFieldErrors({});
+                    if (nextType !== 'teacher') {
+                      setForm((prev) => ({
+                        ...prev,
+                        teacherSubjectInput: '',
+                        teacherSubjects: [],
+                        teacherClassId: '',
+                        teacherOtherGrade: '',
+                      }));
                     }
                   }}
                   className={`w-full rounded-xl border bg-[var(--color-input-bg)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:ring-2 ${
@@ -248,7 +364,6 @@ export default function Register() {
                   <option value='student'>Student</option>
                   <option value='teacher'>Teacher</option>
                   <option value='parent'>Parent</option>
-                  <option value='admin'>Admin</option>
                 </select>
                 {fieldErrors.accountType && (
                   <p role='alert' className='mt-1.5 text-xs text-red-500'>
@@ -258,6 +373,141 @@ export default function Register() {
                 <p className='mt-1.5 text-xs text-[var(--color-text-muted)]'>
                   Parent accounts require child details so your institute can verify guardianship quickly.
                 </p>
+              </div>
+            )}
+
+            {!isAdminInviteSignup && accountType === 'teacher' && (
+              <div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4 space-y-4'>
+                <h2 className='text-sm font-semibold text-[var(--color-text-primary)]'>Teaching Profile</h2>
+
+                <div>
+                  <label
+                    htmlFor='teacherSubjectInput'
+                    className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'
+                  >
+                    Subjects
+                  </label>
+                  <div className='flex gap-2'>
+                    <input
+                      id='teacherSubjectInput'
+                      name='teacherSubjectInput'
+                      value={form.teacherSubjectInput}
+                      onChange={handleChange}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ',') {
+                          event.preventDefault();
+                          addTeacherSubject();
+                        }
+                      }}
+                      placeholder='Math'
+                      className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
+                    />
+                    <button
+                      type='button'
+                      onClick={addTeacherSubject}
+                      className='rounded-xl border border-[var(--color-border)] px-3 py-2.5 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/40'
+                    >
+                      Add
+                    </button>
+                  </div>
+                  {(fieldErrors.teacherSubjects || fieldErrors.teacherSubjectInput) && (
+                    <p role='alert' className='mt-1.5 text-xs text-red-500'>
+                      {fieldErrors.teacherSubjects || fieldErrors.teacherSubjectInput}
+                    </p>
+                  )}
+                  {form.teacherSubjects.length > 0 && (
+                    <div className='mt-2 flex flex-wrap gap-2'>
+                      {form.teacherSubjects.map((subject) => (
+                        <span
+                          key={subject}
+                          className='inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-xs text-[var(--color-text-secondary)]'
+                        >
+                          {subject}
+                          <button
+                            type='button'
+                            onClick={() => removeTeacherSubject(subject)}
+                            className='text-[var(--color-text-muted)] hover:text-red-500'
+                            aria-label={`Remove ${subject}`}
+                          >
+                            x
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label
+                    htmlFor='teacherClassId'
+                    className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'
+                  >
+                    Preferred class
+                  </label>
+                  <select
+                    id='teacherClassId'
+                    name='teacherClassId'
+                    value={form.teacherClassId}
+                    onChange={(event) => {
+                      handleChange(event);
+                      if (event.target.value !== 'other') {
+                        setForm((prev) => ({ ...prev, teacherOtherGrade: '' }));
+                        setFieldErrors((prev) => ({ ...prev, teacherOtherGrade: '' }));
+                      }
+                    }}
+                    className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:ring-2 ${
+                      fieldErrors.teacherClassId
+                        ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20'
+                        : 'border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]/20'
+                    }`}
+                  >
+                    <option value=''>Select a class</option>
+                    {registerClasses.map((classItem) => (
+                      <option key={classItem.id} value={classItem.id}>
+                        {classItem.class_name}
+                      </option>
+                    ))}
+                    <option value='other'>Other</option>
+                  </select>
+                  {fieldErrors.teacherClassId && (
+                    <p role='alert' className='mt-1.5 text-xs text-red-500'>
+                      {fieldErrors.teacherClassId}
+                    </p>
+                  )}
+                  <p className='mt-1.5 text-xs text-[var(--color-text-muted)]'>
+                    {loadingRegisterOptions
+                      ? 'Loading class options...'
+                      : 'Pick an existing class or choose Other to enter a free-text grade.'}
+                  </p>
+                </div>
+
+                {form.teacherClassId === 'other' && (
+                  <div>
+                    <label
+                      htmlFor='teacherOtherGrade'
+                      className='block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5'
+                    >
+                      Class/grade
+                    </label>
+                    <input
+                      id='teacherOtherGrade'
+                      name='teacherOtherGrade'
+                      value={form.teacherOtherGrade}
+                      onChange={handleChange}
+                      placeholder='Grade 11 - Commerce'
+                      className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm text-[var(--color-text-primary)] outline-none transition-all focus:ring-2 ${
+                        fieldErrors.teacherOtherGrade
+                          ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20'
+                          : 'border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]/20'
+                      }`}
+                    />
+                    {fieldErrors.teacherOtherGrade && (
+                      <p role='alert' className='mt-1.5 text-xs text-red-500'>
+                        {fieldErrors.teacherOtherGrade}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -411,6 +661,10 @@ export default function Register() {
                   ? 'Join as admin'
                   : `Create ${accountType} account`}
             </button>
+
+            <p className='text-xs text-[var(--color-text-muted)]'>
+              Password must be {requiredPasswordLength}+ characters and include uppercase, lowercase, number, and special character.
+            </p>
           </form>
         </div>
 

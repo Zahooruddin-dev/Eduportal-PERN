@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SpinnerIcon, AlertBox, EyeIcon } from '../components/Icons/Icon';
-import { requestReset } from '../api/authApi';
+import { requestReset, resetPassword } from '../api/authApi';
 
 function RequestStep({ onSuccess }) {
 	const [email, setEmail] = useState('');
@@ -116,8 +116,8 @@ function SentStep({ email, onReset }) {
 			setError('Reset code is required');
 			return;
 		}
-		if (form.password.length < 8) {
-			setError('Password must be at least 8 characters');
+		if (form.password.length < 10) {
+			setError('Password must be at least 10 characters');
 			return;
 		}
 		if (form.password !== form.confirm) {
@@ -127,14 +127,14 @@ function SentStep({ email, onReset }) {
 		setLoading(true);
 		setError('');
 		try {
-			await requestReset({
+			await resetPassword({
 				email,
 				code: form.code,
 				password: form.password,
 			});
 			setDone(true);
 		} catch (err) {
-			setError(err.message);
+			setError(err?.response?.data?.message || err.message || 'Unable to reset password');
 		} finally {
 			setLoading(false);
 		}

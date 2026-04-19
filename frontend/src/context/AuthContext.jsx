@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {jwtDecode} from 'jwt-decode';
+import { logoutSession, refreshSession } from '../api/authApi';
 
 const AuthContext = createContext(null);
 
@@ -24,12 +25,14 @@ const parseToken = () => {
       instituteId: decoded.instituteId || null,
     };
   } catch {
+    localStorage.removeItem(TOKEN_KEY);
     return null;
   }
 };
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => parseToken());
+  const [authReady, setAuthReady] = useState(false);
 
   const clearAnnouncementPopupSession = useCallback(() => {
     Object.keys(sessionStorage).forEach((key) => {
@@ -45,11 +48,20 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback((token) => {
     clearAnnouncementPopupSession();
-    localStorage.setItem(TOKEN_KEY, token);
+    if (token) {
+      localStorage.setItem(TOKEN_KEY, token);
+    } else {
+      localStorage.removeItem(TOKEN_KEY);
+    }
     refreshUser();
   }, [clearAnnouncementPopupSession, refreshUser]);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await logoutSession();
+    } catch {
+      localStorage.removeItem(TOKEN_KEY);
+    }
     clearAnnouncementPopupSession();
     localStorage.removeItem(TOKEN_KEY);
     setUser(null);
@@ -66,8 +78,44 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener('storage', handleStorage);
   }, [refreshUser]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const initializeSession = async () => {
+      const currentUser = parseToken();
+      if (currentUser) {
+        if (isMounted) {
+          setUser(currentUser);
+          setAuthReady(true);
+        }
+        return;
+      }
+
+      try {
+        const response = await refreshSession();
+        const token = response?.data?.token;
+        if (token) {
+          localStorage.setItem(TOKEN_KEY, token);
+        }
+      } catch {
+        localStorage.removeItem(TOKEN_KEY);
+      } finally {
+        if (isMounted) {
+          setUser(parseToken());
+          setAuthReady(true);
+        }
+      }
+    };
+
+    initializeSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, refreshUser, isAuthenticated }}>
+    <AuthContext.Provider value={{ user, login, logout, refreshUser, isAuthenticated, authReady }}>
       {children}
     </AuthContext.Provider>
   );

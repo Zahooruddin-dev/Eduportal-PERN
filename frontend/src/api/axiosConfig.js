@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
 	baseURL: import.meta.env.VITE_BACKEND_URL || '',
+	withCredentials: true,
 	headers: {
 		'Content-Type': 'application/json',
 	},
@@ -9,6 +10,9 @@ const api = axios.create({
 
 const CACHE_TTL_MS = 20_000;
 const responseCache = new Map();
+const TOKEN_KEY = 'token';
+const AUTH_REFRESH_PATH = '/api/auth/refresh';
+let refreshRequest = null;
 
 function stableSerialize(value) {
 	if (value === null || value === undefined) return '';
@@ -25,7 +29,7 @@ function stableSerialize(value) {
 }
 
 function buildCacheKey(url, config = {}) {
-	const token = localStorage.getItem('token') || '';
+	const token = localStorage.getItem(TOKEN_KEY) || '';
 	const paramsSignature = stableSerialize(config.params || {});
 	return `${token}::${url}::${paramsSignature}`;
 }
@@ -50,6 +54,48 @@ function emitGlobalApiError(message) {
 			detail: { message },
 		}),
 	);
+}
+
+function clearAuthState() {
+	localStorage.removeItem(TOKEN_KEY);
+}
+
+function isAuthRequestPath(url = '') {
+	return (
+		url.includes('/api/auth/login')
+		|| url.includes('/api/auth/register')
+		|| url.includes('/api/auth/request-reset')
+		|| url.includes('/api/auth/reset-password')
+		|| url.includes('/api/auth/refresh')
+		|| url.includes('/api/auth/logout')
+	);
+}
+
+async function requestTokenRefresh() {
+	if (!refreshRequest) {
+		refreshRequest = api
+			.post(
+				AUTH_REFRESH_PATH,
+				{},
+				{
+					skipAuthRefresh: true,
+					cache: false,
+				},
+			)
+			.then((response) => {
+				const token = response?.data?.token || '';
+				if (!token) {
+					throw new Error('Refresh token response did not include access token.');
+				}
+				localStorage.setItem(TOKEN_KEY, token);
+				return token;
+			})
+			.finally(() => {
+				refreshRequest = null;
+			});
+	}
+
+	return refreshRequest;
 }
 
 const rawGet = api.get.bind(api);
@@ -84,7 +130,8 @@ api.clearResponseCache = () => {
 
 api.interceptors.request.use(
 	(config) => {
-		const token = localStorage.getItem('token');
+		config.headers = config.headers || {};
+		const token = localStorage.getItem(TOKEN_KEY);
 		if (token) {
 			config.headers.Authorization = `Bearer ${token}`;
 		}
@@ -100,13 +147,11 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
 	(response) => response,
-	(error) => {
+	async (error) => {
 		const status = error?.response?.status;
-		const requestUrl = String(error?.config?.url || '');
-		const isAuthRequest = requestUrl.includes('/api/auth/login')
-			|| requestUrl.includes('/api/auth/register')
-			|| requestUrl.includes('/api/auth/request-reset')
-			|| requestUrl.includes('/api/auth/reset-password');
+		const originalRequest = error?.config || {};
+		const requestUrl = String(originalRequest?.url || '');
+		const isAuthRequest = isAuthRequestPath(requestUrl);
 
 		if (!error.response || status >= 500) {
 			emitGlobalApiError(
@@ -114,8 +159,27 @@ api.interceptors.response.use(
 			);
 		}
 
-		if (status === 401 && !isAuthRequest) {
-			localStorage.removeItem('token');
+		const shouldRetryWithRefresh = status === 401
+			&& !isAuthRequest
+			&& !originalRequest._retry
+			&& !originalRequest.skipAuthRefresh;
+
+		if (shouldRetryWithRefresh) {
+			originalRequest._retry = true;
+			try {
+				const refreshedToken = await requestTokenRefresh();
+				originalRequest.headers = {
+					...(originalRequest.headers || {}),
+					Authorization: `Bearer ${refreshedToken}`,
+				};
+				return api(originalRequest);
+			} catch {
+				clearAuthState();
+			}
+		}
+
+		if (status === 401 && !isAuthRequest && !originalRequest.skipSessionRedirect) {
+			clearAuthState();
 			emitGlobalApiError('Your session has expired. Please sign in again.');
 			if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
 				window.location.href = '/login';

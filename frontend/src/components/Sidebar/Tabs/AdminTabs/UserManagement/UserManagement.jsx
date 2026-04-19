@@ -74,12 +74,32 @@ function parseCsvRows(text) {
 }
 
 function generateTempPassword(length = 12) {
-	const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#$%&*';
-	let password = '';
-	for (let i = 0; i < length; i += 1) {
-		password += alphabet[Math.floor(Math.random() * alphabet.length)];
+	const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+	const lowercase = 'abcdefghijkmnopqrstuvwxyz';
+	const numbers = '23456789';
+	const specials = '@#$%&*';
+	const allChars = `${uppercase}${lowercase}${numbers}${specials}`;
+
+	const pickRandom = (chars) => chars[Math.floor(Math.random() * chars.length)];
+	const chars = [
+		pickRandom(uppercase),
+		pickRandom(lowercase),
+		pickRandom(numbers),
+		pickRandom(specials),
+	];
+
+	while (chars.length < Math.max(12, Number(length) || 12)) {
+		chars.push(pickRandom(allChars));
 	}
-	return password;
+
+	for (let i = chars.length - 1; i > 0; i -= 1) {
+		const j = Math.floor(Math.random() * (i + 1));
+		const temp = chars[i];
+		chars[i] = chars[j];
+		chars[j] = temp;
+	}
+
+	return chars.join('');
 }
 
 const USER_PAGE_SIZE = 25;
@@ -128,7 +148,15 @@ export default function UserManagement() {
 	});
 	const [classes, setClasses] = useState([]);
 	const [selectedClassIds, setSelectedClassIds] = useState([]);
-	const [teacherForm, setTeacherForm] = useState({ username: '', email: '', password: '' });
+	const [teacherForm, setTeacherForm] = useState({
+		username: '',
+		email: '',
+		password: '',
+		subjectInput: '',
+		subjects: [],
+		selectedClassId: '',
+		otherGrade: '',
+	});
 	const [inviteEmail, setInviteEmail] = useState('');
 	const [inviteResult, setInviteResult] = useState(null);
 	const [bulkRows, setBulkRows] = useState([]);
@@ -273,12 +301,78 @@ export default function UserManagement() {
 		);
 	};
 
+	const addTeacherSubject = () => {
+		const value = String(teacherForm.subjectInput || '').trim();
+		if (!value) {
+			return;
+		}
+
+		const isDuplicate = teacherForm.subjects.some(
+			(subject) => String(subject).toLowerCase() === value.toLowerCase(),
+		);
+		if (isDuplicate) {
+			openToast('warning', 'Subject already added.');
+			return;
+		}
+
+		setTeacherForm((previous) => ({
+			...previous,
+			subjectInput: '',
+			subjects: [...previous.subjects, value],
+		}));
+	};
+
+	const removeTeacherSubject = (subjectToRemove) => {
+		setTeacherForm((previous) => ({
+			...previous,
+			subjects: previous.subjects.filter((subject) => subject !== subjectToRemove),
+		}));
+	};
+
 	const handleTeacherSubmit = async (event) => {
 		event.preventDefault();
+		const normalizedSubjects = teacherForm.subjects
+			.map((subject) => String(subject || '').trim())
+			.filter(Boolean);
+		const selectedClass = String(teacherForm.selectedClassId || '').trim();
+		const otherGrade = String(teacherForm.otherGrade || '').trim();
+
+		if (!normalizedSubjects.length) {
+			openToast('warning', 'Add at least one subject for the teacher profile.');
+			return;
+		}
+
+		if (!selectedClass) {
+			openToast('warning', 'Select a class or choose Other for free-text grade.');
+			return;
+		}
+
+		if (selectedClass === 'other' && !otherGrade) {
+			openToast('warning', 'Enter the class/grade when Other is selected.');
+			return;
+		}
+
 		setSubmittingTeacher(true);
 		try {
-			await createTeacherAccount(teacherForm);
-			setTeacherForm({ username: '', email: '', password: '' });
+			await createTeacherAccount({
+				username: teacherForm.username,
+				email: teacherForm.email,
+				password: teacherForm.password,
+				teacherProfile: {
+					subjects: normalizedSubjects,
+					selectedClassId: selectedClass === 'other' ? null : selectedClass,
+					otherGrade: selectedClass === 'other' ? otherGrade : '',
+				},
+			});
+			setTeacherForm({
+				username: '',
+				email: '',
+				password: '',
+				subjectInput: '',
+				subjects: [],
+				selectedClassId: '',
+				otherGrade: '',
+			});
 			openToast('success', 'Teacher account created.');
 			await loadUsers(filters, 1);
 		} catch (error) {
@@ -482,12 +576,95 @@ export default function UserManagement() {
 					<input
 						required
 						type='password'
-						minLength={8}
+						minLength={12}
 						value={teacherForm.password}
 						onChange={(event) => setTeacherForm((previous) => ({ ...previous, password: event.target.value }))}
-						placeholder='Temporary password'
+						placeholder='Strong password'
 						className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30'
 					/>
+
+					<div>
+						<p className='mb-1.5 text-sm font-medium text-[var(--color-text-secondary)]'>Subjects</p>
+						<div className='flex gap-2'>
+							<input
+								value={teacherForm.subjectInput}
+								onChange={(event) => setTeacherForm((previous) => ({ ...previous, subjectInput: event.target.value }))}
+								onKeyDown={(event) => {
+									if (event.key === 'Enter' || event.key === ',') {
+										event.preventDefault();
+										addTeacherSubject();
+									}
+								}}
+								placeholder='Math'
+								className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30'
+							/>
+							<button
+								type='button'
+								onClick={addTeacherSubject}
+								className='rounded-xl border border-[var(--color-border)] px-3 py-2.5 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/40'
+							>
+								Add
+							</button>
+						</div>
+						{teacherForm.subjects.length > 0 && (
+							<div className='mt-2 flex flex-wrap gap-2'>
+								{teacherForm.subjects.map((subject) => (
+									<span
+										key={subject}
+										className='inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-1 text-xs text-[var(--color-text-secondary)]'
+									>
+										{subject}
+										<button
+											type='button'
+											onClick={() => removeTeacherSubject(subject)}
+											className='text-[var(--color-text-muted)] hover:text-red-500'
+											aria-label={`Remove ${subject}`}
+										>
+											x
+										</button>
+									</span>
+								))}
+							</div>
+						)}
+					</div>
+
+					<div>
+						<p className='mb-1.5 text-sm font-medium text-[var(--color-text-secondary)]'>Preferred class</p>
+						<select
+							value={teacherForm.selectedClassId}
+							onChange={(event) => {
+								const nextValue = event.target.value;
+								setTeacherForm((previous) => ({
+									...previous,
+									selectedClassId: nextValue,
+									otherGrade: nextValue === 'other' ? previous.otherGrade : '',
+								}));
+							}}
+							className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30'
+						>
+							<option value=''>Select a class</option>
+							{classes.map((classItem) => (
+								<option key={classItem.id} value={classItem.id}>
+									{classItem.class_name}
+								</option>
+							))}
+							<option value='other'>Other</option>
+						</select>
+					</div>
+
+					{teacherForm.selectedClassId === 'other' && (
+						<input
+							required
+							value={teacherForm.otherGrade}
+							onChange={(event) => setTeacherForm((previous) => ({ ...previous, otherGrade: event.target.value }))}
+							placeholder='Class/grade'
+							className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30'
+						/>
+					)}
+
+					<p className='text-xs text-[var(--color-text-muted)]'>
+						Password must be 12+ characters with uppercase, lowercase, number, and special character.
+					</p>
 					<button
 						type='submit'
 						disabled={submittingTeacher}
@@ -613,99 +790,120 @@ export default function UserManagement() {
 					<div className='rounded-xl border border-[var(--color-border)] p-4 text-sm text-[var(--color-text-muted)]'>Loading users...</div>
 				) : (
 					<div className='space-y-3'>
-						{users.map((user) => (
-							<div key={user.id} className='rounded-xl border border-[var(--color-border)] p-4'>
-								<div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-									<div>
-										<p className='text-sm font-medium text-[var(--color-text-primary)]'>{user.username}</p>
-										<p className='text-sm text-[var(--color-text-secondary)]'>{user.email}</p>
-										<p className='text-xs capitalize text-[var(--color-text-muted)]'>{user.role}</p>
-										{user.role === 'parent' && (
-											<div className='mt-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-xs text-[var(--color-text-secondary)] space-y-1'>
-												<p><span className='font-medium text-[var(--color-text-primary)]'>Child:</span> {user.child_full_name || 'Not provided'}</p>
-												<p><span className='font-medium text-[var(--color-text-primary)]'>Grade:</span> {user.child_grade || 'Not provided'}</p>
-												<p><span className='font-medium text-[var(--color-text-primary)]'>Relationship:</span> {user.relationship_to_child || 'Not provided'}</p>
-												<p><span className='font-medium text-[var(--color-text-primary)]'>Primary phone:</span> {user.parent_phone || 'Not provided'}</p>
-												<p>
-													<span className='font-medium text-[var(--color-text-primary)]'>Linked student account:</span>{' '}
-													{user.linked_student_username
-														? `${user.linked_student_username} (${user.linked_student_email || 'No email'})`
-														: 'Not linked yet'}
-												</p>
-												{user.alternate_phone && (
-													<p><span className='font-medium text-[var(--color-text-primary)]'>Alternate phone:</span> {user.alternate_phone}</p>
-												)}
-												{user.address && (
-													<p><span className='font-medium text-[var(--color-text-primary)]'>Address:</span> {user.address}</p>
-												)}
+						{users.map((user) => {
+							const teacherSubjects = Array.isArray(user.teacher_subjects)
+								? user.teacher_subjects
+								: String(user.teacher_subjects || '')
+									.split(',')
+									.map((item) => item.trim())
+									.filter(Boolean);
 
-												<div className='mt-2 rounded-lg border border-emerald-500/30 bg-emerald-500/8 p-2.5'>
-													<p className='font-medium text-emerald-700 dark:text-emerald-300'>Parent to student mapping</p>
-													<div className='mt-2 flex flex-col gap-2 sm:flex-row'>
-														<select
-															value={parentStudentSelection[user.id] || ''}
-															onChange={(event) => {
-																const value = event.target.value;
-																setParentStudentSelection((previous) => ({
-																	...previous,
-																	[user.id]: value,
-																}));
-															}}
-															disabled={loadingStudents || Boolean(linkingParentIds[user.id])}
-															className='w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1.5 text-xs text-[var(--color-text-primary)]'
-														>
-															<option value=''>No linked student</option>
-															{studentOptions.map((studentOption) => (
-																<option key={studentOption.id} value={studentOption.id}>
-																	{studentOption.username} ({studentOption.email})
-																</option>
-															))}
-														</select>
-														<button
-															type='button'
-															onClick={() => handleSaveParentLink(user)}
-															disabled={
-																loadingStudents
-																|| Boolean(linkingParentIds[user.id])
-																|| (!parentStudentSelection[user.id] && !user.child_student_id)
-															}
-															className='rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-500/20 disabled:opacity-60 dark:text-emerald-300'
-														>
-															{linkingParentIds[user.id]
-																? 'Saving...'
-																: parentStudentSelection[user.id]
-																	? 'Save Link'
-																	: 'Unlink Student'}
-														</button>
+							return (
+								<div key={user.id} className='rounded-xl border border-[var(--color-border)] p-4'>
+									<div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
+										<div>
+											<p className='text-sm font-medium text-[var(--color-text-primary)]'>{user.username}</p>
+											<p className='text-sm text-[var(--color-text-secondary)]'>{user.email}</p>
+											<p className='text-xs capitalize text-[var(--color-text-muted)]'>{user.role}</p>
+											{user.role === 'teacher' && (
+												<div className='mt-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-xs text-[var(--color-text-secondary)] space-y-1'>
+													<p>
+														<span className='font-medium text-[var(--color-text-primary)]'>Subjects:</span>{' '}
+														{teacherSubjects.length ? teacherSubjects.join(', ') : 'Not provided'}
+													</p>
+													<p>
+														<span className='font-medium text-[var(--color-text-primary)]'>Class preference:</span>{' '}
+														{user.teacher_class_name || user.teacher_other_grade || 'Not provided'}
+													</p>
+												</div>
+											)}
+											{user.role === 'parent' && (
+												<div className='mt-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-xs text-[var(--color-text-secondary)] space-y-1'>
+													<p><span className='font-medium text-[var(--color-text-primary)]'>Child:</span> {user.child_full_name || 'Not provided'}</p>
+													<p><span className='font-medium text-[var(--color-text-primary)]'>Grade:</span> {user.child_grade || 'Not provided'}</p>
+													<p><span className='font-medium text-[var(--color-text-primary)]'>Relationship:</span> {user.relationship_to_child || 'Not provided'}</p>
+													<p><span className='font-medium text-[var(--color-text-primary)]'>Primary phone:</span> {user.parent_phone || 'Not provided'}</p>
+													<p>
+														<span className='font-medium text-[var(--color-text-primary)]'>Linked student account:</span>{' '}
+														{user.linked_student_username
+															? `${user.linked_student_username} (${user.linked_student_email || 'No email'})`
+															: 'Not linked yet'}
+													</p>
+													{user.alternate_phone && (
+														<p><span className='font-medium text-[var(--color-text-primary)]'>Alternate phone:</span> {user.alternate_phone}</p>
+													)}
+													{user.address && (
+														<p><span className='font-medium text-[var(--color-text-primary)]'>Address:</span> {user.address}</p>
+													)}
+
+													<div className='mt-2 rounded-lg border border-emerald-500/30 bg-emerald-500/8 p-2.5'>
+														<p className='font-medium text-emerald-700 dark:text-emerald-300'>Parent to student mapping</p>
+														<div className='mt-2 flex flex-col gap-2 sm:flex-row'>
+															<select
+																value={parentStudentSelection[user.id] || ''}
+																onChange={(event) => {
+																	const value = event.target.value;
+																	setParentStudentSelection((previous) => ({
+																		...previous,
+																		[user.id]: value,
+																	}));
+																}}
+																disabled={loadingStudents || Boolean(linkingParentIds[user.id])}
+																className='w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1.5 text-xs text-[var(--color-text-primary)]'
+															>
+																<option value=''>No linked student</option>
+																{studentOptions.map((studentOption) => (
+																	<option key={studentOption.id} value={studentOption.id}>
+																		{studentOption.username} ({studentOption.email})
+																	</option>
+																))}
+															</select>
+															<button
+																type='button'
+																onClick={() => handleSaveParentLink(user)}
+																disabled={
+																	loadingStudents
+																	|| Boolean(linkingParentIds[user.id])
+																	|| (!parentStudentSelection[user.id] && !user.child_student_id)
+																}
+																className='rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-500/20 disabled:opacity-60 dark:text-emerald-300'
+															>
+																{linkingParentIds[user.id]
+																	? 'Saving...'
+																	: parentStudentSelection[user.id]
+																		? 'Save Link'
+																		: 'Unlink Student'}
+															</button>
+														</div>
 													</div>
 												</div>
-											</div>
-										)}
+											)}
+										</div>
+										<div className='flex flex-wrap gap-2'>
+											<button
+												type='button'
+												onClick={() => handleSendResetCode(user)}
+												className='rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/40'
+											>
+												Send Reset Code
+											</button>
+											<button
+												type='button'
+												onClick={() => handleSetTemporaryPassword(user)}
+												className='rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/40'
+											>
+												Set Temporary Password
+											</button>
+										</div>
 									</div>
-									<div className='flex flex-wrap gap-2'>
-										<button
-											type='button'
-											onClick={() => handleSendResetCode(user)}
-											className='rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/40'
-										>
-											Send Reset Code
-										</button>
-										<button
-											type='button'
-											onClick={() => handleSetTemporaryPassword(user)}
-											className='rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]/40'
-										>
-											Set Temporary Password
-										</button>
-									</div>
+									{tempPasswords[user.id] && (
+										<div className='mt-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-xs text-[var(--color-text-secondary)]'>
+											Temporary password: <span className='font-semibold text-[var(--color-text-primary)]'>{tempPasswords[user.id]}</span>
+										</div>
+									)}
 								</div>
-								{tempPasswords[user.id] && (
-									<div className='mt-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-xs text-[var(--color-text-secondary)]'>
-										Temporary password: <span className='font-semibold text-[var(--color-text-primary)]'>{tempPasswords[user.id]}</span>
-									</div>
-								)}
-							</div>
-						))}
+							);
+						})}
 						{!users.length && (
 							<div className='rounded-xl border border-[var(--color-border)] p-4 text-sm text-[var(--color-text-muted)]'>No users found.</div>
 						)}
