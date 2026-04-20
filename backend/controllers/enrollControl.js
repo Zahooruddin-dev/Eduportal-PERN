@@ -63,12 +63,12 @@ async function assertTeacherOwnsClass(classId, user) {
     return { ok: false, status: 404, error: 'Class not found.' };
   }
 
+  if (user.role !== 'teacher' && user.role !== 'admin') {
+    return { ok: false, status: 403, error: 'Unauthorized to manage this class.' };
+  }
+
   if (user.role === 'admin') {
-    const instituteResult = await pool.query(
-      'SELECT institute_id FROM users WHERE id = $1',
-      [user.id],
-    );
-    const adminInstituteId = instituteResult.rows[0]?.institute_id;
+    const adminInstituteId = user.instituteId;
     if (!adminInstituteId || adminInstituteId !== classObj.institute_id) {
       return { ok: false, status: 403, error: 'Unauthorized to manage this class.' };
     }
@@ -319,10 +319,21 @@ async function removeStudentFromClass(req, res) {
       return res.status(access.status).json({ error: access.error });
     }
 
-    const userResult = await pool.query('SELECT id, role FROM users WHERE id = $1', [studentId]);
-    const targetStudent = userResult.rows[0];
+    const targetStudent = await getStudentById(studentId);
     if (!targetStudent || targetStudent.role !== 'student') {
       return res.status(404).json({ error: 'Student not found.' });
+    }
+
+    if (targetStudent.institute_id !== access.classObj.institute_id) {
+      return res.status(403).json({ error: 'Unauthorized to manage this student in this class.' });
+    }
+
+    const [isEnrolled, existingStatus] = await Promise.all([
+      db.isStudentEnrolledInClassQuery(classId, studentId),
+      db.getEnrollmentStatusQuery(classId, studentId),
+    ]);
+    if (!isEnrolled && !existingStatus) {
+      return res.status(404).json({ error: 'Student has no enrollment record for this class.' });
     }
 
     const result = await db.removeStudentFromClassQuery({
@@ -393,12 +404,30 @@ async function unbanStudent(req, res) {
       return res.status(access.status).json({ error: access.error });
     }
 
+    const targetStudent = await getStudentById(studentId);
+    if (!targetStudent || targetStudent.role !== 'student') {
+      return res.status(404).json({ error: 'Student not found.' });
+    }
+
+    if (targetStudent.institute_id !== access.classObj.institute_id) {
+      return res.status(403).json({ error: 'Unauthorized to manage this student in this class.' });
+    }
+
+    const existingStatus = await db.getEnrollmentStatusQuery(classId, studentId);
+    if (!existingStatus || !['banned', 'kicked'].includes(existingStatus.status)) {
+      return res.status(409).json({ error: 'Student is not currently banned or kicked in this class.' });
+    }
+
     const updated = await db.unbanStudentQuery({
       classId,
       studentId,
       teacherId: req.user.id,
       note,
     });
+
+    if (!updated) {
+      return res.status(409).json({ error: 'Student is not currently banned or kicked in this class.' });
+    }
 
     return res.status(200).json({
       message: 'Student can enroll in this class again.',
@@ -421,6 +450,23 @@ async function getStudentProfileForClass(req, res) {
     const access = await assertTeacherOwnsClass(classId, req.user);
     if (!access.ok) {
       return res.status(access.status).json({ error: access.error });
+    }
+
+    const targetStudent = await getStudentById(studentId);
+    if (!targetStudent || targetStudent.role !== 'student') {
+      return res.status(404).json({ error: 'Student not found.' });
+    }
+
+    if (targetStudent.institute_id !== access.classObj.institute_id) {
+      return res.status(403).json({ error: 'Unauthorized to access this student profile.' });
+    }
+
+    const [isEnrolled, existingStatus] = await Promise.all([
+      db.isStudentEnrolledInClassQuery(classId, studentId),
+      db.getEnrollmentStatusQuery(classId, studentId),
+    ]);
+    if (!isEnrolled && !existingStatus) {
+      return res.status(404).json({ error: 'Student is not associated with this class.' });
     }
 
     const profile = await db.getStudentProfileForClassQuery(classId, studentId);
