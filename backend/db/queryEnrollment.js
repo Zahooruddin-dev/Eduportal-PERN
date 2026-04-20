@@ -145,6 +145,17 @@ async function unenrollStudentQuery(studentId, classId) {
   return rowCount;
 }
 
+async function isStudentEnrolledInClassQuery(classId, studentId) {
+  const { rows } = await pool.query(
+    `SELECT 1
+     FROM enrollments
+     WHERE class_id = $1 AND student_id = $2
+     LIMIT 1`,
+    [classId, studentId],
+  );
+  return rows.length > 0;
+}
+
 async function removeStudentFromClassQuery({
   classId,
   studentId,
@@ -261,14 +272,20 @@ async function listRemovedStudentsByClassQuery(classId) {
 }
 
 async function unbanStudentQuery({ classId, studentId, teacherId, note }) {
-  return upsertEnrollmentStatusQuery({
-    classId,
-    studentId,
-    status: 'active',
-    dataPolicy: 'keep',
-    note,
-    updatedBy: teacherId,
-  });
+  const { rows } = await pool.query(
+    `UPDATE class_enrollment_status
+     SET status = 'active',
+         data_policy = 'keep',
+         note = $4,
+         updated_by = $3,
+         updated_at = NOW()
+     WHERE class_id = $1
+       AND student_id = $2
+       AND status IN ('banned', 'kicked')
+     RETURNING *`,
+    [classId, studentId, teacherId || null, note || null],
+  );
+  return rows[0] || null;
 }
 
 async function getStudentProfileForClassQuery(classId, studentId) {
@@ -295,8 +312,13 @@ async function getStudentProfileForClassQuery(classId, studentId) {
        FROM enrollments e
        JOIN classes c ON c.id = e.class_id
        WHERE e.student_id = $1
+         AND c.institute_id = (
+           SELECT institute_id
+           FROM classes
+           WHERE id = $2
+         )
        ORDER BY c.class_name ASC`,
-      [studentId],
+      [studentId, classId],
     ),
     pool.query(
       `SELECT status, data_policy, note, updated_at
@@ -330,6 +352,7 @@ module.exports = {
   getEnrollmentStatusQuery,
   upsertEnrollmentStatusQuery,
   unenrollStudentQuery,
+  isStudentEnrolledInClassQuery,
   removeStudentFromClassQuery,
   listRemovedStudentsByClassQuery,
   unbanStudentQuery,
