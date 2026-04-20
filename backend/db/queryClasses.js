@@ -79,7 +79,9 @@ async function updateClassQuery(data) {
 		meeting_link,
 		schedule_timezone,
 		id,
-		teacher_id,
+		actor_id,
+		actor_role,
+		actor_institute_id,
 	} = data;
 	const { rows } = await pool.query(
 		`UPDATE classes SET
@@ -95,7 +97,11 @@ async function updateClassQuery(data) {
 	      schedule_blocks = $10::jsonb,
 	      meeting_link = $11,
 	      schedule_timezone = $12
-	    WHERE id = $13 AND teacher_id = $14
+	    WHERE id = $13
+				AND (
+					($14::text = 'teacher' AND teacher_id = $15)
+					OR ($14::text = 'admin' AND institute_id = $16)
+				)
     RETURNING *`,
 		[
 			class_name,
@@ -111,7 +117,9 @@ async function updateClassQuery(data) {
 			meeting_link || null,
 			schedule_timezone || 'UTC',
 			id,
-			teacher_id,
+			String(actor_role || '').toLowerCase(),
+			actor_id,
+			actor_institute_id,
 		],
 	);
 	return rows[0];
