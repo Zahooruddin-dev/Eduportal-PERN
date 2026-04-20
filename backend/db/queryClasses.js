@@ -151,10 +151,15 @@ async function deleteClassByIdQuery(id) {
 
 async function getClassesByTeacherIdQuery(teacherId) {
 	const { rows } = await pool.query(
-		`SELECT c.*, u.username AS teacher_name
+		`SELECT
+			c.*,
+			u.username AS teacher_name,
+			COUNT(e.student_id)::int AS enrolled_count
 		 FROM classes c
 		 LEFT JOIN users u ON u.id = c.teacher_id
+		 LEFT JOIN enrollments e ON e.class_id = c.id
 		 WHERE c.teacher_id = $1
+		 GROUP BY c.id, u.username
 		 ORDER BY c.class_name ASC`,
 		[teacherId],
 	);
