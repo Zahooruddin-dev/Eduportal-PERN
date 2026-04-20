@@ -12,6 +12,8 @@ const ADMIN_AUDIENCE_SCOPES = new Set([
 	'teachers_parents',
 ]);
 
+const CLASS_ANNOUNCEMENT_ROLES = new Set(['admin', 'teacher', 'student']);
+
 function normalizeAudience(value) {
 	return String(value || '').trim().toLowerCase();
 }
@@ -86,6 +88,10 @@ async function getClassAnnouncements(req, res) {
 		return res.status(403).json({ error: 'Unauthorized to access class announcements.' });
 	}
 
+	if (!CLASS_ANNOUNCEMENT_ROLES.has(requesterRole)) {
+		return res.status(403).json({ error: 'Unauthorized to access class announcements.' });
+	}
+
 	try {
 		const targetClass = await dbClass.getClassByIdQuery(classId);
 		if (!targetClass) {
@@ -122,12 +128,50 @@ async function getClassAnnouncements(req, res) {
 
 async function getAnnouncementById(req, res) {
 	const { announcementId } = req.params;
+	const requesterId = req.user?.id;
+	const requesterRole = String(req.user?.role || '').toLowerCase();
+	const requesterInstituteId = req.user?.instituteId || null;
+
+	if (!requesterId || !requesterInstituteId) {
+		return res.status(403).json({ error: 'Unauthorized to access this announcement.' });
+	}
+
+	if (!CLASS_ANNOUNCEMENT_ROLES.has(requesterRole)) {
+		return res.status(403).json({ error: 'Unauthorized to access this announcement.' });
+	}
+
 	try {
 		const announcement =
 			await dbAnnounce.getAnnouncementByIdQuery(announcementId);
 
 		if (!announcement) {
 			return res.status(404).json({ error: 'Announcement not found' });
+		}
+
+		const targetClass = await dbClass.getClassByIdQuery(announcement.class_id);
+		if (!targetClass) {
+			return res.status(404).json({ error: 'Class not found.' });
+		}
+
+		if (targetClass.institute_id !== requesterInstituteId) {
+			return res.status(403).json({ error: 'Unauthorized to access this announcement.' });
+		}
+
+		if (requesterRole === 'teacher' && targetClass.teacher_id !== requesterId) {
+			return res.status(403).json({ error: 'Unauthorized to access this announcement.' });
+		}
+
+		if (requesterRole === 'student') {
+			const enrollmentCheck = await pool.query(
+				`SELECT 1
+				 FROM enrollments
+				 WHERE class_id = $1 AND student_id = $2
+				 LIMIT 1`,
+				[targetClass.id, requesterId],
+			);
+			if (!enrollmentCheck.rows.length) {
+				return res.status(403).json({ error: 'Unauthorized to access this announcement.' });
+			}
 		}
 
 		res.status(200).json(announcement);
