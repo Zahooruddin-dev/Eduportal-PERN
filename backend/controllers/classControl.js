@@ -187,8 +187,14 @@ async function createClasses(req, res) {
 }
 
 async function updateClass(req, res) {
-	if (req.user.role !== 'teacher') {
-		return res.status(403).json({ error: 'Only teachers can update class schedules.' });
+	if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
+		return res
+			.status(403)
+			.json({ error: 'Only teachers or admins can update class schedules.' });
+	}
+
+	if (req.user.role === 'admin' && !req.user.instituteId) {
+		return res.status(403).json({ error: 'Admin must belong to an institute.' });
 	}
 
 	const { id } = req.params;
@@ -209,7 +215,9 @@ async function updateClass(req, res) {
 		meeting_link,
 		schedule_timezone,
 	} = req.body;
-	const teacher_id = req.user.id;
+	const actor_id = req.user.id;
+	const actor_role = String(req.user.role || '').toLowerCase();
+	const actor_institute_id = req.user.instituteId || null;
 	const normalizedSchedule = normalizeScheduleBlocks(schedule_blocks, {
 		schedule_days,
 		start_time,
@@ -249,7 +257,9 @@ async function updateClass(req, res) {
 			meeting_link,
 			schedule_timezone: schedule_timezone || 'UTC',
 			id,
-			teacher_id,
+			actor_id,
+			actor_role,
+			actor_institute_id,
 		});
 
 		if (!updated) {
