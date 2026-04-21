@@ -103,16 +103,38 @@ CREATE TABLE IF NOT EXISTS resource_view_progress (
   class_id UUID NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
   student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   watch_seconds NUMERIC(12, 2) NOT NULL DEFAULT 0,
-  video_duration_seconds NUMERIC(12, 2),
-  max_percent_viewed NUMERIC(5, 2) NOT NULL DEFAULT 0,
+  duration_seconds NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  last_position_seconds NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  progress_percent NUMERIC(5, 2) NOT NULL DEFAULT 0,
   threshold_25_reached BOOLEAN NOT NULL DEFAULT false,
-  threshold_reached_at TIMESTAMP WITH TIME ZONE,
+  threshold_25_reached_at TIMESTAMP WITH TIME ZONE,
   last_event_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  CONSTRAINT resource_view_progress_percent_check CHECK (max_percent_viewed >= 0 AND max_percent_viewed <= 100),
+  CONSTRAINT resource_view_progress_percent_check CHECK (progress_percent >= 0 AND progress_percent <= 100),
   UNIQUE (resource_id, student_id)
 );
+
+ALTER TABLE resource_view_progress
+  ADD COLUMN IF NOT EXISTS duration_seconds NUMERIC(12, 2) NOT NULL DEFAULT 0;
+
+ALTER TABLE resource_view_progress
+  ADD COLUMN IF NOT EXISTS last_position_seconds NUMERIC(12, 2) NOT NULL DEFAULT 0;
+
+ALTER TABLE resource_view_progress
+  ADD COLUMN IF NOT EXISTS progress_percent NUMERIC(5, 2) NOT NULL DEFAULT 0;
+
+ALTER TABLE resource_view_progress
+  ADD COLUMN IF NOT EXISTS threshold_25_reached_at TIMESTAMP WITH TIME ZONE;
+
+ALTER TABLE resource_view_progress
+  DROP COLUMN IF EXISTS video_duration_seconds;
+
+ALTER TABLE resource_view_progress
+  DROP COLUMN IF EXISTS max_percent_viewed;
+
+ALTER TABLE resource_view_progress
+  DROP COLUMN IF EXISTS threshold_reached_at;
 
 CREATE INDEX IF NOT EXISTS idx_resource_view_progress_class_student
   ON resource_view_progress (class_id, student_id);
@@ -129,10 +151,22 @@ CREATE TABLE IF NOT EXISTS resource_attendance_events (
   resource_id UUID NOT NULL REFERENCES class_resources(id) ON DELETE CASCADE,
   student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   attendance_date DATE NOT NULL,
-  trigger_percent NUMERIC(5, 2) NOT NULL DEFAULT 25,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  UNIQUE (class_id, student_id, attendance_date)
+  progress_percent NUMERIC(5, 2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE resource_attendance_events
+  ADD COLUMN IF NOT EXISTS progress_percent NUMERIC(5, 2) NOT NULL DEFAULT 0;
+
+DELETE FROM resource_attendance_events a
+USING resource_attendance_events b
+WHERE a.ctid < b.ctid
+  AND a.class_id = b.class_id
+  AND a.student_id = b.student_id
+  AND a.attendance_date = b.attendance_date;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_resource_attendance_events_class_student_date
+  ON resource_attendance_events (class_id, student_id, attendance_date);
 
 CREATE INDEX IF NOT EXISTS idx_resource_attendance_events_resource
   ON resource_attendance_events (resource_id);
