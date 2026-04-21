@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   createClass,
   deleteMyClass,
-  getClassEnrolledRooster,
   getMyClasses,
   updateClass,
 } from '../../../../../api/api';
@@ -66,7 +65,7 @@ export default function ScheduleManagement() {
   const classStats = useMemo(() => {
     const totalClasses = sortedClasses.length;
     const totalEnrolled = sortedClasses.reduce(
-      (sum, classItem) => sum + Number(classItem.enrolledCount || 0),
+      (sum, classItem) => sum + Number(classItem.enrolled_count || 0),
       0,
     );
     const classesWithMeetingLink = sortedClasses.filter((classItem) => Boolean(classItem.meeting_link)).length;
@@ -82,18 +81,7 @@ export default function ScheduleManagement() {
     setLoading(true);
     try {
       const response = await getMyClasses();
-      const classList = response.data || [];
-      const withCounts = await Promise.all(
-        classList.map(async (classItem) => {
-          try {
-            const rosterResponse = await getClassEnrolledRooster(classItem.id);
-            return { ...classItem, enrolledCount: rosterResponse.data?.length || 0 };
-          } catch {
-            return { ...classItem, enrolledCount: 0 };
-          }
-        }),
-      );
-      setClasses(withCounts);
+      setClasses(response.data || []);
     } catch (error) {
       setToast({
         isOpen: true,
@@ -258,7 +246,7 @@ export default function ScheduleManagement() {
                 <p className="text-sm text-[var(--color-text-secondary)]">{scheduleSummary(classItem)}</p>
 
                 <div className="mt-3 space-y-1 text-xs text-[var(--color-text-muted)]">
-                  <p>Enrolled: {classItem.enrolledCount || 0}</p>
+                  <p>Enrolled: {Number(classItem.enrolled_count || 0)}</p>
                   {classItem.room_number && <p>Room: {classItem.room_number}</p>}
                   {classItem.max_students && <p>Capacity: {classItem.max_students}</p>}
                 </div>
