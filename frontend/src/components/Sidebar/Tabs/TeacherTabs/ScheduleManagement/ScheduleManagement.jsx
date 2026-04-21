@@ -175,16 +175,16 @@ export default function ScheduleManagement() {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-[var(--color-text-primary)] sm:text-3xl">Class Schedule Manager</h1>
+            <h1 className="text-2xl font-bold text-[var(--color-text-primary)] sm:text-3xl">Classes Hub</h1>
             <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-              Manage classes, schedules, and quick class actions from one place.
+              Open any class to manage students, announcements, and schedule details from one page.
             </p>
           </div>
           <button
             onClick={openCreateModal}
             className="rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--color-primary-hover)]"
           >
-            + New Class
+            + Create Class
           </button>
         </div>
 
@@ -224,70 +224,75 @@ export default function ScheduleManagement() {
             <p className="text-[var(--color-text-muted)]">No classes matched your search.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4">
             {filteredClasses.map((classItem) => (
               <div
                 key={classItem.id}
-                className="group rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm transition hover:shadow-md"
+                className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm transition hover:shadow-md"
               >
-                <div className="mb-3 flex items-start justify-between gap-2">
-                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)] line-clamp-2">
-                    {classItem.class_name}
-                  </h2>
-                  <span className="rounded-full bg-[var(--color-primary)]/10 px-2 py-0.5 text-xs text-[var(--color-primary)]">
-                    {classItem.grade_level || 'General'}
-                  </span>
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-2 flex flex-wrap items-start gap-2">
+                      <h2 className="text-lg font-semibold text-[var(--color-text-primary)] line-clamp-2">
+                        {classItem.class_name}
+                      </h2>
+                      <span className="rounded-full bg-[var(--color-primary)]/10 px-2 py-0.5 text-xs text-[var(--color-primary)]">
+                        {classItem.grade_level || 'General'}
+                      </span>
+                    </div>
+
+                    {classItem.subject && (
+                      <p className="mb-1 text-sm text-[var(--color-text-secondary)]">{classItem.subject}</p>
+                    )}
+
+                    <p className="text-sm text-[var(--color-text-secondary)]">{scheduleSummary(classItem)}</p>
+
+                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--color-text-muted)]">
+                      <p>Enrolled: {Number(classItem.enrolled_count || 0)}</p>
+                      {classItem.room_number && <p>Room: {classItem.room_number}</p>}
+                      {classItem.max_students && <p>Capacity: {classItem.max_students}</p>}
+                    </div>
+
+                    {classItem.meeting_link && (
+                      <a
+                        href={classItem.meeting_link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-3 inline-block text-sm text-[var(--color-primary)] hover:underline"
+                      >
+                        Open meeting link
+                      </a>
+                    )}
+
+                    {classItem.description && (
+                      <p className="mt-3 text-sm text-[var(--color-text-muted)] line-clamp-3">
+                        {classItem.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 lg:w-[240px] lg:flex-col lg:items-stretch">
+                    <button
+                      onClick={() => setSelectedClassId(classItem.id)}
+                      className="rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-primary)] transition hover:bg-[var(--color-border)]/40"
+                    >
+                      Open Class Workspace
+                    </button>
+                    <button
+                      onClick={() => openEditModal(classItem)}
+                      className="rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text-primary)] transition hover:bg-[var(--color-border)]/40"
+                    >
+                      Edit Class
+                    </button>
+                    <button
+                      onClick={() => requestDelete(classItem)}
+                      className="rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-danger)] transition hover:bg-[var(--color-danger)]/10"
+                    >
+                      Delete Class
+                    </button>
+                  </div>
                 </div>
 
-                {classItem.subject && (
-                  <p className="mb-1 text-sm text-[var(--color-text-secondary)]">{classItem.subject}</p>
-                )}
-
-                <p className="text-sm text-[var(--color-text-secondary)]">{scheduleSummary(classItem)}</p>
-
-                <div className="mt-3 space-y-1 text-xs text-[var(--color-text-muted)]">
-                  <p>Enrolled: {Number(classItem.enrolled_count || 0)}</p>
-                  {classItem.room_number && <p>Room: {classItem.room_number}</p>}
-                  {classItem.max_students && <p>Capacity: {classItem.max_students}</p>}
-                </div>
-
-                {classItem.meeting_link && (
-                  <a
-                    href={classItem.meeting_link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-3 inline-block text-sm text-[var(--color-primary)] hover:underline"
-                  >
-                    Open meeting link
-                  </a>
-                )}
-
-                {classItem.description && (
-                  <p className="mt-3 text-sm text-[var(--color-text-muted)] line-clamp-3">
-                    {classItem.description}
-                  </p>
-                )}
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setSelectedClassId(classItem.id)}
-                    className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-primary)] transition hover:bg-[var(--color-border)]/40"
-                  >
-                    Open Class
-                  </button>
-                  <button
-                    onClick={() => openEditModal(classItem)}
-                    className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] transition hover:bg-[var(--color-border)]/40"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => requestDelete(classItem)}
-                    className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-danger)] transition hover:bg-[var(--color-danger)]/10"
-                  >
-                    Delete
-                  </button>
-                </div>
               </div>
             ))}
           </div>
