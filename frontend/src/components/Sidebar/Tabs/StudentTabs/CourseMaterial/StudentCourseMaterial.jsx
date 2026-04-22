@@ -1,14 +1,75 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../../../../context/useAuth';
 import {
   getStudentEnrolledShedule,
   getClassResources,
+  getMyResourceProgress,
+  trackResourceProgress,
 } from '../../../../../api/api';
 import { SpinnerIcon } from '../../../../Icons/Icon';
-import { FileText, ExternalLink, Link as LinkIcon, ChevronDown, MessageSquare, Download, Clock, Users } from 'lucide-react';
+import { FileText, ExternalLink, Link as LinkIcon, ChevronDown, MessageSquare, Download, Clock, PlayCircle } from 'lucide-react';
 import FileViewerModal from '../../../../FileViewerModal/FileViewerModal';
 import CommentSection from '../../Shared/CommentSection';
 import { getFileViewUrl } from '../../../../../utils/fileUtils';
+
+let youtubeApiLoader = null;
+
+function extractYouTubeVideoId(url) {
+  const text = String(url || '').trim();
+  if (!text) return null;
+
+  const directMatch = text.match(/^[a-zA-Z0-9_-]{11}$/);
+  if (directMatch) return directMatch[0];
+
+  try {
+    const parsed = new URL(text);
+    const host = parsed.hostname.replace(/^www\./, '').toLowerCase();
+    if (host === 'youtu.be') {
+      const pathId = parsed.pathname.split('/').filter(Boolean)[0];
+      return /^[a-zA-Z0-9_-]{11}$/.test(pathId || '') ? pathId : null;
+    }
+    if (host.includes('youtube.com')) {
+      const queryId = parsed.searchParams.get('v');
+      if (queryId && /^[a-zA-Z0-9_-]{11}$/.test(queryId)) return queryId;
+      const parts = parsed.pathname.split('/').filter(Boolean);
+      if ((parts[0] === 'embed' || parts[0] === 'shorts') && /^[a-zA-Z0-9_-]{11}$/.test(parts[1] || '')) {
+        return parts[1];
+      }
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function loadYouTubeApi() {
+  if (typeof window === 'undefined') return Promise.reject(new Error('Window unavailable'));
+  if (window.YT && typeof window.YT.Player === 'function') {
+    return Promise.resolve(window.YT);
+  }
+
+  if (!youtubeApiLoader) {
+    youtubeApiLoader = new Promise((resolve, reject) => {
+      const previousReady = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        if (typeof previousReady === 'function') previousReady();
+        resolve(window.YT);
+      };
+
+      const existingScript = document.querySelector('script[src="https://www.youtube.com/iframe_api"]');
+      if (!existingScript) {
+        const script = document.createElement('script');
+        script.src = 'https://www.youtube.com/iframe_api';
+        script.async = true;
+        script.onerror = () => reject(new Error('Unable to load YouTube API'));
+        document.head.appendChild(script);
+      }
+    });
+  }
+
+  return youtubeApiLoader;
+}
 
 function formatDate(value) {
   if (!value) return '-';
@@ -23,6 +84,160 @@ function toTimestamp(value, fallback = 0) {
   return Number.isNaN(timestamp) ? fallback : timestamp;
 }
 
+function YouTubeProgressPlayer({
+  classId,
+  resource,
+  savedProgress,
+  onProgressChange,
+}) {
+  const containerRef = useRef(null);
+  const playerRef = useRef(null);
+  const timerRef = useRef(null);
+  const lastSentTimeRef = useRef(0);
+  const [syncing, setSyncing] = useState(false);
+
+  const videoId = useMemo(
+    () => resource.youtube_video_id || extractYouTubeVideoId(resource.content),
+    [resource.youtube_video_id, resource.content],
+  );
+
+  const pushProgress = useCallback(async (force = false) => {
+    const player = playerRef.current;
+    if (!player || typeof player.getDuration !== 'function') return;
+
+    const duration = Number(player.getDuration());
+    const currentTime = Number(player.getCurrentTime());
+
+    if (!Number.isFinite(duration) || duration <= 0 || !Number.isFinite(currentTime) || currentTime < 0) {
+      return;
+    }
+
+    if (!force && Math.abs(currentTime - lastSentTimeRef.current) < 5) {
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      const res = await trackResourceProgress(classId, resource.id, {
+        watchedSeconds: currentTime,
+        currentTimeSeconds: currentTime,
+        durationSeconds: duration,
+      });
+      lastSentTimeRef.current = currentTime;
+      const progressPercent = Number(res.data?.progressPercent || 0);
+      const thresholdReached = Boolean(res.data?.thresholdReached);
+      onProgressChange(resource.id, {
+        progressPercent,
+        thresholdReached,
+      });
+    } catch (err) {
+      const _ignored = err;
+      void _ignored;
+    } finally {
+      setSyncing(false);
+    }
+  }, [classId, onProgressChange, resource.id]);
+
+  useEffect(() => {
+    if (!videoId || !containerRef.current) return undefined;
+
+    let mounted = true;
+
+    loadYouTubeApi()
+      .then(() => {
+        if (!mounted || !containerRef.current) return;
+
+        playerRef.current = new window.YT.Player(containerRef.current, {
+          videoId,
+          playerVars: {
+            rel: 0,
+            modestbranding: 1,
+          },
+          events: {
+            onReady: (event) => {
+              const seekSeconds = Number(savedProgress?.progressPercent || 0);
+              const duration = Number(event.target.getDuration());
+              if (duration > 0 && seekSeconds > 0) {
+                const target = Math.max(0, Math.min(duration - 1, (seekSeconds / 100) * duration));
+                if (target > 0) event.target.seekTo(target, true);
+              }
+            },
+            onStateChange: (event) => {
+              const playerState = window.YT?.PlayerState;
+              if (!playerState) return;
+
+              if (event.data === playerState.PLAYING) {
+                if (timerRef.current) window.clearInterval(timerRef.current);
+                timerRef.current = window.setInterval(() => {
+                  pushProgress(false);
+                }, 10000);
+              }
+
+              if (
+                event.data === playerState.PAUSED ||
+                event.data === playerState.ENDED ||
+                event.data === playerState.BUFFERING
+              ) {
+                if (timerRef.current) {
+                  window.clearInterval(timerRef.current);
+                  timerRef.current = null;
+                }
+                pushProgress(true);
+              }
+            },
+          },
+        });
+      })
+      .catch(() => null);
+
+    return () => {
+      mounted = false;
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      if (playerRef.current && typeof playerRef.current.destroy === 'function') {
+        playerRef.current.destroy();
+        playerRef.current = null;
+      }
+    };
+  }, [videoId, savedProgress?.progressPercent, pushProgress]);
+
+  if (!videoId) {
+    return (
+      <a
+        href={resource.content}
+        target='_blank'
+        rel='noopener noreferrer'
+        className='inline-flex items-center gap-2 rounded-lg border-2 border-[var(--color-primary)] bg-[var(--color-primary)]/5 px-4 py-2.5 text-sm font-bold text-[var(--color-primary)] transition hover:bg-[var(--color-primary)]/15 md:rounded-xl md:px-5'
+      >
+        <PlayCircle size={18} />
+        Open Video
+      </a>
+    );
+  }
+
+  const progressPercent = Number(savedProgress?.progressPercent || 0);
+
+  return (
+    <div className='w-full space-y-2'>
+      <div className='aspect-video w-full overflow-hidden rounded-xl border border-[var(--color-border)] bg-black'>
+        <div ref={containerRef} className='h-full w-full' />
+      </div>
+      <div className='flex items-center justify-between text-xs'>
+        <span className='font-semibold text-[var(--color-text-secondary)]'>Watched {progressPercent.toFixed(2)}%</span>
+        <span className={`font-semibold ${savedProgress?.thresholdReached ? 'text-[var(--color-success)]' : 'text-[var(--color-text-muted)]'}`}>
+          {savedProgress?.thresholdReached ? 'Attendance eligible' : 'Need 25% for attendance'}
+        </span>
+      </div>
+      <div className='h-2 overflow-hidden rounded-full bg-[var(--color-border)]'>
+        <div className='h-full bg-[var(--color-primary)]' style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }} />
+      </div>
+      {syncing && <p className='text-xs text-[var(--color-text-muted)]'>Syncing progress...</p>}
+    </div>
+  );
+}
+
 export default function StudentCourseMaterial() {
   const { user } = useAuth();
   const [classes, setClasses] = useState([]);
@@ -34,9 +249,11 @@ export default function StudentCourseMaterial() {
   const [viewingFile, setViewingFile] = useState(null);
   const [showCommentsFor, setShowCommentsFor] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedTag, setSelectedTag] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [downloadingAll, setDownloadingAll] = useState(false);
+  const [resourceProgress, setResourceProgress] = useState({});
 
   const selectedClass = useMemo(
     () => classes.find((classItem) => classItem.id === selectedClassId) || null,
@@ -52,6 +269,15 @@ export default function StudentCourseMaterial() {
       });
     });
     return [...tags].sort((a, b) => a.localeCompare(b));
+  }, [resources]);
+
+  const availableCategories = useMemo(() => {
+    const categories = new Set();
+    resources.forEach((resource) => {
+      const category = String(resource.material_category || '').trim();
+      if (category) categories.add(category);
+    });
+    return [...categories].sort((a, b) => a.localeCompare(b));
   }, [resources]);
 
   const filteredResources = useMemo(() => {
@@ -81,6 +307,12 @@ export default function StudentCourseMaterial() {
       );
     }
 
+    if (selectedCategory !== 'all') {
+      next = next.filter(
+        (resource) => String(resource.material_category || '').toLowerCase() === selectedCategory.toLowerCase(),
+      );
+    }
+
     next.sort((a, b) => {
       if (sortBy === 'oldest') {
         return toTimestamp(a.created_at) - toTimestamp(b.created_at);
@@ -95,7 +327,7 @@ export default function StudentCourseMaterial() {
     });
 
     return next;
-  }, [resources, searchQuery, selectedTag, sortBy]);
+  }, [resources, searchQuery, selectedTag, selectedCategory, sortBy]);
 
   useEffect(() => {
     if (selectedTag !== 'all' && !availableTags.includes(selectedTag)) {
@@ -103,9 +335,53 @@ export default function StudentCourseMaterial() {
     }
   }, [availableTags, selectedTag]);
 
-  const fetchResourcesForClass = async (classId) => {
+  useEffect(() => {
+    if (selectedCategory !== 'all' && !availableCategories.includes(selectedCategory)) {
+      setSelectedCategory('all');
+    }
+  }, [availableCategories, selectedCategory]);
+
+  const handleProgressChange = useCallback((resourceId, progress) => {
+    setResourceProgress((current) => ({
+      ...current,
+      [resourceId]: {
+        progressPercent: Number(progress?.progressPercent || 0),
+        thresholdReached: Boolean(progress?.thresholdReached),
+      },
+    }));
+  }, []);
+
+  const loadResourceProgress = useCallback(async (classId, resourceItems) => {
+    const youtubeResources = (resourceItems || []).filter((item) => item.type === 'youtube');
+    if (youtubeResources.length === 0) {
+      setResourceProgress({});
+      return;
+    }
+
+    const entries = await Promise.all(
+      youtubeResources.map(async (item) => {
+        try {
+          const res = await getMyResourceProgress(classId, item.id);
+          return [
+            item.id,
+            {
+              progressPercent: Number(res.data?.progressPercent || 0),
+              thresholdReached: Boolean(res.data?.thresholdReached),
+            },
+          ];
+        } catch {
+          return [item.id, { progressPercent: 0, thresholdReached: false }];
+        }
+      }),
+    );
+
+    setResourceProgress(Object.fromEntries(entries));
+  }, []);
+
+  const fetchResourcesForClass = useCallback(async (classId) => {
     if (!classId) {
       setResources([]);
+      setResourceProgress({});
       return;
     }
 
@@ -113,14 +389,17 @@ export default function StudentCourseMaterial() {
     setError('');
     try {
       const res = await getClassResources(classId);
-      setResources(res.data || []);
+      const nextResources = res.data || [];
+      setResources(nextResources);
+      await loadResourceProgress(classId, nextResources);
     } catch {
       setError('Failed to load resources for this class.');
       setResources([]);
+      setResourceProgress({});
     } finally {
       setLoadingResources(false);
     }
-  };
+  }, [loadResourceProgress]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -149,7 +428,7 @@ export default function StudentCourseMaterial() {
     };
 
     fetchClasses();
-  }, [user?.id]);
+  }, [user?.id, fetchResourcesForClass]);
 
   const handleClassChange = async (event) => {
     const nextClassId = event.target.value;
@@ -316,7 +595,7 @@ export default function StudentCourseMaterial() {
               )}
 
               {/* Class Stats Grid */}
-              <div className='grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4'>
+              <div className='grid grid-cols-2 gap-3 md:grid-cols-5 md:gap-4'>
                 <div className='rounded-xl border-2 border-[var(--color-border)] bg-gradient-to-br from-[var(--color-primary)]/5 to-transparent p-4 text-center shadow-sm transition hover:border-[var(--color-primary)]/50 hover:shadow-md md:rounded-2xl md:p-5'>
                   <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>Course Name</p>
                   <p className='mt-2 truncate text-sm font-bold text-[var(--color-primary)] md:text-base'>
@@ -336,6 +615,14 @@ export default function StudentCourseMaterial() {
                     {resources.filter(r => r.type === 'file').length}
                   </p>
                   <p className='mt-1 text-xs text-[var(--color-text-muted)]'>downloadable</p>
+                </div>
+
+                <div className='rounded-xl border-2 border-[var(--color-border)] bg-gradient-to-br from-red-500/5 to-transparent p-4 text-center shadow-sm transition hover:border-red-500/50 hover:shadow-md md:rounded-2xl md:p-5'>
+                  <p className='text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>Videos</p>
+                  <p className='mt-2 text-sm font-bold text-red-600 md:text-base'>
+                    {resources.filter(r => r.type === 'youtube').length}
+                  </p>
+                  <p className='mt-1 text-xs text-[var(--color-text-muted)]'>watch & track</p>
                 </div>
 
                 <div className='rounded-xl border-2 border-[var(--color-border)] bg-gradient-to-br from-green-500/5 to-transparent p-4 text-center shadow-sm transition hover:border-green-500/50 hover:shadow-md md:rounded-2xl md:p-5'>
@@ -379,7 +666,7 @@ export default function StudentCourseMaterial() {
                 <h3 className='mb-4 text-sm font-bold uppercase tracking-widest text-[var(--color-text-muted)]'>
                   Search & Filter
                 </h3>
-                <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
+                <div className='grid grid-cols-1 gap-3 md:grid-cols-4'>
                   {/* Search */}
                   <div>
                     <label htmlFor='student-resource-search' className='mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>
@@ -410,6 +697,25 @@ export default function StudentCourseMaterial() {
                       {availableTags.map((tag) => (
                         <option key={tag} value={tag}>
                           #{tag}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor='student-resource-category-filter' className='mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]'>
+                      Category
+                    </label>
+                    <select
+                      id='student-resource-category-filter'
+                      value={selectedCategory}
+                      onChange={(event) => setSelectedCategory(event.target.value)}
+                      className='w-full rounded-lg border-2 border-[var(--color-border)] bg-[var(--color-input-bg)] px-4 py-2.5 text-sm font-medium text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 md:rounded-xl'
+                    >
+                      <option value='all'>All categories</option>
+                      {availableCategories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
                         </option>
                       ))}
                     </select>
@@ -495,6 +801,8 @@ export default function StudentCourseMaterial() {
                           <div className='mt-1 rounded-lg bg-[var(--color-primary)]/10 p-2 md:p-2.5'>
                             {resource.type === 'file' ? (
                               <FileText size={20} className='text-[var(--color-primary)]' />
+                            ) : resource.type === 'youtube' ? (
+                              <PlayCircle size={20} className='text-[var(--color-primary)]' />
                             ) : (
                               <LinkIcon size={20} className='text-[var(--color-primary)]' />
                             )}
@@ -514,7 +822,15 @@ export default function StudentCourseMaterial() {
                         {/* Tags */}
                         <div className='mt-3.5 flex flex-wrap gap-2'>
                           <span className='inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary)]/15 px-3 py-1.5 text-xs font-bold text-[var(--color-primary)]'>
-                            {resource.type === 'file' ? 'File' : 'Link'}
+                            {resource.type === 'file' ? 'File' : resource.type === 'youtube' ? 'YouTube' : 'Link'}
+                          </span>
+
+                          <span className='inline-flex items-center gap-1.5 rounded-full bg-[var(--color-border)]/70 px-3 py-1.5 text-xs font-semibold text-[var(--color-text-secondary)]'>
+                            {resource.material_category || 'lecture'}
+                          </span>
+
+                          <span className='inline-flex items-center gap-1.5 rounded-full bg-[var(--color-border)]/70 px-3 py-1.5 text-xs font-semibold text-[var(--color-text-secondary)]'>
+                            {resource.content_mode || 'view'}
                           </span>
 
                           {resource.tags?.length > 0 &&
@@ -560,6 +876,15 @@ export default function StudentCourseMaterial() {
                           <FileText size={18} />
                           <span className='hidden sm:inline'>Preview</span>File
                         </button>
+                      ) : resource.type === 'youtube' ? (
+                        <div className='w-full'>
+                          <YouTubeProgressPlayer
+                            classId={selectedClassId}
+                            resource={resource}
+                            savedProgress={resourceProgress[resource.id]}
+                            onProgressChange={handleProgressChange}
+                          />
+                        </div>
                       ) : (
                         <a
                           href={resource.content}
