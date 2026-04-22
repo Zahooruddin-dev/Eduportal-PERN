@@ -119,6 +119,18 @@ export const deleteResource = (classId, resourceId) => {
   return api.delete(`/api/class/${classId}/resources/${resourceId}`);
 };
 
+export const getMyResourceProgress = (classId, resourceId) => {
+  return api.get(`/api/class/${classId}/resources/${resourceId}/progress`);
+};
+
+export const trackResourceProgress = (classId, resourceId, data) => {
+  return api.post(`/api/class/${classId}/resources/${resourceId}/progress`, data);
+};
+
+export const getResourceProgressSummary = (classId, resourceId) => {
+  return api.get(`/api/class/${classId}/resources/${resourceId}/progress/summary`);
+};
+
 export const getResourceComments = (classId, resourceId) => {
     return api.get(`/api/class/${classId}/resources/${resourceId}/comments`);
 };
