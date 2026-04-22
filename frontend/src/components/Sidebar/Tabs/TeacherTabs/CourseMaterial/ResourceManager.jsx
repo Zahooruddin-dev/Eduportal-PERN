@@ -5,6 +5,7 @@ import {
   Eye,
   EyeOff,
   FileText,
+  PlayCircle,
   ChevronDown,
   MessageSquare,
 } from 'lucide-react';
@@ -13,6 +14,7 @@ import {
   createResource,
   updateResource,
   deleteResource,
+  getResourceProgressSummary,
 } from '../../../../../api/api';
 import { SpinnerIcon } from '../../../../Icons/Icon';
 import Toast from '../../../../Toast';
@@ -29,7 +31,19 @@ const INITIAL_FORM_DATA = {
   tags: '',
   isPublished: false,
   expiresAt: '',
+  contentMode: 'view',
+  materialCategory: 'lecture',
 };
+
+const MATERIAL_CATEGORY_OPTIONS = [
+  { value: 'lecture', label: 'Lecture' },
+  { value: 'reading', label: 'Reading' },
+  { value: 'glossary', label: 'Glossary' },
+  { value: 'download', label: 'Download' },
+  { value: 'notice', label: 'Notice' },
+  { value: 'info', label: 'Info' },
+  { value: 'assessment', label: 'Assessment' },
+];
 
 function formatDate(value) {
   if (!value) return '-';
@@ -72,6 +86,7 @@ export default function ResourceManager({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const [progressSummaryByResource, setProgressSummaryByResource] = useState({});
 
   const publishedCount = useMemo(
     () => resources.filter((resource) => resource.is_published).length,
@@ -140,20 +155,44 @@ export default function ResourceManager({
     }
   }, [availableTags, selectedTag]);
 
+  const loadProgressSummaries = useCallback(async (resourceItems) => {
+    const youtubeResources = (resourceItems || []).filter((item) => item.type === 'youtube');
+    if (youtubeResources.length === 0) {
+      setProgressSummaryByResource({});
+      return;
+    }
+
+    const entries = await Promise.all(
+      youtubeResources.map(async (item) => {
+        try {
+          const res = await getResourceProgressSummary(classId, item.id);
+          return [item.id, res.data?.summary || null];
+        } catch {
+          return [item.id, null];
+        }
+      }),
+    );
+
+    setProgressSummaryByResource(Object.fromEntries(entries));
+  }, [classId]);
+
   const fetchResources = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
       const res = await getClassResources(classId);
-      setResources(res.data || []);
+      const nextResources = res.data || [];
+      setResources(nextResources);
+      await loadProgressSummaries(nextResources);
     } catch (err) {
       const message = err.response?.data?.error || 'Failed to load resources.';
       setError(message);
       setToast({ isOpen: true, type: 'error', message });
+      setProgressSummaryByResource({});
     } finally {
       setLoading(false);
     }
-  }, [classId]);
+  }, [classId, loadProgressSummaries]);
 
   useEffect(() => {
     if (classId) fetchResources();
@@ -161,10 +200,26 @@ export default function ResourceManager({
 
   const handleInputChange = (event) => {
     const { name, value, type, checked } = event.target;
-    setFormData((current) => ({
-      ...current,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
+    setFormData((current) => {
+      const next = {
+        ...current,
+        [name]: type === 'checkbox' ? checked : value,
+      };
+
+      if (name === 'type') {
+        if (value === 'youtube') {
+          next.contentMode = 'view';
+          if (!next.materialCategory || next.materialCategory === 'reading') {
+            next.materialCategory = 'lecture';
+          }
+        }
+        if (value === 'file' || value === 'link') {
+          if (!next.contentMode) next.contentMode = 'read';
+        }
+      }
+
+      return next;
+    });
   };
 
   const handleFileChange = (event) => {
@@ -188,6 +243,8 @@ export default function ResourceManager({
       payload.append('description', formData.description.trim());
       payload.append('tags', formData.tags.trim());
       payload.append('isPublished', String(formData.isPublished));
+      payload.append('contentMode', formData.contentMode);
+      payload.append('materialCategory', formData.materialCategory);
 
       if (formData.expiresAt) {
         payload.append('expiresAt', formData.expiresAt);
@@ -198,11 +255,13 @@ export default function ResourceManager({
           throw new Error('Please choose a file before submitting.');
         }
         payload.append('file', selectedFile);
-      } else {
+      } else if (formData.type === 'link' || formData.type === 'youtube') {
         if (!formData.content.trim()) {
-          throw new Error('Please provide a valid link before submitting.');
+          throw new Error('Please provide a valid URL before submitting.');
         }
         payload.append('content', formData.content.trim());
+      } else {
+        throw new Error('Invalid resource type selected.');
       }
 
       await createResource(classId, payload);
@@ -452,6 +511,16 @@ export default function ResourceManager({
                   />
                   External Link
                 </label>
+                <label className='inline-flex items-center gap-2 text-sm text-[var(--color-text-primary)]'>
+                  <input
+                    type='radio'
+                    name='type'
+                    value='youtube'
+                    checked={formData.type === 'youtube'}
+                    onChange={handleInputChange}
+                  />
+                  YouTube Video
+                </label>
               </div>
             </fieldset>
 
@@ -480,11 +549,49 @@ export default function ResourceManager({
                   value={formData.content}
                   onChange={handleInputChange}
                   required
-                  placeholder='https://...'
+                  placeholder={formData.type === 'youtube' ? 'https://www.youtube.com/watch?v=...' : 'https://...'}
                   className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
                 />
               </div>
             )}
+
+            <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
+              <div>
+                <label htmlFor='teacher-resource-content-mode' className='mb-1 block text-sm text-[var(--color-text-secondary)]'>
+                  Mode
+                </label>
+                <select
+                  id='teacher-resource-content-mode'
+                  name='contentMode'
+                  value={formData.contentMode}
+                  onChange={handleInputChange}
+                  disabled={formData.type === 'youtube'}
+                  className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 disabled:opacity-60'
+                >
+                  <option value='view'>View</option>
+                  <option value='read'>Read</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor='teacher-resource-category' className='mb-1 block text-sm text-[var(--color-text-secondary)]'>
+                  Category
+                </label>
+                <select
+                  id='teacher-resource-category'
+                  name='materialCategory'
+                  value={formData.materialCategory}
+                  onChange={handleInputChange}
+                  className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
+                >
+                  {MATERIAL_CATEGORY_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
             <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
               <div>
@@ -578,6 +685,7 @@ export default function ResourceManager({
         <div className='space-y-3'>
           {filteredResources.map((resource) => {
             const expired = isExpired(resource.expires_at);
+            const progressSummary = progressSummaryByResource[resource.id];
             return (
               <article
                 key={resource.id}
@@ -591,7 +699,17 @@ export default function ResourceManager({
 
                     <div className='mt-2 flex flex-wrap items-center gap-2'>
                       <span className='rounded-full bg-[var(--color-primary)]/12 px-2 py-1 text-xs text-[var(--color-primary)]'>
-                        {resource.type === 'file' ? 'File' : 'Link'}
+                        {resource.type === 'file'
+                          ? 'File'
+                          : resource.type === 'youtube'
+                            ? 'YouTube'
+                            : 'Link'}
+                      </span>
+                      <span className='rounded-full bg-[var(--color-border)] px-2 py-1 text-xs text-[var(--color-text-secondary)]'>
+                        {resource.material_category || 'lecture'}
+                      </span>
+                      <span className='rounded-full bg-[var(--color-border)] px-2 py-1 text-xs text-[var(--color-text-secondary)]'>
+                        {resource.content_mode || 'view'}
                       </span>
                       <span
                         className={`rounded-full px-2 py-1 text-xs ${
@@ -641,6 +759,16 @@ export default function ResourceManager({
                           <FileText size={14} />
                           View File
                         </button>
+                      ) : resource.type === 'youtube' ? (
+                        <a
+                          href={resource.content}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='inline-flex items-center gap-1 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-primary)] hover:bg-[var(--color-border)]/50'
+                        >
+                          <PlayCircle size={14} />
+                          Watch Video
+                        </a>
                       ) : (
                         <a
                           href={resource.content}
@@ -662,6 +790,27 @@ export default function ResourceManager({
                         Comments ({resource.comment_count ?? 0})
                       </button>
                     </div>
+
+                    {resource.type === 'youtube' && progressSummary && (
+                      <div className='mt-3 grid grid-cols-2 gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-2 text-xs sm:grid-cols-4'>
+                        <div>
+                          <p className='text-[var(--color-text-muted)]'>Tracked</p>
+                          <p className='font-semibold text-[var(--color-text-primary)]'>{progressSummary.tracked_students ?? 0}</p>
+                        </div>
+                        <div>
+                          <p className='text-[var(--color-text-muted)]'>25% Reached</p>
+                          <p className='font-semibold text-[var(--color-success)]'>{progressSummary.threshold_students ?? 0}</p>
+                        </div>
+                        <div>
+                          <p className='text-[var(--color-text-muted)]'>Avg %</p>
+                          <p className='font-semibold text-[var(--color-text-primary)]'>{progressSummary.avg_progress_percent ?? 0}</p>
+                        </div>
+                        <div>
+                          <p className='text-[var(--color-text-muted)]'>Max %</p>
+                          <p className='font-semibold text-[var(--color-text-primary)]'>{progressSummary.max_progress_percent ?? 0}</p>
+                        </div>
+                      </div>
+                    )}
 
                     <p className='mt-3 text-xs text-[var(--color-text-muted)]'>
                       Added: {formatDate(resource.created_at)}
