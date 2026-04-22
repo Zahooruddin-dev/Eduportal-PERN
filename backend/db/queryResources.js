@@ -16,6 +16,7 @@ async function createResourceQuery(resourceData) {
 		youtubeVideoId,
 		meta,
 	} = resourceData;
+
 	const { rows } = await pool.query(
 		`INSERT INTO class_resources
       (class_id, teacher_id, title, type, content, description, tags, is_published, expires_at, content_mode, material_category, youtube_video_id, meta)
@@ -37,6 +38,7 @@ async function createResourceQuery(resourceData) {
 			meta && typeof meta === 'object' ? meta : {},
 		],
 	);
+
 	return rows[0];
 }
 
@@ -109,6 +111,7 @@ async function getResourcesByClassQuery(classId, teacherId, filters = {}) {
 
 	return rows;
 }
+
 async function getResourceByIdQuery(resourceId) {
 	const { rows } = await pool.query(
 		`SELECT * FROM class_resources WHERE id = $1`,
@@ -146,7 +149,7 @@ async function updateResourceQuery(resourceId, teacherId, updates) {
 		if (updates[field] !== undefined) {
 			setClauses.push(`${field} = $${i}`);
 			values.push(updates[field]);
-			i++;
+			i += 1;
 		}
 	}
 	if (setClauses.length === 0) return null;
@@ -167,10 +170,6 @@ async function deleteResourceQuery(resourceId, teacherId) {
 		[resourceId, teacherId],
 	);
 	return rowCount;
-}
-
-async function getFileByPath(filePath) {
-	//  we'll use to serve files
 }
 
 module.exports = {
