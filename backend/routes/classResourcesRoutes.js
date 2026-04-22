@@ -16,6 +16,11 @@ router.get('/', verifyToken, controller.getClassResources);
 // PUT – update resource (JSON)
 router.put('/:resourceId', verifyToken, isTeacher, controller.updateResource);
 
+// GET/POST – student progress tracking for lecture resources
+router.get('/:resourceId/progress', verifyToken, controller.getMyResourceProgress);
+router.post('/:resourceId/progress', verifyToken, controller.trackResourceProgress);
+router.get('/:resourceId/progress/summary', verifyToken, controller.getResourceProgressSummary);
+
 // DELETE – delete resource
 router.delete('/:resourceId', verifyToken, isTeacher, controller.deleteResource);
 
