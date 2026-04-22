@@ -256,6 +256,130 @@ async function ensureAdminSchema() {
 		CREATE INDEX IF NOT EXISTS idx_attendance_class_date ON attendance(class_id, date DESC);
 		CREATE INDEX IF NOT EXISTS idx_attendance_student_date ON attendance(student_id, date DESC);
 		CREATE INDEX IF NOT EXISTS idx_attendance_class_student_date ON attendance(class_id, student_id, date DESC);
+
+		DO $$
+		DECLARE resource_type_constraint RECORD;
+		BEGIN
+			IF to_regclass('public.class_resources') IS NOT NULL THEN
+				ALTER TABLE class_resources
+				ADD COLUMN IF NOT EXISTS content_mode VARCHAR(20) NOT NULL DEFAULT 'view';
+
+				ALTER TABLE class_resources
+				ADD COLUMN IF NOT EXISTS material_category VARCHAR(30) NOT NULL DEFAULT 'lecture';
+
+				ALTER TABLE class_resources
+				ADD COLUMN IF NOT EXISTS youtube_video_id VARCHAR(32);
+
+				ALTER TABLE class_resources
+				ADD COLUMN IF NOT EXISTS meta JSONB NOT NULL DEFAULT '{}'::jsonb;
+
+				FOR resource_type_constraint IN
+					SELECT conname
+					FROM pg_constraint
+					WHERE conrelid = 'class_resources'::regclass
+					AND contype = 'c'
+					AND pg_get_constraintdef(oid) ILIKE '%type%'
+				LOOP
+					EXECUTE format('ALTER TABLE class_resources DROP CONSTRAINT IF EXISTS %I', resource_type_constraint.conname);
+				END LOOP;
+
+				ALTER TABLE class_resources
+				ADD CONSTRAINT class_resources_type_check
+				CHECK (type IN ('file', 'link', 'youtube'));
+
+				IF NOT EXISTS (
+					SELECT 1
+					FROM pg_constraint
+					WHERE conrelid = 'class_resources'::regclass
+					AND conname = 'class_resources_content_mode_check'
+				) THEN
+					ALTER TABLE class_resources
+					ADD CONSTRAINT class_resources_content_mode_check
+					CHECK (content_mode IN ('view', 'read'));
+				END IF;
+
+				IF NOT EXISTS (
+					SELECT 1
+					FROM pg_constraint
+					WHERE conrelid = 'class_resources'::regclass
+					AND conname = 'class_resources_material_category_check'
+				) THEN
+					ALTER TABLE class_resources
+					ADD CONSTRAINT class_resources_material_category_check
+					CHECK (material_category IN ('lecture', 'reading', 'glossary', 'notice', 'info', 'download', 'assessment'));
+				END IF;
+			END IF;
+		END
+		$$;
+
+		DO $$
+		BEGIN
+			IF to_regclass('public.class_resources') IS NOT NULL
+				AND to_regclass('public.classes') IS NOT NULL
+				AND to_regclass('public.users') IS NOT NULL
+			THEN
+				CREATE TABLE IF NOT EXISTS resource_view_progress (
+					id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+					resource_id UUID NOT NULL REFERENCES class_resources(id) ON DELETE CASCADE,
+					class_id UUID NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+					student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+					watch_seconds NUMERIC(12, 2) NOT NULL DEFAULT 0,
+					duration_seconds NUMERIC(12, 2) NOT NULL DEFAULT 0,
+					last_position_seconds NUMERIC(12, 2) NOT NULL DEFAULT 0,
+					progress_percent NUMERIC(5, 2) NOT NULL DEFAULT 0,
+					threshold_25_reached BOOLEAN NOT NULL DEFAULT false,
+					threshold_25_reached_at TIMESTAMP WITH TIME ZONE,
+					last_event_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+					created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+					updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+					CONSTRAINT resource_view_progress_percent_check CHECK (progress_percent >= 0 AND progress_percent <= 100),
+					UNIQUE (resource_id, student_id)
+				);
+
+				ALTER TABLE resource_view_progress
+				ADD COLUMN IF NOT EXISTS duration_seconds NUMERIC(12, 2) NOT NULL DEFAULT 0;
+
+				ALTER TABLE resource_view_progress
+				ADD COLUMN IF NOT EXISTS last_position_seconds NUMERIC(12, 2) NOT NULL DEFAULT 0;
+
+				ALTER TABLE resource_view_progress
+				ADD COLUMN IF NOT EXISTS progress_percent NUMERIC(5, 2) NOT NULL DEFAULT 0;
+
+				ALTER TABLE resource_view_progress
+				ADD COLUMN IF NOT EXISTS threshold_25_reached_at TIMESTAMP WITH TIME ZONE;
+
+				CREATE INDEX IF NOT EXISTS idx_resource_view_progress_class_student
+				ON resource_view_progress(class_id, student_id);
+
+				CREATE INDEX IF NOT EXISTS idx_resource_view_progress_resource
+				ON resource_view_progress(resource_id);
+
+				CREATE INDEX IF NOT EXISTS idx_resource_view_progress_threshold
+				ON resource_view_progress(class_id, threshold_25_reached);
+
+				CREATE TABLE IF NOT EXISTS resource_attendance_events (
+					id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+					class_id UUID NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+					resource_id UUID NOT NULL REFERENCES class_resources(id) ON DELETE CASCADE,
+					student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+					attendance_date DATE NOT NULL,
+					progress_percent NUMERIC(5, 2) NOT NULL DEFAULT 0,
+					created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+					UNIQUE (class_id, student_id, attendance_date)
+				);
+
+				ALTER TABLE resource_attendance_events
+				ADD COLUMN IF NOT EXISTS progress_percent NUMERIC(5, 2) NOT NULL DEFAULT 0;
+
+				CREATE INDEX IF NOT EXISTS idx_resource_attendance_events_class_student
+				ON resource_attendance_events(class_id, student_id, attendance_date DESC);
+
+				CREATE INDEX IF NOT EXISTS idx_resource_attendance_events_resource
+				ON resource_attendance_events(resource_id);
+			END IF;
+		END
+		$$;
+
 		CREATE INDEX IF NOT EXISTS idx_grades_student_released_created ON grades(student_id, released, created_at DESC);
 		CREATE INDEX IF NOT EXISTS idx_grades_class_created ON grades(class_id, created_at DESC);
 		CREATE INDEX IF NOT EXISTS idx_admin_invites_institute_status ON admin_invites(institute_id, status);
