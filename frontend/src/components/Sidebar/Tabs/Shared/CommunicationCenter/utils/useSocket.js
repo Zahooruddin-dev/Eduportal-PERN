@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 
-export function useSocket({ userId, onNewMessage, onMessageUpdated, onMessageDeleted, onUnreadCountUpdated, onInboxRefresh }) {
+export function useSocket({
+	userId,
+	onNewMessage,
+	onMessageUpdated,
+	onMessageDeleted,
+	onUnreadCountUpdated,
+	onInboxRefresh,
+}) {
 	const socketRef = useRef(null);
 	const activeConversationIdRef = useRef(null);
 
@@ -35,10 +42,13 @@ export function useSocket({ userId, onNewMessage, onMessageUpdated, onMessageDel
 		const token = localStorage.getItem('token');
 		if (!token) return;
 
-		const socket = io(import.meta.env.VITE_BACKEND_URL || undefined, {
-			auth: { token },
-			transports: ['websocket', 'polling'],
-		});
+		const socket = io(
+			import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000',
+			{
+				auth: { token },
+				transports: ['websocket', 'polling'],
+			},
+		);
 		socketRef.current = socket;
 
 		socket.on('connect', () => {
@@ -50,8 +60,15 @@ export function useSocket({ userId, onNewMessage, onMessageUpdated, onMessageDel
 
 		socket.on('chat:new-message', (msg) => {
 			onNewMessage(msg, activeConversationIdRef.current);
-			if (msg.conversation_id === activeConversationIdRef.current && msg.sender_id !== userId) {
-				socket.emit('chat:mark-read', { conversationId: msg.conversation_id }, () => {});
+			if (
+				msg.conversation_id === activeConversationIdRef.current &&
+				msg.sender_id !== userId
+			) {
+				socket.emit(
+					'chat:mark-read',
+					{ conversationId: msg.conversation_id },
+					() => {},
+				);
 			}
 			onInboxRefresh?.();
 		});
@@ -78,7 +95,19 @@ export function useSocket({ userId, onNewMessage, onMessageUpdated, onMessageDel
 			socket.disconnect();
 			socketRef.current = null;
 		};
-	}, [onInboxRefresh, onMessageDeleted, onMessageUpdated, onNewMessage, onUnreadCountUpdated, userId]);
+	}, [
+		onInboxRefresh,
+		onMessageDeleted,
+		onMessageUpdated,
+		onNewMessage,
+		onUnreadCountUpdated,
+		userId,
+	]);
 
-	return { joinConversationRoom, setActiveConversationId, markReadViaSocket, sendViaSocket };
+	return {
+		joinConversationRoom,
+		setActiveConversationId,
+		markReadViaSocket,
+		sendViaSocket,
+	};
 }
