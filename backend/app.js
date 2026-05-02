@@ -11,6 +11,7 @@ const authRoutes = require('./routes/authRoutes');
 const announcementRoutes = require('./routes/announcements');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const resourceRoutes = require('./routes/classResourcesRoutes');
+const quizRoutes = require('./routes/quizRoutes');
 const commentRoutes = require('./routes/comments');
 const assignmentRoutes = require('./routes/assignmentRoutes');
 const gradebookRoutes = require('./routes/gradebookRoutes');
@@ -63,6 +64,8 @@ const uuidParamLabels = {
 	id: 'id',
 	classId: 'class id',
 	resourceId: 'resource id',
+	quizId: 'quiz id',
+	submissionId: 'submission id',
 	studentId: 'student id',
 	assignmentId: 'assignment id',
 	attachmentId: 'attachment id',
@@ -83,6 +86,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/class/:classId/resources', resourceRoutes);
 app.use('/api/class/:classId/resources/:resourceId/comments', commentRoutes);
+app.use('/api/class/:classId/quizzes', quizRoutes);
 app.use('/api/class/:classId/assignments', assignmentRoutes);
 app.use('/api/enroll', enrollRoutes);
 app.use('/api/auth', authRoutes);
