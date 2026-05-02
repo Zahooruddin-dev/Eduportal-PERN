@@ -10,6 +10,7 @@ import { SpinnerIcon } from '../../../../Icons/Icon';
 import { FileText, ExternalLink, Link as LinkIcon, ChevronDown, MessageSquare, Download, Clock, PlayCircle } from 'lucide-react';
 import FileViewerModal from '../../../../FileViewerModal/FileViewerModal';
 import CommentSection from '../../Shared/CommentSection';
+import StudentQuizView from './StudentQuizView';
 import { getFileViewUrl } from '../../../../../utils/fileUtils';
 
 let youtubeApiLoader = null;
@@ -254,6 +255,7 @@ export default function StudentCourseMaterial() {
   const [sortBy, setSortBy] = useState('newest');
   const [downloadingAll, setDownloadingAll] = useState(false);
   const [resourceProgress, setResourceProgress] = useState({});
+  const [activeTab, setActiveTab] = useState('materials');
 
   const selectedClass = useMemo(
     () => classes.find((classItem) => classItem.id === selectedClassId) || null,
@@ -499,6 +501,32 @@ export default function StudentCourseMaterial() {
           </div>
         </header>
 
+        {/* Tabs */}
+        <div className='flex gap-2 border-b mb-6 md:mb-8'>
+          <button
+            onClick={() => setActiveTab('materials')}
+            className={`px-4 py-2 font-medium ${
+              activeTab === 'materials'
+                ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]'
+                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+            }`}
+          >
+            Materials
+          </button>
+          <button
+            onClick={() => setActiveTab('quizzes')}
+            className={`px-4 py-2 font-medium ${
+              activeTab === 'quizzes'
+                ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]'
+                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+            }`}
+          >
+            Quizzes
+          </button>
+        </div>
+
+        {activeTab === 'materials' && (
+          <>
         {/* Error Alert */}
         {error && (
           <div
@@ -944,6 +972,12 @@ export default function StudentCourseMaterial() {
             isOpen={Boolean(viewingFile)}
             onClose={() => setViewingFile(null)}
           />
+        )}
+          </>
+        )}
+
+        {activeTab === 'quizzes' && (
+          <StudentQuizView classId={selectedClassId} user={user} />
         )}
       </div>
     </div>
