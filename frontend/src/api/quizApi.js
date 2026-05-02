@@ -1,10 +1,8 @@
-import axios from 'axios';
+import api from './axiosConfig';
 import { getAuthHeader } from './axiosConfig';
 
-const apiClient = axios.create();
-
 export async function createQuiz(classId, quizData) {
-	const response = await apiClient.post(
+	const response = await api.post(
 		`/api/class/${classId}/quizzes`,
 		quizData,
 		{ headers: getAuthHeader() },
@@ -13,7 +11,7 @@ export async function createQuiz(classId, quizData) {
 }
 
 export async function getClassQuizzes(classId, search = '') {
-	const response = await apiClient.get(
+	const response = await api.get(
 		`/api/class/${classId}/quizzes`,
 		{
 			params: search ? { search } : {},
@@ -24,7 +22,7 @@ export async function getClassQuizzes(classId, search = '') {
 }
 
 export async function getQuizDetails(classId, quizId) {
-	const response = await apiClient.get(
+	const response = await api.get(
 		`/api/class/${classId}/quizzes/${quizId}`,
 		{ headers: getAuthHeader() },
 	);
@@ -32,7 +30,7 @@ export async function getQuizDetails(classId, quizId) {
 }
 
 export async function updateQuiz(classId, quizId, updates) {
-	const response = await apiClient.put(
+	const response = await api.put(
 		`/api/class/${classId}/quizzes/${quizId}`,
 		updates,
 		{ headers: getAuthHeader() },
@@ -41,7 +39,7 @@ export async function updateQuiz(classId, quizId, updates) {
 }
 
 export async function deleteQuiz(classId, quizId) {
-	const response = await apiClient.delete(
+	const response = await api.delete(
 		`/api/class/${classId}/quizzes/${quizId}`,
 		{ headers: getAuthHeader() },
 	);
@@ -49,7 +47,7 @@ export async function deleteQuiz(classId, quizId) {
 }
 
 export async function addQuestionToQuiz(classId, quizId, questionData) {
-	const response = await apiClient.post(
+	const response = await api.post(
 		`/api/class/${classId}/quizzes/${quizId}/questions`,
 		questionData,
 		{ headers: getAuthHeader() },
@@ -58,7 +56,7 @@ export async function addQuestionToQuiz(classId, quizId, questionData) {
 }
 
 export async function updateQuestion(classId, quizId, questionId, updates) {
-	const response = await apiClient.put(
+	const response = await api.put(
 		`/api/class/${classId}/quizzes/${quizId}/questions/${questionId}`,
 		updates,
 		{ headers: getAuthHeader() },
@@ -67,7 +65,7 @@ export async function updateQuestion(classId, quizId, questionId, updates) {
 }
 
 export async function deleteQuestion(classId, quizId, questionId) {
-	const response = await apiClient.delete(
+	const response = await api.delete(
 		`/api/class/${classId}/quizzes/${quizId}/questions/${questionId}`,
 		{ headers: getAuthHeader() },
 	);
@@ -75,7 +73,7 @@ export async function deleteQuestion(classId, quizId, questionId) {
 }
 
 export async function startQuiz(classId, quizId) {
-	const response = await apiClient.post(
+	const response = await api.post(
 		`/api/class/${classId}/quizzes/${quizId}/start`,
 		{},
 		{ headers: getAuthHeader() },
@@ -84,7 +82,7 @@ export async function startQuiz(classId, quizId) {
 }
 
 export async function getMySubmissions(classId, quizId) {
-	const response = await apiClient.get(
+	const response = await api.get(
 		`/api/class/${classId}/quizzes/${quizId}/my-submissions`,
 		{ headers: getAuthHeader() },
 	);
@@ -92,7 +90,7 @@ export async function getMySubmissions(classId, quizId) {
 }
 
 export async function submitAnswer(classId, quizId, submissionId, answerData) {
-	const response = await apiClient.post(
+	const response = await api.post(
 		`/api/class/${classId}/quizzes/${quizId}/submissions/${submissionId}/answer`,
 		answerData,
 		{ headers: getAuthHeader() },
@@ -101,7 +99,7 @@ export async function submitAnswer(classId, quizId, submissionId, answerData) {
 }
 
 export async function submitQuiz(classId, quizId, submissionId, submitData) {
-	const response = await apiClient.post(
+	const response = await api.post(
 		`/api/class/${classId}/quizzes/${quizId}/submissions/${submissionId}/submit`,
 		submitData,
 		{ headers: getAuthHeader() },
@@ -110,7 +108,7 @@ export async function submitQuiz(classId, quizId, submissionId, submitData) {
 }
 
 export async function getSubmissionDetails(classId, quizId, submissionId) {
-	const response = await apiClient.get(
+	const response = await api.get(
 		`/api/class/${classId}/quizzes/${quizId}/submissions/${submissionId}`,
 		{ headers: getAuthHeader() },
 	);
@@ -118,7 +116,7 @@ export async function getSubmissionDetails(classId, quizId, submissionId) {
 }
 
 export async function getQuizSummary(classId, quizId) {
-	const response = await apiClient.get(
+	const response = await api.get(
 		`/api/class/${classId}/quizzes/${quizId}/summary`,
 		{ headers: getAuthHeader() },
 	);
