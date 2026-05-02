@@ -8,7 +8,7 @@ import {
 	addQuestionToQuiz,
 	updateQuestion,
 	deleteQuestion,
-} from '../../../api/quizApi';
+} from '../../../../../api/quizApi';
 import CommentSection from '../../CommentSection';
 
 export default function QuizManager({ classId, user }) {

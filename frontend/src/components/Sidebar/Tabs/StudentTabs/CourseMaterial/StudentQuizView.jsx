@@ -8,7 +8,7 @@ import {
 	submitQuiz,
 	getMySubmissions,
 	getSubmissionDetails,
-} from '../../../api/quizApi';
+} from '../../../../../api/quizApi';
 
 export default function StudentQuizView({ classId, user }) {
 	const [quizzes, setQuizzes] = useState([]);
