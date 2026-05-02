@@ -11,6 +11,9 @@ import { FileText, ExternalLink, Link as LinkIcon, ChevronDown, MessageSquare, D
 import FileViewerModal from '../../../../FileViewerModal/FileViewerModal';
 import CommentSection from '../../Shared/CommentSection';
 import StudentQuizView from './StudentQuizView';
+import GlossaryTab from './GlossaryTab';
+import DownloadTab from './DownloadTab';
+import InfoNoticesTab from './InfoNoticesTab';
 import { getFileViewUrl } from '../../../../../utils/fileUtils';
 
 let youtubeApiLoader = null;
@@ -256,6 +259,7 @@ export default function StudentCourseMaterial() {
   const [downloadingAll, setDownloadingAll] = useState(false);
   const [resourceProgress, setResourceProgress] = useState({});
   const [activeTab, setActiveTab] = useState('materials');
+  const [activeSubTab, setActiveSubTab] = useState('all');
 
   const selectedClass = useMemo(
     () => classes.find((classItem) => classItem.id === selectedClassId) || null,
@@ -537,6 +541,52 @@ export default function StudentCourseMaterial() {
           </div>
         )}
 
+        {/* Material Sub-tabs */}
+        {classes.length > 0 && (
+          <div className='flex gap-2 border-b mb-6 md:mb-8 overflow-x-auto'>
+            <button
+              onClick={() => setActiveSubTab('all')}
+              className={`px-4 py-2 font-medium whitespace-nowrap ${
+                activeSubTab === 'all'
+                  ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]'
+                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+              }`}
+            >
+              All Materials
+            </button>
+            <button
+              onClick={() => setActiveSubTab('glossary')}
+              className={`px-4 py-2 font-medium whitespace-nowrap ${
+                activeSubTab === 'glossary'
+                  ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]'
+                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+              }`}
+            >
+              Glossary
+            </button>
+            <button
+              onClick={() => setActiveSubTab('download')}
+              className={`px-4 py-2 font-medium whitespace-nowrap ${
+                activeSubTab === 'download'
+                  ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]'
+                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+              }`}
+            >
+              Downloads
+            </button>
+            <button
+              onClick={() => setActiveSubTab('notices')}
+              className={`px-4 py-2 font-medium whitespace-nowrap ${
+                activeSubTab === 'notices'
+                  ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]'
+                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+              }`}
+            >
+              Notices & Info
+            </button>
+          </div>
+        )}
+
         {/* No Classes State */}
         {classes.length === 0 ? (
           <div className='rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-surface)]/50 p-8 text-center md:p-12'>
@@ -550,7 +600,7 @@ export default function StudentCourseMaterial() {
               You are not enrolled in any classes yet. Admin will add you to classes soon!
             </p>
           </div>
-        ) : (
+        ) : activeSubTab === 'all' ? (
           <>
             {/* Class Selection and Info */}
             <div className='mb-6 space-y-4 md:mb-8'>
@@ -954,7 +1004,13 @@ export default function StudentCourseMaterial() {
               </div>
             )}
           </>
-        )}
+        ) : activeSubTab === 'glossary' ? (
+          <GlossaryTab resources={resources} />
+        ) : activeSubTab === 'download' ? (
+          <DownloadTab resources={resources} />
+        ) : activeSubTab === 'notices' ? (
+          <InfoNoticesTab resources={resources} />
+        ) : null}
 
         {/* Modals */}
         {showCommentsFor && (
