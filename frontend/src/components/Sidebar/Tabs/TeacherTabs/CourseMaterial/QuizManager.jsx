@@ -9,7 +9,8 @@ import {
 	updateQuestion,
 	deleteQuestion,
 } from '../../../../../api/quizApi';
-import CommentSection from '../../CommentSection';
+import CommentSection from '../../Shared/CommentSection';
+
 
 export default function QuizManager({ classId, user }) {
 	const [quizzes, setQuizzes] = useState([]);
