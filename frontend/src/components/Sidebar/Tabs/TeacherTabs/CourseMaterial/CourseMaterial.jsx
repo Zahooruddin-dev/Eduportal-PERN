@@ -3,6 +3,7 @@ import { useAuth } from '../../../../../context/useAuth';
 import { getMyClasses } from '../../../../../api/api';
 import { SpinnerIcon } from '../../../../Icons/Icon';
 import ResourceManager from './ResourceManager';
+import QuizManager from './QuizManager';
 
 export default function CourseMaterial() {
 	const { user } = useAuth();
@@ -10,6 +11,7 @@ export default function CourseMaterial() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
 	const [selectedClassId, setSelectedClassId] = useState('');
+	const [activeTab, setActiveTab] = useState('materials');
 
 	const fetchClasses = async () => {
 		setLoading(true);
@@ -56,14 +58,48 @@ export default function CourseMaterial() {
 
 	if (selectedClass) {
 		return (
-			<ResourceManager
-				classId={selectedClass.id}
-				className={selectedClass.class_name}
-				classes={classes}
-				onClassChange={(newId) => {
-					setSelectedClassId(newId);
-				}}
-			/>
+			<div>
+				<div className='flex gap-2 border-b mb-4'>
+					<button
+						onClick={() => setActiveTab('materials')}
+						className={`px-4 py-2 font-medium ${
+							activeTab === 'materials'
+								? 'border-b-2 border-blue-600 text-blue-600'
+								: 'text-gray-600 hover:text-gray-900'
+						}`}
+					>
+						Materials
+					</button>
+					<button
+						onClick={() => setActiveTab('quizzes')}
+						className={`px-4 py-2 font-medium ${
+							activeTab === 'quizzes'
+								? 'border-b-2 border-blue-600 text-blue-600'
+								: 'text-gray-600 hover:text-gray-900'
+						}`}
+					>
+						Quizzes
+					</button>
+				</div>
+
+				{activeTab === 'materials' && (
+					<ResourceManager
+						classId={selectedClass.id}
+						className={selectedClass.class_name}
+						classes={classes}
+						onClassChange={(newId) => {
+							setSelectedClassId(newId);
+						}}
+					/>
+				)}
+
+				{activeTab === 'quizzes' && (
+					<QuizManager
+						classId={selectedClass.id}
+						user={user}
+					/>
+				)}
+			</div>
 		);
 	}
 
