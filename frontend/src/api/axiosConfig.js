@@ -62,12 +62,12 @@ function clearAuthState() {
 
 function isAuthRequestPath(url = '') {
 	return (
-		url.includes('/api/auth/login')
-		|| url.includes('/api/auth/register')
-		|| url.includes('/api/auth/request-reset')
-		|| url.includes('/api/auth/reset-password')
-		|| url.includes('/api/auth/refresh')
-		|| url.includes('/api/auth/logout')
+		url.includes('/api/auth/login') ||
+		url.includes('/api/auth/register') ||
+		url.includes('/api/auth/request-reset') ||
+		url.includes('/api/auth/reset-password') ||
+		url.includes('/api/auth/refresh') ||
+		url.includes('/api/auth/logout')
 	);
 }
 
@@ -85,7 +85,9 @@ async function requestTokenRefresh() {
 			.then((response) => {
 				const token = response?.data?.token || '';
 				if (!token) {
-					throw new Error('Refresh token response did not include access token.');
+					throw new Error(
+						'Refresh token response did not include access token.',
+					);
 				}
 				localStorage.setItem(TOKEN_KEY, token);
 				return token;
@@ -111,9 +113,8 @@ api.get = (url, config = {}) => {
 	}
 
 	responseCache.delete(cacheKey);
-	const ttlMs = Number(config?.cacheTtlMs) > 0
-		? Number(config.cacheTtlMs)
-		: CACHE_TTL_MS;
+	const ttlMs =
+		Number(config?.cacheTtlMs) > 0 ? Number(config.cacheTtlMs) : CACHE_TTL_MS;
 
 	return rawGet(url, config).then((response) => {
 		responseCache.set(cacheKey, {
@@ -155,14 +156,17 @@ api.interceptors.response.use(
 
 		if (!error.response || status >= 500) {
 			emitGlobalApiError(
-				error?.response?.data?.message || error?.message || 'Server error. Please try again.',
+				error?.response?.data?.message ||
+					error?.message ||
+					'Server error. Please try again.',
 			);
 		}
 
-		const shouldRetryWithRefresh = status === 401
-			&& !isAuthRequest
-			&& !originalRequest._retry
-			&& !originalRequest.skipAuthRefresh;
+		const shouldRetryWithRefresh =
+			status === 401 &&
+			!isAuthRequest &&
+			!originalRequest._retry &&
+			!originalRequest.skipAuthRefresh;
 
 		if (shouldRetryWithRefresh) {
 			originalRequest._retry = true;
@@ -178,10 +182,17 @@ api.interceptors.response.use(
 			}
 		}
 
-		if (status === 401 && !isAuthRequest && !originalRequest.skipSessionRedirect) {
+		if (
+			status === 401 &&
+			!isAuthRequest &&
+			!originalRequest.skipSessionRedirect
+		) {
 			clearAuthState();
 			emitGlobalApiError('Your session has expired. Please sign in again.');
-			if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+			if (
+				typeof window !== 'undefined' &&
+				window.location.pathname !== '/login'
+			) {
 				window.location.href = '/login';
 			}
 		}
