@@ -9,8 +9,6 @@ import {
 	updateQuestion,
 	deleteQuestion,
 } from '../../../../../api/quizApi';
-import CommentSection from '../../Shared/CommentSection';
-
 
 export default function QuizManager({ classId, user }) {
 	const [quizzes, setQuizzes] = useState([]);
@@ -214,20 +212,35 @@ export default function QuizManager({ classId, user }) {
 
 	return (
 		<div className="space-y-4">
-			{error && <div className="bg-red-50 text-red-700 p-3 rounded border border-red-200">{error}</div>}
+			{error && (
+				<div style={{
+					backgroundColor: 'var(--color-danger-soft)',
+					color: 'var(--color-danger)',
+					padding: '12px',
+					borderRadius: '6px',
+					border: '1px solid var(--color-danger)',
+				}}>{error}</div>
+			)}
 
 			{!showForm && !selectedQuizForQuestion && (
 				<button
 					onClick={() => setShowForm(true)}
-					className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+					className="flex items-center gap-2 px-4 py-2 text-white rounded hover:opacity-90 transition"
+					style={{ backgroundColor: 'var(--color-primary)' }}
 				>
 					<Plus size={18} /> Create Quiz
 				</button>
 			)}
 
 			{showForm && (
-				<form onSubmit={handleSubmitQuiz} className="bg-white rounded border p-4 space-y-3">
-					<h3 className="font-semibold">{editingQuizId ? 'Edit' : 'Create'} Quiz</h3>
+				<form onSubmit={handleSubmitQuiz} className="rounded border p-4 space-y-3" style={{
+					backgroundColor: 'var(--color-surface)',
+					borderColor: 'var(--color-border)',
+					boxShadow: 'var(--shadow-md)',
+				}}>
+					<h3 className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+						{editingQuizId ? 'Edit' : 'Create'} Quiz
+					</h3>
 
 					<input
 						type="text"
@@ -235,7 +248,12 @@ export default function QuizManager({ classId, user }) {
 						placeholder="Quiz Title"
 						value={formData.title}
 						onChange={handleInputChange}
-						className="w-full px-3 py-2 border rounded"
+						className="w-full px-3 py-2 border rounded focus:outline-none"
+						style={{
+							backgroundColor: 'var(--color-input-bg)',
+							color: 'var(--color-text-primary)',
+							borderColor: 'var(--color-border)',
+						}}
 						required
 					/>
 
@@ -244,7 +262,12 @@ export default function QuizManager({ classId, user }) {
 						placeholder="Description (optional)"
 						value={formData.description}
 						onChange={handleInputChange}
-						className="w-full px-3 py-2 border rounded"
+						className="w-full px-3 py-2 border rounded focus:outline-none"
+						style={{
+							backgroundColor: 'var(--color-input-bg)',
+							color: 'var(--color-text-primary)',
+							borderColor: 'var(--color-border)',
+						}}
 						rows="2"
 					/>
 
@@ -253,18 +276,28 @@ export default function QuizManager({ classId, user }) {
 						placeholder="Instructions for students (optional)"
 						value={formData.instructions}
 						onChange={handleInputChange}
-						className="w-full px-3 py-2 border rounded"
+						className="w-full px-3 py-2 border rounded focus:outline-none"
+						style={{
+							backgroundColor: 'var(--color-input-bg)',
+							color: 'var(--color-text-primary)',
+							borderColor: 'var(--color-border)',
+						}}
 						rows="2"
 					/>
 
 					<div className="grid grid-cols-2 gap-3">
 						<div>
-							<label className="block text-sm font-medium mb-1">Quiz Type</label>
+							<label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Quiz Type</label>
 							<select
 								name="type"
 								value={formData.type}
 								onChange={handleInputChange}
-								className="w-full px-3 py-2 border rounded"
+								className="w-full px-3 py-2 border rounded focus:outline-none"
+								style={{
+									backgroundColor: 'var(--color-input-bg)',
+									color: 'var(--color-text-primary)',
+									borderColor: 'var(--color-border)',
+								}}
 							>
 								<option value="multiple-choice">Multiple Choice</option>
 								<option value="short-answer">Short Answer</option>
@@ -273,40 +306,55 @@ export default function QuizManager({ classId, user }) {
 						</div>
 
 						<div>
-							<label className="block text-sm font-medium mb-1">Attempts Allowed</label>
+							<label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Attempts Allowed</label>
 							<input
 								type="number"
 								name="attemptsAllowed"
 								placeholder="Unlimited"
 								value={formData.attemptsAllowed}
 								onChange={handleInputChange}
-								className="w-full px-3 py-2 border rounded"
+								className="w-full px-3 py-2 border rounded focus:outline-none"
+								style={{
+									backgroundColor: 'var(--color-input-bg)',
+									color: 'var(--color-text-primary)',
+									borderColor: 'var(--color-border)',
+								}}
 								min="0"
 							/>
 						</div>
 
 						<div>
-							<label className="block text-sm font-medium mb-1">Time Limit (minutes)</label>
+							<label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Time Limit (minutes)</label>
 							<input
 								type="number"
 								name="timeLimitMinutes"
 								placeholder="No limit"
 								value={formData.timeLimitMinutes}
 								onChange={handleInputChange}
-								className="w-full px-3 py-2 border rounded"
+								className="w-full px-3 py-2 border rounded focus:outline-none"
+								style={{
+									backgroundColor: 'var(--color-input-bg)',
+									color: 'var(--color-text-primary)',
+									borderColor: 'var(--color-border)',
+								}}
 								min="0"
 							/>
 						</div>
 
 						<div>
-							<label className="block text-sm font-medium mb-1">Pass Percentage</label>
+							<label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Pass Percentage</label>
 							<input
 								type="number"
 								name="passPercentage"
 								placeholder="Not set"
 								value={formData.passPercentage}
 								onChange={handleInputChange}
-								className="w-full px-3 py-2 border rounded"
+								className="w-full px-3 py-2 border rounded focus:outline-none"
+								style={{
+									backgroundColor: 'var(--color-input-bg)',
+									color: 'var(--color-text-primary)',
+									borderColor: 'var(--color-border)',
+								}}
 								min="0"
 								max="100"
 								step="0.01"
@@ -315,79 +363,90 @@ export default function QuizManager({ classId, user }) {
 					</div>
 
 					<div className="space-y-2">
-						<label className="flex items-center gap-2">
+						<label className="flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
 							<input
 								type="checkbox"
 								name="isPublished"
 								checked={formData.isPublished}
 								onChange={handleInputChange}
+								style={{ accentColor: 'var(--color-primary)' }}
 							/>
 							Publish for students
 						</label>
-						<label className="flex items-center gap-2">
+						<label className="flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
 							<input
 								type="checkbox"
 								name="allowReview"
 								checked={formData.allowReview}
 								onChange={handleInputChange}
+								style={{ accentColor: 'var(--color-primary)' }}
 							/>
 							Allow review after submission
 						</label>
-						<label className="flex items-center gap-2">
+						<label className="flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
 							<input
 								type="checkbox"
 								name="showAnswers"
 								checked={formData.showAnswers}
 								onChange={handleInputChange}
+								style={{ accentColor: 'var(--color-primary)' }}
 							/>
 							Show correct answers
 						</label>
-						<label className="flex items-center gap-2">
+						<label className="flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
 							<input
 								type="checkbox"
 								name="randomizeQuestions"
 								checked={formData.randomizeQuestions}
 								onChange={handleInputChange}
+								style={{ accentColor: 'var(--color-primary)' }}
 							/>
 							Randomize questions order
 						</label>
-						<label className="flex items-center gap-2">
+						<label className="flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
 							<input
 								type="checkbox"
 								name="shuffleAnswers"
 								checked={formData.shuffleAnswers}
 								onChange={handleInputChange}
+								style={{ accentColor: 'var(--color-primary)' }}
 							/>
 							Shuffle answer options
 						</label>
 					</div>
 
-					<div className="bg-yellow-50 border border-yellow-200 p-3 rounded">
-						<h4 className="font-semibold text-sm mb-2">Security Options</h4>
-						<label className="flex items-center gap-2">
+					<div className="border rounded p-3" style={{
+						backgroundColor: 'var(--color-warning-soft)',
+						borderColor: 'var(--color-warning)',
+					}}>
+						<h4 className="font-semibold text-sm mb-2" style={{ color: 'var(--color-warning)' }}>Security Options</h4>
+						<label className="flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
 							<input
 								type="checkbox"
 								name="copyProtectionEnabled"
 								checked={formData.copyProtectionEnabled}
 								onChange={handleInputChange}
+								style={{ accentColor: 'var(--color-primary)' }}
 							/>
 							Prevent copying
 						</label>
-						<label className="flex items-center gap-2">
+						<label className="flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
 							<input
 								type="checkbox"
 								name="pasteProtectionEnabled"
 								checked={formData.pasteProtectionEnabled}
 								onChange={handleInputChange}
+								style={{ accentColor: 'var(--color-primary)' }}
 							/>
 							Prevent pasting
 						</label>
-						<label className="flex items-center gap-2">
+						<label className="flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
 							<input
 								type="checkbox"
 								name="disableRightClick"
 								checked={formData.disableRightClick}
 								onChange={handleInputChange}
+								style={{ accentColor: 'var(--color-primary)' }}
 							/>
 							Disable right-click
 						</label>
@@ -397,7 +456,8 @@ export default function QuizManager({ classId, user }) {
 						<button
 							type="submit"
 							disabled={loading}
-							className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+							className="px-4 py-2 text-white rounded hover:opacity-90 disabled:opacity-50 transition"
+							style={{ backgroundColor: 'var(--color-primary)' }}
 						>
 							{loading ? 'Saving...' : 'Save Quiz'}
 						</button>
@@ -424,7 +484,11 @@ export default function QuizManager({ classId, user }) {
 									disableRightClick: true,
 								});
 							}}
-							className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+							className="px-4 py-2 rounded hover:opacity-90 transition"
+							style={{
+								backgroundColor: 'var(--color-border)',
+								color: 'var(--color-text-primary)',
+							}}
 						>
 							Cancel
 						</button>
@@ -433,27 +497,41 @@ export default function QuizManager({ classId, user }) {
 			)}
 
 			{selectedQuizForQuestion && (
-				<form onSubmit={handleAddQuestion} className="bg-white rounded border p-4 space-y-3">
-					<h3 className="font-semibold">Add Question</h3>
+				<form onSubmit={handleAddQuestion} className="rounded border p-4 space-y-3" style={{
+					backgroundColor: 'var(--color-surface)',
+					borderColor: 'var(--color-border)',
+					boxShadow: 'var(--shadow-md)',
+				}}>
+					<h3 className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>Add Question</h3>
 
 					<textarea
 						name="questionText"
 						placeholder="Question text"
 						value={questionFormData.questionText}
 						onChange={handleQuestionInputChange}
-						className="w-full px-3 py-2 border rounded"
+						className="w-full px-3 py-2 border rounded focus:outline-none"
+						style={{
+							backgroundColor: 'var(--color-input-bg)',
+							color: 'var(--color-text-primary)',
+							borderColor: 'var(--color-border)',
+						}}
 						rows="2"
 						required
 					/>
 
 					<div className="grid grid-cols-2 gap-3">
 						<div>
-							<label className="block text-sm font-medium mb-1">Question Type</label>
+							<label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Question Type</label>
 							<select
 								name="questionType"
 								value={questionFormData.questionType}
 								onChange={handleQuestionInputChange}
-								className="w-full px-3 py-2 border rounded"
+								className="w-full px-3 py-2 border rounded focus:outline-none"
+								style={{
+									backgroundColor: 'var(--color-input-bg)',
+									color: 'var(--color-text-primary)',
+									borderColor: 'var(--color-border)',
+								}}
 							>
 								<option value="multiple-choice">Multiple Choice</option>
 								<option value="short-answer">Short Answer</option>
@@ -461,13 +539,18 @@ export default function QuizManager({ classId, user }) {
 						</div>
 
 						<div>
-							<label className="block text-sm font-medium mb-1">Points</label>
+							<label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Points</label>
 							<input
 								type="number"
 								name="points"
 								value={questionFormData.points}
 								onChange={handleQuestionInputChange}
-								className="w-full px-3 py-2 border rounded"
+								className="w-full px-3 py-2 border rounded focus:outline-none"
+								style={{
+									backgroundColor: 'var(--color-input-bg)',
+									color: 'var(--color-text-primary)',
+									borderColor: 'var(--color-border)',
+								}}
 								min="0"
 								step="0.01"
 								required
@@ -477,7 +560,7 @@ export default function QuizManager({ classId, user }) {
 
 					{questionFormData.questionType === 'multiple-choice' && (
 						<div className="space-y-2">
-							<h4 className="font-medium text-sm">Answer Options</h4>
+							<h4 className="font-medium text-sm" style={{ color: 'var(--color-text-primary)' }}>Answer Options</h4>
 							{questionFormData.options.map((option, idx) => (
 								<div key={idx} className="flex gap-2">
 									<input
@@ -485,21 +568,28 @@ export default function QuizManager({ classId, user }) {
 										placeholder="Option text"
 										value={option.optionText}
 										onChange={(e) => handleOptionChange(idx, 'optionText', e.target.value)}
-										className="flex-1 px-3 py-2 border rounded"
+										className="flex-1 px-3 py-2 border rounded focus:outline-none"
+										style={{
+											backgroundColor: 'var(--color-input-bg)',
+											color: 'var(--color-text-primary)',
+											borderColor: 'var(--color-border)',
+										}}
 										required
 									/>
-									<label className="flex items-center gap-1">
+									<label className="flex items-center gap-1" style={{ color: 'var(--color-text-primary)' }}>
 										<input
 											type="checkbox"
 											checked={option.isCorrect}
 											onChange={() => handleOptionChange(idx, 'isCorrect')}
+											style={{ accentColor: 'var(--color-primary)' }}
 										/>
 										Correct
 									</label>
 									<button
 										type="button"
 										onClick={() => removeOptionField(idx)}
-										className="px-2 py-1 text-red-600 hover:bg-red-50 rounded"
+										className="px-2 py-1 rounded hover:opacity-70 transition"
+										style={{ color: 'var(--color-danger)' }}
 									>
 										<Trash2 size={16} />
 									</button>
@@ -508,7 +598,8 @@ export default function QuizManager({ classId, user }) {
 							<button
 								type="button"
 								onClick={addOptionField}
-								className="text-sm text-blue-600 hover:text-blue-700"
+								className="text-sm hover:opacity-70 transition"
+								style={{ color: 'var(--color-primary)' }}
 							>
 								+ Add Option
 							</button>
@@ -522,7 +613,12 @@ export default function QuizManager({ classId, user }) {
 							placeholder="Correct answer"
 							value={questionFormData.correctAnswer}
 							onChange={handleQuestionInputChange}
-							className="w-full px-3 py-2 border rounded"
+							className="w-full px-3 py-2 border rounded focus:outline-none"
+							style={{
+								backgroundColor: 'var(--color-input-bg)',
+								color: 'var(--color-text-primary)',
+								borderColor: 'var(--color-border)',
+							}}
 						/>
 					)}
 
@@ -530,7 +626,8 @@ export default function QuizManager({ classId, user }) {
 						<button
 							type="submit"
 							disabled={loading}
-							className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+							className="px-4 py-2 text-white rounded hover:opacity-90 disabled:opacity-50 transition"
+							style={{ backgroundColor: 'var(--color-primary)' }}
 						>
 							{loading ? 'Adding...' : 'Add Question'}
 						</button>
@@ -546,7 +643,11 @@ export default function QuizManager({ classId, user }) {
 									options: [{ optionText: '', isCorrect: false }],
 								});
 							}}
-							className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+							className="px-4 py-2 rounded hover:opacity-90 transition"
+							style={{
+								backgroundColor: 'var(--color-border)',
+								color: 'var(--color-text-primary)',
+							}}
 						>
 							Cancel
 						</button>
@@ -556,29 +657,42 @@ export default function QuizManager({ classId, user }) {
 
 			<div className="space-y-2">
 				{quizzes.map((quiz) => (
-					<div key={quiz.id} className="border rounded bg-white">
+					<div key={quiz.id} className="border rounded" style={{
+						backgroundColor: 'var(--color-surface)',
+						borderColor: 'var(--color-border)',
+						boxShadow: 'var(--shadow-sm)',
+					}}>
 						<div
-							className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50"
+							className="p-4 flex items-center justify-between cursor-pointer hover:opacity-80 transition"
 							onClick={() =>
 								setExpandedQuizId(expandedQuizId === quiz.id ? null : quiz.id)
 							}
 						>
 							<div className="flex-1">
-								<h3 className="font-semibold">{quiz.title}</h3>
-								<p className="text-sm text-gray-600">
+								<h3 className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>{quiz.title}</h3>
+								<p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
 									{quiz.total_submissions} submission(s) · {quiz.graded_submissions} graded
 								</p>
-								<div className="flex gap-2 mt-1">
+								<div className="flex gap-2 mt-1 flex-wrap">
 									{quiz.is_published ? (
-										<span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+										<span className="text-xs px-2 py-0.5 rounded" style={{
+											backgroundColor: 'var(--color-success-soft)',
+											color: 'var(--color-success)',
+										}}>
 											Published
 										</span>
 									) : (
-										<span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+										<span className="text-xs px-2 py-0.5 rounded" style={{
+											backgroundColor: 'var(--color-border)',
+											color: 'var(--color-text-secondary)',
+										}}>
 											Draft
 										</span>
 									)}
-									<span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+									<span className="text-xs px-2 py-0.5 rounded" style={{
+										backgroundColor: 'var(--color-info-soft)',
+										color: 'var(--color-info)',
+									}}>
 										{quiz.type}
 									</span>
 								</div>
@@ -608,46 +722,63 @@ export default function QuizManager({ classId, user }) {
 										});
 										setShowForm(true);
 									}}
-									className="p-2 hover:bg-blue-100 rounded"
+									className="p-2 rounded hover:opacity-70 transition"
+									style={{
+										backgroundColor: 'var(--color-info-soft)',
+										color: 'var(--color-info)',
+									}}
 								>
-									<Edit2 size={16} className="text-blue-600" />
+									<Edit2 size={16} />
 								</button>
 								<button
 									onClick={(e) => {
 										e.stopPropagation();
 										handleDeleteQuiz(quiz.id);
 									}}
-									className="p-2 hover:bg-red-100 rounded"
+									className="p-2 rounded hover:opacity-70 transition"
+									style={{
+										backgroundColor: 'var(--color-danger-soft)',
+										color: 'var(--color-danger)',
+									}}
 								>
-									<Trash2 size={16} className="text-red-600" />
+									<Trash2 size={16} />
 								</button>
 							</div>
 
-							{expandedQuizId === quiz.id ? <ChevronUp /> : <ChevronDown />}
+							<div style={{ color: 'var(--color-text-secondary)' }}>
+								{expandedQuizId === quiz.id ? <ChevronUp /> : <ChevronDown />}
+							</div>
 						</div>
 
 						{expandedQuizId === quiz.id && (
-							<div className="border-t p-4 bg-gray-50 space-y-3">
-								{quiz.description && <p className="text-sm text-gray-700">{quiz.description}</p>}
+							<div className="border-t p-4 space-y-3" style={{
+								backgroundColor: 'var(--color-surface-raised)',
+								borderColor: 'var(--color-border)',
+							}}>
+								{quiz.description && <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{quiz.description}</p>}
 
 								{quiz.questions && quiz.questions.length > 0 && (
 									<div>
-										<h4 className="font-medium mb-2">Questions ({quiz.questions.length})</h4>
+										<h4 className="font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>Questions ({quiz.questions.length})</h4>
 										<div className="space-y-2">
 											{quiz.questions.map((q) => (
-												<div key={q.id} className="bg-white p-3 rounded border text-sm">
+												<div key={q.id} className="p-3 rounded border text-sm" style={{
+													backgroundColor: 'var(--color-surface)',
+													borderColor: 'var(--color-border)',
+												}}>
 													<div className="flex items-start justify-between gap-2">
 														<div className="flex-1">
-															<p className="font-medium">{q.question_text}</p>
-															<p className="text-xs text-gray-600 mt-1">
+															<p className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{q.question_text}</p>
+															<p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
 																Type: {q.question_type} · Points: {q.points}
 															</p>
 														</div>
 														<button
 															onClick={() => handleDeleteQuestion(quiz.id, q.id)}
-															className="p-1 hover:bg-red-100 rounded"
+															className="p-1 rounded hover:opacity-70 transition"
+															style={{ color: 'var(--color-danger)' }}
 														>
-															<Trash2 size={14} className="text-red-600" />
+															<Trash2 size={14} />
 														</button>
 													</div>
 												</div>
@@ -658,7 +789,11 @@ export default function QuizManager({ classId, user }) {
 
 								<button
 									onClick={() => setSelectedQuizForQuestion(quiz.id)}
-									className="w-full py-2 px-3 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm font-medium flex items-center justify-center gap-2"
+									className="w-full py-2 px-3 rounded hover:opacity-90 transition text-sm font-medium flex items-center justify-center gap-2"
+									style={{
+										backgroundColor: 'var(--color-primary-soft)',
+										color: 'var(--color-primary)',
+									}}
 								>
 									<Plus size={16} /> Add Question
 								</button>
@@ -669,7 +804,7 @@ export default function QuizManager({ classId, user }) {
 			</div>
 
 			{quizzes.length === 0 && !showForm && !loading && (
-				<div className="text-center py-8 text-gray-500">No quizzes yet. Create one to get started!</div>
+				<div className="text-center py-8" style={{ color: 'var(--color-text-muted)' }}>No quizzes yet. Create one to get started!</div>
 			)}
 		</div>
 	);
