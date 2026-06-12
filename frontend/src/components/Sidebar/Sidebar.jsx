@@ -429,13 +429,10 @@ export default function Sidebar({
 
 			const token = localStorage.getItem('token');
 			if (token && !socketRef.current) {
-				socketRef.current = io(
-					import.meta.env.VITE_BACKEND_URL || undefined,
-					{
-						auth: { token },
-						transports: ['websocket', 'polling'],
-					},
-				);
+				socketRef.current = io(import.meta.env.VITE_BACKEND_URL || undefined, {
+					auth: { token },
+					transports: ['websocket', 'polling'],
+				});
 				socketRef.current.on('chat:unread-count-updated', (payload) => {
 					setCommunicationUnreadCount(Number(payload?.unreadCount || 0));
 				});
@@ -548,10 +545,7 @@ export default function Sidebar({
 			const deltaX = touch.clientX - swipe.startX;
 			const deltaY = Math.abs(touch.clientY - swipe.startY);
 
-			if (
-				deltaY > SWIPE_VERTICAL_TOLERANCE_PX &&
-				deltaY > Math.abs(deltaX)
-			) {
+			if (deltaY > SWIPE_VERTICAL_TOLERANCE_PX && deltaY > Math.abs(deltaX)) {
 				drawerSwipeRef.current.tracking = false;
 				return;
 			}
@@ -618,7 +612,10 @@ export default function Sidebar({
 		if (!drawerSurface) return;
 
 		const handleTransitionEnd = (event) => {
-			if (event.target !== drawerSurface || event.propertyName !== 'transform') {
+			if (
+				event.target !== drawerSurface ||
+				event.propertyName !== 'transform'
+			) {
 				return;
 			}
 
@@ -742,10 +739,7 @@ export default function Sidebar({
 			const deltaX = touch.clientX - swipe.startX;
 			const deltaY = Math.abs(touch.clientY - swipe.startY);
 
-			if (
-				deltaY > SWIPE_VERTICAL_TOLERANCE_PX &&
-				deltaY > Math.abs(deltaX)
-			) {
+			if (deltaY > SWIPE_VERTICAL_TOLERANCE_PX && deltaY > Math.abs(deltaX)) {
 				edgeSwipeRef.current.tracking = false;
 				return;
 			}
