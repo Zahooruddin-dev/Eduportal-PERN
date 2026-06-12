@@ -94,10 +94,7 @@ export default function CourseMaterial() {
 				)}
 
 				{activeTab === 'quizzes' && (
-					<QuizManager
-						classId={selectedClass.id}
-						user={user}
-					/>
+					<QuizManager classId={selectedClass.id} user={user} />
 				)}
 			</div>
 		);
