@@ -273,7 +273,9 @@ export default function SubmissionsTable({ classId, assignmentId, maxScore }) {
 													{sub.username.charAt(0).toUpperCase()}
 												</div>
 											)}
-											<span className='text-sm text-[var(--color-text-primary)]'>{sub.username}</span>
+											<span className='text-sm text-[var(--color-text-primary)]'>
+												{sub.username}
+											</span>
 										</div>
 									</td>
 									<td className='px-3 py-2'>

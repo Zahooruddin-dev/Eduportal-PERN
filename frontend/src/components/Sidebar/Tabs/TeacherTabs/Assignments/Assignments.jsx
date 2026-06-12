@@ -41,16 +41,23 @@ export default function TeacherAssignments() {
 	);
 
 	const filteredAssignments = useMemo(() => {
-		const query = String(searchQuery || '').trim().toLowerCase();
+		const query = String(searchQuery || '')
+			.trim()
+			.toLowerCase();
 		return assignments.filter((assignment) => {
-			const matchesType = typeFilter === 'all' || assignment.type === typeFilter;
+			const matchesType =
+				typeFilter === 'all' || assignment.type === typeFilter;
 			if (!matchesType) return false;
 
 			if (!query) return true;
 			const title = String(assignment.title || '').toLowerCase();
 			const description = String(assignment.description || '').toLowerCase();
 			const type = String(assignment.type || '').toLowerCase();
-			return title.includes(query) || description.includes(query) || type.includes(query);
+			return (
+				title.includes(query) ||
+				description.includes(query) ||
+				type.includes(query)
+			);
 		});
 	}, [assignments, searchQuery, typeFilter]);
 
@@ -171,11 +178,17 @@ export default function TeacherAssignments() {
 						} else {
 							formData.append('content', att.content);
 						}
-						return addAssignmentAttachment(selectedClassId, assignmentId, formData);
+						return addAssignmentAttachment(
+							selectedClassId,
+							assignmentId,
+							formData,
+						);
 					}),
 				);
 
-				const failedUploads = uploadResults.filter((result) => result.status === 'rejected').length;
+				const failedUploads = uploadResults.filter(
+					(result) => result.status === 'rejected',
+				).length;
 				if (failedUploads > 0) {
 					setToast({
 						isOpen: true,
@@ -241,7 +254,9 @@ export default function TeacherAssignments() {
 	if (!classes.length) {
 		return (
 			<div className='p-6'>
-				<h1 className='mb-6 text-2xl font-semibold text-[var(--color-text-primary)]'>Assignments</h1>
+				<h1 className='mb-6 text-2xl font-semibold text-[var(--color-text-primary)]'>
+					Assignments
+				</h1>
 				{error && <AlertBox message={error} />}
 				<div className='rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center text-sm text-[var(--color-text-muted)]'>
 					You have no classes yet. Create a class first to manage assignments.
@@ -255,23 +270,26 @@ export default function TeacherAssignments() {
 			<div className='mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8'>
 				<div className='flex flex-wrap items-center justify-between gap-4'>
 					<div>
-						<h1 className='text-2xl font-semibold text-[var(--color-text-primary)] sm:text-3xl'>Assignments</h1>
+						<h1 className='text-2xl font-semibold text-[var(--color-text-primary)] sm:text-3xl'>
+							Assignments
+						</h1>
 						<p className='mt-1 text-sm text-[var(--color-text-muted)]'>
-							Create work, manage attachments, and grade submissions in one place.
+							Create work, manage attachments, and grade submissions in one
+							place.
 						</p>
 					</div>
 
-				<button
-					onClick={() => {
-						setEditingAssignment(null);
-						setShowAssignmentForm(true);
-					}}
-					disabled={!selectedClassId}
-					className='inline-flex items-center gap-2 rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--color-primary-hover)] disabled:opacity-60'
-				>
-					<Plus size={16} /> New Assignment
-				</button>
-			</div>
+					<button
+						onClick={() => {
+							setEditingAssignment(null);
+							setShowAssignmentForm(true);
+						}}
+						disabled={!selectedClassId}
+						className='inline-flex items-center gap-2 rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--color-primary-hover)] disabled:opacity-60'
+					>
+						<Plus size={16} /> New Assignment
+					</button>
+				</div>
 
 				<div className='grid grid-cols-1 gap-3 lg:grid-cols-[1.1fr_1fr_220px]'>
 					<select
@@ -312,21 +330,34 @@ export default function TeacherAssignments() {
 							{selectedClass.class_name}
 						</h2>
 						<p className='mt-1 text-sm text-[var(--color-text-muted)]'>
-							Showing {filteredAssignments.length} of {assignments.length} assignments
+							Showing {filteredAssignments.length} of {assignments.length}{' '}
+							assignments
 						</p>
 
 						<div className='mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3'>
 							<div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2'>
-								<p className='text-xs uppercase tracking-wide text-[var(--color-text-muted)]'>Total</p>
-								<p className='text-lg font-semibold text-[var(--color-text-primary)]'>{assignmentStats.total}</p>
+								<p className='text-xs uppercase tracking-wide text-[var(--color-text-muted)]'>
+									Total
+								</p>
+								<p className='text-lg font-semibold text-[var(--color-text-primary)]'>
+									{assignmentStats.total}
+								</p>
 							</div>
 							<div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2'>
-								<p className='text-xs uppercase tracking-wide text-[var(--color-text-muted)]'>Due In 7 Days</p>
-								<p className='text-lg font-semibold text-[var(--color-text-primary)]'>{assignmentStats.dueSoon}</p>
+								<p className='text-xs uppercase tracking-wide text-[var(--color-text-muted)]'>
+									Due In 7 Days
+								</p>
+								<p className='text-lg font-semibold text-[var(--color-text-primary)]'>
+									{assignmentStats.dueSoon}
+								</p>
 							</div>
 							<div className='rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2'>
-								<p className='text-xs uppercase tracking-wide text-[var(--color-text-muted)]'>Overdue</p>
-								<p className='text-lg font-semibold text-[var(--color-danger)]'>{assignmentStats.overdue}</p>
+								<p className='text-xs uppercase tracking-wide text-[var(--color-text-muted)]'>
+									Overdue
+								</p>
+								<p className='text-lg font-semibold text-[var(--color-danger)]'>
+									{assignmentStats.overdue}
+								</p>
 							</div>
 						</div>
 					</div>
@@ -367,7 +398,10 @@ export default function TeacherAssignments() {
 											</span>
 											{(assignment.due_at || assignment.due_date) && (
 												<span className='rounded-full border border-[var(--color-border)] px-2 py-0.5'>
-													Due: {new Date(assignment.due_at || assignment.due_date).toLocaleString()}
+													Due:{' '}
+													{new Date(
+														assignment.due_at || assignment.due_date,
+													).toLocaleString()}
 												</span>
 											)}
 										</div>
@@ -399,7 +433,9 @@ export default function TeacherAssignments() {
 										<button
 											onClick={() =>
 												setExpandedAssignment(
-													expandedAssignment === assignment.id ? null : assignment.id,
+													expandedAssignment === assignment.id
+														? null
+														: assignment.id,
 												)
 											}
 											className='rounded-lg border border-[var(--color-border)] p-1.5 text-[var(--color-text-muted)] transition hover:bg-[var(--color-border)]/40 hover:text-[var(--color-text-primary)]'
