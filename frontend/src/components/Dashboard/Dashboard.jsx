@@ -60,7 +60,8 @@ const AdminRiskOverview = lazy(
 	() => import('../Sidebar/Tabs/AdminTabs/RiskOverview/AdminRiskOverview'),
 );
 const AdminAcademicCalendar = lazy(
-	() => import('../Sidebar/Tabs/AdminTabs/AcademicCalendar/AdminAcademicCalendar'),
+	() =>
+		import('../Sidebar/Tabs/AdminTabs/AcademicCalendar/AdminAcademicCalendar'),
 );
 const ReportCenter = lazy(() => import('../Sidebar/Tabs/Shared/ReportCenter'));
 /* const CommunicationCenter = lazy(() => import('../Sidebar/Tabs/Shared/CommunicationCenter'));
