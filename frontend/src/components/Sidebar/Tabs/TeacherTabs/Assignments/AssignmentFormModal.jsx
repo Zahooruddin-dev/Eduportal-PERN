@@ -12,9 +12,10 @@ export default function AssignmentFormModal({
 		description: initialData?.description || '',
 		type: initialData?.type || 'assignment',
 		maxScore: initialData?.max_score || 100,
-		dueDate: (initialData?.due_at || initialData?.due_date)
-			? String(initialData.due_at || initialData.due_date).split('T')[0]
-			: '',
+		dueDate:
+			initialData?.due_at || initialData?.due_date
+				? String(initialData.due_at || initialData.due_date).split('T')[0]
+				: '',
 		dueTime: initialData?.due_at
 			? new Date(initialData.due_at).toISOString().slice(11, 16)
 			: '23:59',
@@ -104,7 +105,7 @@ export default function AssignmentFormModal({
 			<div className='w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-2xl'>
 				<div className='mb-4 flex items-center justify-between gap-3'>
 					<h2 className='text-xl font-semibold text-[var(--color-text-primary)]'>
-					{initialData ? 'Edit Assignment' : 'New Assignment'}
+						{initialData ? 'Edit Assignment' : 'New Assignment'}
 					</h2>
 					<button
 						type='button'
@@ -121,7 +122,9 @@ export default function AssignmentFormModal({
 
 				<form onSubmit={handleSubmit} className='space-y-4'>
 					<section className='rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)] p-4'>
-						<h3 className='mb-3 text-sm font-semibold text-[var(--color-text-primary)]'>Assignment Details</h3>
+						<h3 className='mb-3 text-sm font-semibold text-[var(--color-text-primary)]'>
+							Assignment Details
+						</h3>
 						<div className='space-y-3'>
 							<div>
 								<label className='mb-1 block text-sm font-medium text-[var(--color-text-primary)]'>
@@ -143,7 +146,9 @@ export default function AssignmentFormModal({
 								</label>
 								<textarea
 									value={form.description}
-									onChange={(e) => setForm({ ...form, description: e.target.value })}
+									onChange={(e) =>
+										setForm({ ...form, description: e.target.value })
+									}
 									rows='3'
 									className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25'
 								/>
@@ -151,7 +156,9 @@ export default function AssignmentFormModal({
 
 							<div className='grid grid-cols-1 gap-3 sm:grid-cols-4'>
 								<div>
-									<label className='mb-1 block text-sm font-medium text-[var(--color-text-primary)]'>Type</label>
+									<label className='mb-1 block text-sm font-medium text-[var(--color-text-primary)]'>
+										Type
+									</label>
 									<select
 										value={form.type}
 										onChange={(e) => setForm({ ...form, type: e.target.value })}
@@ -164,34 +171,46 @@ export default function AssignmentFormModal({
 								</div>
 
 								<div>
-									<label className='mb-1 block text-sm font-medium text-[var(--color-text-primary)]'>Max Score *</label>
+									<label className='mb-1 block text-sm font-medium text-[var(--color-text-primary)]'>
+										Max Score *
+									</label>
 									<input
 										type='number'
 										step='any'
 										min='0.01'
 										value={form.maxScore}
-										onChange={(e) => setForm({ ...form, maxScore: e.target.value })}
+										onChange={(e) =>
+											setForm({ ...form, maxScore: e.target.value })
+										}
 										className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25'
 										required
 									/>
 								</div>
 
 								<div>
-									<label className='mb-1 block text-sm font-medium text-[var(--color-text-primary)]'>Due Date</label>
+									<label className='mb-1 block text-sm font-medium text-[var(--color-text-primary)]'>
+										Due Date
+									</label>
 									<input
 										type='date'
 										value={form.dueDate}
-										onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+										onChange={(e) =>
+											setForm({ ...form, dueDate: e.target.value })
+										}
 										className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25'
 									/>
 								</div>
 
 								<div>
-									<label className='mb-1 block text-sm font-medium text-[var(--color-text-primary)]'>Due Time</label>
+									<label className='mb-1 block text-sm font-medium text-[var(--color-text-primary)]'>
+										Due Time
+									</label>
 									<input
 										type='time'
 										value={form.dueTime}
-										onChange={(e) => setForm({ ...form, dueTime: e.target.value })}
+										onChange={(e) =>
+											setForm({ ...form, dueTime: e.target.value })
+										}
 										disabled={!form.dueDate}
 										className='w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 disabled:opacity-60'
 									/>
@@ -294,7 +313,9 @@ export default function AssignmentFormModal({
 								)}
 
 								{addError && (
-									<p className='mt-2 text-xs text-[var(--color-danger)]'>{addError}</p>
+									<p className='mt-2 text-xs text-[var(--color-danger)]'>
+										{addError}
+									</p>
 								)}
 
 								<div className='mt-2 flex justify-end gap-2'>
