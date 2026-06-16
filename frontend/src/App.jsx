@@ -1,4 +1,3 @@
-// App.js (updated to use Dashboard)
 import { useEffect, useRef, useState } from 'react';
 import {
 	BrowserRouter as Router,
